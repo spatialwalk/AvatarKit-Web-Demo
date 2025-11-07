@@ -1,5 +1,5 @@
 /**
- * 控制面板组件
+ * Control panel component
  */
 
 import { Environment } from '../types'
@@ -49,9 +49,9 @@ export function ControlPanel({
 }: ControlPanelProps) {
   return (
     <div className="control-panel">
-      <h2>🎮 控制面板</h2>
+      <h2>🎮 Control Panel</h2>
       <div className="form-group">
-        <label>环境</label>
+        <label>Environment</label>
         <select
           value={environment}
           onChange={(e) => onEnvironmentChange(e.target.value as Environment)}
@@ -63,12 +63,12 @@ export function ControlPanel({
       </div>
 
       <div className="form-group">
-        <label>角色 ID</label>
+        <label>Character ID</label>
         <input
           type="text"
           value={characterId}
           onChange={(e) => onCharacterIdChange(e.target.value)}
-          placeholder="输入角色 ID"
+          placeholder="Enter character ID"
         />
       </div>
 
@@ -78,34 +78,34 @@ export function ControlPanel({
           type="text"
           value={sessionToken}
           onChange={(e) => onSessionTokenChange(e.target.value)}
-          placeholder="输入 Session Token（可选）"
+          placeholder="Enter Session Token (optional)"
         />
       </div>
 
       <div className="button-group">
         <button disabled={isInitialized || isLoading} onClick={onInit}>
-          1. 初始化 SDK
+          1. Initialize SDK
         </button>
         <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={onLoadCharacter}>
-          2. 加载角色
+          2. Load Character
         </button>
         <button disabled={!avatarView || (avatarController?.connected) || isLoading} onClick={onConnect}>
-          3. 连接服务
+          3. Connect Service
         </button>
         <button disabled={!avatarController || !avatarController.connected || isLoading || isRecording} onClick={onStartRecord}>
-          4. 开始录音
+          4. Start Recording
         </button>
         <button disabled={!avatarController || !isRecording} onClick={onStopRecord}>
-          停止录音
+          Stop Recording
         </button>
         <button disabled={!avatarController || !avatarController.connected} onClick={onInterrupt}>
-          打断对话
+          Interrupt
         </button>
         <button disabled={!avatarController || !avatarController.connected} onClick={onDisconnect}>
-          断开连接
+          Disconnect
         </button>
         <button disabled={!avatarView || isLoading} onClick={onUnloadCharacter} style={{ background: '#ef4444' }}>
-          卸载角色
+          Unload Character
         </button>
       </div>
     </div>

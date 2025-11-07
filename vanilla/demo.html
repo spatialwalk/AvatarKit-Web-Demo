@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,15 +10,15 @@
   <div class="container">
     <div class="header">
       <h1>🚀 SPAvatar SDK - Demo</h1>
-      <p>演示应用</p>
+      <p>Demo Application</p>
     </div>
     <div class="content">
       <div>
         <div class="canvas-container" id="canvasContainer"></div>
         <div class="control-panel">
-          <h2>🎮 控制面板</h2>
+          <h2>🎮 Control Panel</h2>
           <div class="form-group">
-            <label>环境</label>
+            <label>Environment</label>
             <select id="environment">
               <option value="us">US</option>
               <option value="cn">CN</option>
@@ -26,28 +26,28 @@
             </select>
           </div>
           <div class="form-group">
-            <label>角色 ID</label>
-            <input type="text" id="characterId" placeholder="输入角色 ID">
+            <label>Character ID</label>
+            <input type="text" id="characterId" placeholder="Enter character ID">
           </div>
           <div class="form-group">
             <label>Session Token</label>
-            <input type="text" id="sessionToken" placeholder="输入 Session Token（可选）">
+            <input type="text" id="sessionToken" placeholder="Enter Session Token (optional)">
           </div>
-          <div id="status" class="status info">准备就绪</div>
-          <button id="btnInit" class="btn btn-primary">1. 初始化 SDK</button>
-          <button id="btnLoad" class="btn btn-primary" disabled>2. 加载角色</button>
-          <button id="btnConnect" class="btn btn-primary" disabled>3. 连接服务</button>
-          <button id="btnStartRecord" class="btn btn-primary" disabled>4. 开始录音</button>
-          <button id="btnStopRecord" class="btn btn-danger" disabled>停止录音</button>
-          <button id="btnInterrupt" class="btn btn-warning" disabled>打断对话</button>
-          <button id="btnDisconnect" class="btn btn-danger" disabled>断开连接</button>
-          <button id="btnUnload" class="btn btn-danger" disabled>卸载角色</button>
+          <div id="status" class="status info">Ready</div>
+          <button id="btnInit" class="btn btn-primary">1. Initialize SDK</button>
+          <button id="btnLoad" class="btn btn-primary" disabled>2. Load Character</button>
+          <button id="btnConnect" class="btn btn-primary" disabled>3. Connect Service</button>
+          <button id="btnStartRecord" class="btn btn-primary" disabled>4. Start Recording</button>
+          <button id="btnStopRecord" class="btn btn-danger" disabled>Stop Recording</button>
+          <button id="btnInterrupt" class="btn btn-warning" disabled>Interrupt</button>
+          <button id="btnDisconnect" class="btn btn-danger" disabled>Disconnect</button>
+          <button id="btnUnload" class="btn btn-danger" disabled>Unload Character</button>
         </div>
       </div>
       <div class="control-panel">
-        <h2>📋 日志</h2>
+        <h2>📋 Logs</h2>
         <div class="log-panel" id="logPanel"></div>
-        <button id="btnClearLog" class="btn btn-primary">清空日志</button>
+        <button id="btnClearLog" class="btn btn-primary">Clear Logs</button>
       </div>
     </div>
   </div>

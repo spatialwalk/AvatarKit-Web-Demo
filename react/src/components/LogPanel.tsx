@@ -1,5 +1,5 @@
 /**
- * 日志面板组件
+ * Log panel component
  */
 
 import type { LogEntry } from '../types'
@@ -12,7 +12,7 @@ interface LogPanelProps {
 export function LogPanel({ logs, onClear }: LogPanelProps) {
   return (
     <div className="control-panel">
-      <h2>📋 日志</h2>
+      <h2>📋 Logs</h2>
       <div className="log-panel">
         {logs.map((log, index) => (
           <div key={index} className={`log-entry log-level-${log.level}`}>
@@ -23,7 +23,7 @@ export function LogPanel({ logs, onClear }: LogPanelProps) {
         ))}
       </div>
       <button className="btn btn-primary" onClick={onClear}>
-        清空日志
+        Clear Logs
       </button>
     </div>
   )

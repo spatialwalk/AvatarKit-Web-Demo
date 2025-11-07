@@ -1,8 +1,8 @@
 <template>
   <div class="control-panel">
-    <h2>🎮 控制面板</h2>
+    <h2>🎮 Control Panel</h2>
     <div class="form-group">
-      <label>环境</label>
+      <label>Environment</label>
       <select :value="environment" @change="handleEnvironmentChange">
         <option :value="Environment.us">US</option>
         <option :value="Environment.cn">CN</option>
@@ -11,11 +11,11 @@
     </div>
 
     <div class="form-group">
-      <label>角色 ID</label>
+      <label>Character ID</label>
       <input
         :value="characterId"
         type="text"
-        placeholder="输入角色 ID"
+        placeholder="Enter character ID"
         @input="handleCharacterIdChange"
       >
     </div>
@@ -25,35 +25,35 @@
       <input
         :value="sessionToken"
         type="text"
-        placeholder="输入 Session Token（可选）"
+        placeholder="Enter Session Token (optional)"
         @input="handleSessionTokenChange"
       >
     </div>
 
     <div class="button-group">
       <button :disabled="isInitialized || isLoading" @click="onInit">
-        1. 初始化 SDK
+        1. Initialize SDK
       </button>
       <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="onLoadCharacter">
-        2. 加载角色
+        2. Load Character
       </button>
       <button :disabled="!avatarView || (avatarController?.connected) || isLoading" @click="onConnect">
-        3. 连接服务
+        3. Connect Service
       </button>
       <button :disabled="!avatarController || !avatarController.connected || isLoading || isRecording" @click="onStartRecord">
-        4. 开始录音
+        4. Start Recording
       </button>
       <button :disabled="!avatarController || !isRecording" @click="onStopRecord">
-        停止录音
+        Stop Recording
       </button>
       <button :disabled="!avatarController || !avatarController.connected" @click="onInterrupt">
-        打断对话
+        Interrupt
       </button>
       <button :disabled="!avatarController || !avatarController.connected" @click="onDisconnect">
-        断开连接
+        Disconnect
       </button>
       <button :disabled="!avatarView || isLoading" @click="onUnloadCharacter" style="background: #ef4444;">
-        卸载角色
+        Unload Character
       </button>
     </div>
   </div>

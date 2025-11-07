@@ -1,5 +1,5 @@
 /**
- * Avatar Canvas 容器组件
+ * Avatar Canvas container component
  */
 
 import { forwardRef } from 'react'

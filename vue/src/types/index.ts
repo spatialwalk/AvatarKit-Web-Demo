@@ -1,5 +1,5 @@
 /**
- * 类型定义
+ * Type definitions
  */
 
 export { Environment } from '@spatialwalk/avatarkit'

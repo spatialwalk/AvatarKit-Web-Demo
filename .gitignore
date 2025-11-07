@@ -2,7 +2,7 @@
 # 注意：examples/*/package.json 中的 spavatarkit 依赖在发布前需要从 workspace:* 改回版本号
 
 # SDK 目录（不提交）
-sdk/
+web-sdk/
 
 # 系统文件
 .DS_Store

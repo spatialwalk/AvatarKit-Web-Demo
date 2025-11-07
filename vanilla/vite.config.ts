@@ -6,7 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [
-    // 确保 WASM 文件使用正确的 MIME 类型
+    // Ensure WASM files use correct MIME type
     {
       name: 'configure-wasm-mime',
       configureServer(server) {
@@ -25,10 +25,10 @@ export default defineConfig({
     open: true,
   },
   publicDir: false,
-  // 排除 @spatialwalk/avatarkit 的预构建，让 WASM 文件从 node_modules 正确加载
+  // Exclude @spatialwalk/avatarkit from pre-bundling to allow WASM files to load correctly from node_modules
   optimizeDeps: {
     exclude: ['@spatialwalk/avatarkit'],
   },
-  // 将 WASM 文件标记为静态资源
+  // Mark WASM files as static assets
   assetsInclude: ['**/*.wasm'],
 })

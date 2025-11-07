@@ -1,6 +1,6 @@
 <template>
   <div class="control-panel">
-    <h2>📋 日志</h2>
+    <h2>📋 Logs</h2>
     <div class="log-panel">
       <div
         v-for="(log, index) in logs"
@@ -14,7 +14,7 @@
       </div>
     </div>
     <button class="btn btn-primary" @click="onClear">
-      清空日志
+      Clear Logs
     </button>
   </div>
 </template>

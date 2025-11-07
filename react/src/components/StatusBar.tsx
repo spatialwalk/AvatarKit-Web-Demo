@@ -1,5 +1,5 @@
 /**
- * 状态栏组件
+ * Status bar component
  */
 
 import type { StatusType } from '../types'

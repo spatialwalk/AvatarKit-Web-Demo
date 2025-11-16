@@ -17,7 +17,8 @@ defineProps<{
 .status {
   padding: 12px;
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 

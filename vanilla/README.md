@@ -33,6 +33,8 @@ Open browser and visit: `http://localhost:5174/demo.html`
 - ✅ Real-time animation rendering
 - ✅ Conversation interruption
 - ✅ Log panel (real-time status display)
+- ✅ Network Mode: Real-time audio streaming via WebSocket
+- ✅ External Data Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
 
 ## 🎯 Use Cases
 
@@ -171,6 +173,7 @@ This structure makes the code:
 - Requires user authorization for microphone permission
 - Recommended to use HTTPS or localhost (required by some browsers)
 - Ensure `@spatialwalk/avatarkit` SDK is installed: `npm install @spatialwalk/avatarkit`
+- **External Data Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
 
 ## 🔍 View Code
 

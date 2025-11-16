@@ -1,6 +1,5 @@
 <template>
-  <div class="control-panel">
-    <h2>📋 Logs</h2>
+  <div>
     <div class="log-panel">
       <div
         v-for="(log, index) in logs"
@@ -34,23 +33,16 @@ const onClear = () => emit('clear')
 </script>
 
 <style scoped>
-.control-panel {
-  background: #f9fafb;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
 .log-panel {
   background: #1e1e1e;
   border-radius: 12px;
   padding: 16px;
-  max-height: 300px;
+  flex: 1;
+  min-height: 300px;
   overflow-y: auto;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: #d4d4d4;
-  margin-bottom: 15px;
 }
 
 .log-entry {
@@ -85,22 +77,25 @@ const onClear = () => emit('clear')
 }
 
 .btn {
-  padding: 8px 16px;
+  width: 100%;
+  padding: 12px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  margin-bottom: 12px;
+  transition: all 0.2s;
 }
 
 .btn-primary {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.btn-primary:hover {
-  background: #2563eb;
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>
 

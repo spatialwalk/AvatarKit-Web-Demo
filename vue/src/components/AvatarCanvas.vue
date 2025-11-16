@@ -14,22 +14,15 @@ defineExpose({
 
 <style scoped>
 .canvas-container {
-  background: #000;
+  background: #f5f5f5;
   border-radius: 12px;
-  margin-bottom: 20px;
-  position: relative;
-  width: 100%;
-  height: 600px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
-}
-
-#avatarCanvas {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
 

@@ -11,8 +11,7 @@ interface LogPanelProps {
 
 export function LogPanel({ logs, onClear }: LogPanelProps) {
   return (
-    <div className="control-panel">
-      <h2>📋 Logs</h2>
+    <>
       <div className="log-panel">
         {logs.map((log, index) => (
           <div key={index} className={`log-entry log-level-${log.level}`}>
@@ -25,7 +24,7 @@ export function LogPanel({ logs, onClear }: LogPanelProps) {
       <button className="btn btn-primary" onClick={onClear}>
         Clear Logs
       </button>
-    </div>
+    </>
   )
 }
 

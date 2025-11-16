@@ -34,6 +34,8 @@ Open browser and visit: `http://localhost:5175`
 - ✅ Computed properties control button state
 - ✅ Complete error handling
 - ✅ Resource cleanup (on component unmount)
+- ✅ Network Mode: Real-time audio streaming via WebSocket
+- ✅ External Data Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
 
 ## 🎯 Use Cases
 
@@ -187,6 +189,7 @@ Ensure SDK resources are properly cleaned up when component unmounts to avoid me
 - Requires user authorization for microphone permission
 - Ensure `@spatialwalk/avatarkit` SDK is installed: `npm install @spatialwalk/avatarkit`
 - Resources are automatically cleaned up on component unmount, no manual management needed
+- **External Data Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
 
 ## 🔍 View Code
 

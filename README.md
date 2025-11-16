@@ -54,13 +54,24 @@ npm run dev
 
 ### 6. Start Using
 
+**Network Mode (Real-time Audio Streaming):**
 1. Enter the character ID in the interface
 2. (Optional) Enter Session Token (if server requires authentication)
 3. Click "Initialize SDK"
-4. Click "Load Character"
+4. Click "Load Character (Network)"
 5. Click "Connect Service"
 6. Click "Start Recording" and start speaking
-7. Observe the character's real-time animation effects
+7. Click "Stop Recording" to send audio and receive animation
+8. Observe the character's real-time animation effects
+
+**External Data Mode (Pre-recorded Audio/Animation):**
+> ⚠️ **Note**: External Data Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
+
+1. Enter the character ID in the interface
+2. Click "Initialize SDK"
+3. Click "Load Character (External)"
+4. Click "Play Data" to load and play pre-recorded audio and animation files
+5. Observe the character's animation synchronized with audio
 
 ## 📦 Example List
 
@@ -149,7 +160,9 @@ Before running the examples, ensure the following requirements are met:
 
 ## 📝 Usage Steps
 
-All examples follow the same basic flow:
+All examples support two playback modes:
+
+### Network Mode (Real-time Audio Streaming)
 
 1. **Initialize SDK** - Configure environment and authentication
    - Select environment (US/CN/Test)
@@ -177,6 +190,26 @@ All examples follow the same basic flow:
    - Character will generate animations based on audio in real-time
    - You can see character's mouth, expressions, and other animations
 
+### External Data Mode (Pre-recorded Audio/Animation)
+
+> ⚠️ **Important**: External Data Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the SPAvatar server-side SDK to generate animation keyframes from audio.
+
+1. **Initialize SDK** - Configure environment
+   - Select environment (US/CN/Test)
+
+2. **Enter Character ID** - Specify the character to load
+   - Get character ID from SDK management platform
+
+3. **Load Character** - Download and initialize character resources
+   - SDK will automatically download character models and textures
+   - Display loading progress
+
+4. **Play Data** - Load and play pre-recorded audio and animation files
+   - Audio files are automatically resampled from 24kHz to 16kHz
+   - Animation keyframes are synchronized with audio playback
+   - Data is streamed at 2x playback speed to ensure smooth playback
+   - **Note**: The animation keyframes must be generated using the SPAvatar server-side SDK
+
 ## 🔧 Configuration
 
 ### Environment Configuration
@@ -201,10 +234,21 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
+- **Playback Modes**: 
+  - **Network Mode**: Real-time audio streaming via WebSocket, server generates animation
+  - **External Data Mode**: Pre-recorded audio and animation files, client-side playback
+    - ⚠️ **Requires SPAvatar Server-side SDK**: External Data Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
 - **Animation Data**: FLAME parameter keyframe sequences
-- **Audio Data Source**: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
+- **Audio Data Source**: 
+  - Network Mode: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
+  - External Data Mode: Pre-recorded PCM16 audio files (24kHz, automatically resampled to 16kHz). Animation keyframes must be generated using the SPAvatar server-side SDK.
+- **Audio Resampling**: High-quality resampling using Web Audio API's OfflineAudioContext with anti-aliasing
 - **WASM Support**: All examples are configured with correct WASM MIME types
 - **Rendering Backend**: Automatically selects WebGPU or WebGL
+- **State Management**: 
+  - React: Uses custom Hooks (`useAvatarSDK`, `useAudioRecorder`, `useLogger`)
+  - Vue: Uses Composables (`useAvatarSDK`, `useAudioRecorder`, `useLogger`)
+  - Vanilla: Uses class-based modules with clear separation of concerns
 
 ## ❓ FAQ
 
@@ -260,6 +304,17 @@ A: Yes, but requires:
 ### Q: How to modify the port number?
 
 A: Modify the `server.port` configuration in each example's `vite.config.ts`.
+
+### Q: How to use External Data Mode in production?
+
+A: External Data Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files for demonstration purposes. In production:
+
+1. Integrate the SPAvatar server-side SDK into your backend service
+2. Use the server-side SDK to generate animation keyframes from your audio files
+3. Store the generated keyframes (FLAME parameter sequences) along with the audio files
+4. Load and play both audio and animation keyframes in the client using External Data Mode
+
+For more information about the server-side SDK, please contact the SDK provider or check the server-side SDK documentation.
 
 ## 📚 More Information
 

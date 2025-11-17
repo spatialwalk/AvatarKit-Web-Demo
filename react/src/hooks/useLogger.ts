@@ -13,8 +13,11 @@ export function useLogger() {
   const log = useCallback((level: LogEntry['level'], message: string, data?: any) => {
     const time = new Date().toLocaleTimeString()
     setLogs((prev) => [...prev, { level, message, time }])
-    const consoleMethod = level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'log'
-    console[consoleMethod](`[${level.toUpperCase()}]`, message, data || '')
+    // Only output errors to console (for debugging)
+    // Info and success messages are shown in UI panel only
+    if (level === 'error') {
+      console.error(`[ERROR]`, message, data || '')
+    }
   }, [])
 
   const updateStatus = useCallback((message: string, type: StatusType = 'info') => {

@@ -42,9 +42,11 @@ export class Logger {
   log(level, message, data = null) {
     createLogEntry(this.logPanel, level, message, data)
     
-    // Also output to console
-    const consoleMethod = level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'log'
-    console[consoleMethod](`[${level.toUpperCase()}]`, message, data || '')
+    // Only output errors to console (for debugging)
+    // Info and success messages are shown in UI panel only
+    if (level === 'error') {
+      console.error(`[ERROR]`, message, data || '')
+    }
   }
 
   info(message, data = null) {
@@ -57,6 +59,11 @@ export class Logger {
 
   warning(message, data = null) {
     this.log('warning', message, data)
+  }
+
+  // Alias for warning (common logger API)
+  warn(message, data = null) {
+    this.warning(message, data)
   }
 
   error(message, data = null) {

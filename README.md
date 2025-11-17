@@ -19,8 +19,8 @@ This is a complete SDK usage example collection demonstrating how to integrate a
 
 ```bash
 # Clone the repository
-git clone https://github.com/spatialwalk/Avatarkit-web-demo.git
-cd Avatarkit-web-demo
+git clone https://github.com/spatialwalk/AvatarKit-Web-Demo.git
+cd AvatarKit-Web-Demo
 
 # Or download the ZIP file and extract it
 ```
@@ -320,4 +320,4 @@ For more information about the server-side SDK, please contact the SDK provider 
 
 - Check the `README.md` in each example directory for detailed instructions
 - Check the example source code for specific implementation details
-- If you have questions, please submit a [GitHub Issue](https://github.com/spatialwalk/Avatarkit-web-demo/issues)
+- If you have questions, please submit a [GitHub Issue](https://github.com/spatialwalk/AvatarKit-Web-Demo/issues)

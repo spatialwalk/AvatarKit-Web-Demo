@@ -31,7 +31,7 @@ Open browser and visit: `http://localhost:5174/demo.html`
 - ✅ WebSocket connection management
 - ✅ Real-time audio recording and sending
 - ✅ Real-time animation rendering
-- ✅ Conversation interruption
+- ✅ Conversation interruption (supports interruption in both network and external data modes)
 - ✅ Log panel (real-time status display)
 - ✅ Network Mode: Real-time audio streaming via WebSocket
 - ✅ External Data Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)

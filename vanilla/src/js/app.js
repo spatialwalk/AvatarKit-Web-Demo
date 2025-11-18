@@ -54,6 +54,9 @@ export class App {
       unload: false,
     }
 
+    // Flag to control external data sending (for interrupt support)
+    this.shouldContinueSendingData = false
+
     // Initialize utilities
     this.logger = new Logger(this.elements.logPanel)
     // Create AudioRecorder
@@ -342,9 +345,24 @@ export class App {
         // External data mode: load data from files and play
         updateStatus(this.elements.status, 'Loading and playing external data...', 'info')
         await this.handleExternalDataMode()
-        updateStatus(this.elements.status, 'External data playback started', 'success')
-        this.elements.btnStopRecord.disabled = true
-        this.elements.btnInterrupt.disabled = false // Allow interrupt in external data mode as well
+        // Only update button states if not interrupted
+        // Note: If interrupted, handleInterrupt() already updated button states
+        if (this.shouldContinueSendingData) {
+          updateStatus(this.elements.status, 'External data playback started', 'success')
+          this.elements.btnStopRecord.disabled = true
+          this.elements.btnInterrupt.disabled = false // Allow interrupt in external data mode as well
+        } else {
+          // Was interrupted, button states already updated in handleInterrupt
+          // Ensure button states are correct (handleInterrupt should have set btnStopRecord.disabled = false)
+          // But in case it didn't, we ensure it here
+          if (this.elements.btnStopRecord.disabled) {
+            this.elements.btnStopRecord.disabled = false
+          }
+          if (!this.elements.btnInterrupt.disabled) {
+            this.elements.btnInterrupt.disabled = true
+          }
+          updateStatus(this.elements.status, 'Playback interrupted', 'info')
+        }
       }
     } catch (error) {
       this.logger.error('Operation failed', error)
@@ -374,6 +392,9 @@ export class App {
         // Ignore errors if interrupt fails (may already be stopped)
       }
     }
+    
+    // Reset flag to allow data sending
+    this.shouldContinueSendingData = true
     
     try {
       
@@ -500,10 +521,15 @@ export class App {
       await this.sdkManager.play(initialAudioChunks, initialKeyframes)
       
       // Continue sending remaining audio data (at 2x speed)
-      while (audioOffset < audioData.length) {
+      while (audioOffset < audioData.length && this.shouldContinueSendingData) {
         const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
         const chunk = audioData.slice(audioOffset, chunkEnd)
         const isLast = chunkEnd >= audioData.length
+        
+        // Check flag before sending
+        if (!this.shouldContinueSendingData) {
+          break
+        }
         
         this.sdkManager.sendAudioChunk(chunk, isLast)
         audioOffset = chunkEnd
@@ -511,13 +537,17 @@ export class App {
         await new Promise(resolve => setTimeout(resolve, sendInterval))
       }
       
-      // Send remaining keyframes
-      if (keyframes.length > initialKeyframes.length) {
+      // Send remaining keyframes only if not interrupted
+      if (this.shouldContinueSendingData && keyframes.length > initialKeyframes.length) {
         const remainingKeyframes = keyframes.slice(initialKeyframes.length)
         this.sdkManager.sendKeyframes(remainingKeyframes)
       }
       
-      this.logger.success(`External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+      if (this.shouldContinueSendingData) {
+        this.logger.success(`External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+      } else {
+        this.logger.info('External data mode: data sending interrupted')
+      }
     } catch (error) {
       this.logger.error('External data mode failed', error)
       throw error
@@ -541,6 +571,12 @@ export class App {
     try {
       this.isProcessing.interrupt = true
       this.elements.btnInterrupt.disabled = true
+      
+      // Stop data sending in external data mode
+      if (this.currentPlaybackMode === 'external') {
+        this.shouldContinueSendingData = false
+      }
+      
       this.sdkManager.interrupt()
       updateStatus(this.elements.status, 'Current conversation interrupted', 'info')
       

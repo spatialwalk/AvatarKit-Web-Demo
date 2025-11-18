@@ -89,6 +89,7 @@ const sdk = useAvatarSDK()
 
 // Refs
 const avatarCanvasRef = ref<InstanceType<typeof AvatarCanvas> | null>(null)
+const shouldContinueSendingData = ref(false)
 
 // Initialize SDK
 const handleInit = async () => {
@@ -330,6 +331,9 @@ const handleExternalDataMode = async () => {
     }
   }
 
+  // Reset flag to allow data sending
+  shouldContinueSendingData.value = true
+
   try {
     // Only set isLoading while loading files
     isLoading.value = true
@@ -418,10 +422,15 @@ const handleExternalDataMode = async () => {
     // Continue sending remaining audio data (at 2x speed) asynchronously
     // Use Promise without awaiting so buttons remain responsive
     Promise.resolve().then(async () => {
-      while (audioOffset < audioData.length) {
+      while (audioOffset < audioData.length && shouldContinueSendingData.value) {
         const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
         const chunk = audioData.slice(audioOffset, chunkEnd)
         const isLast = chunkEnd >= audioData.length
+        
+        // Check flag before sending
+        if (!shouldContinueSendingData.value) {
+          break
+        }
         
         sdk.sendAudioChunk(chunk, isLast)
         audioOffset = chunkEnd
@@ -429,13 +438,15 @@ const handleExternalDataMode = async () => {
         await new Promise(resolve => setTimeout(resolve, sendInterval))
       }
       
-      // Send remaining keyframes
-      if (keyframes.length > initialKeyframes.length) {
+      // Send remaining keyframes only if not interrupted
+      if (shouldContinueSendingData.value && keyframes.length > initialKeyframes.length) {
         const remainingKeyframes = keyframes.slice(initialKeyframes.length)
         sdk.sendKeyframes(remainingKeyframes)
       }
       
-      logger.log('success', `External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+      if (shouldContinueSendingData.value) {
+        logger.log('success', `External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+      }
     })
     
     logger.updateStatus('External data playback started', 'success')
@@ -458,6 +469,12 @@ const handleInterrupt = () => {
 
   try {
     isProcessing.value.interrupt = true
+    
+    // Stop data sending in external data mode
+    if (currentPlaybackMode.value === AvatarPlaybackMode.external) {
+      shouldContinueSendingData.value = false
+    }
+    
     sdk.interrupt()
     logger.updateStatus('Current conversation interrupted', 'info')
     logger.log('info', 'Current conversation interrupted')

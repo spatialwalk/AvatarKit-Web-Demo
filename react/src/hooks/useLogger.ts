@@ -35,6 +35,7 @@ export function useLogger() {
     statusClass,
     log,
     updateStatus,
+    clear: clearLogs,
     clearLogs,
   }
 }

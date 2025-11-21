@@ -1,0 +1,123 @@
+.avatar-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+  max-height: 600px;
+}
+
+.avatar-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.avatar-panel-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.btn-remove {
+  width: auto;
+  padding: 4px 12px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  margin: 0;
+  transition: background 0.2s;
+}
+
+.btn-remove:hover {
+  background: #dc2626;
+}
+
+.avatar-panel-content {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.avatar-panel-controls {
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.avatar-panel-canvas {
+  flex: 1;
+  min-width: 0;
+  min-height: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.canvas-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.performance-display {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1000;
+  pointer-events: none;
+  user-select: none;
+}
+
+.fps-display {
+  background: rgba(0, 0, 0, 0.7);
+  color: #00ff00;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: right;
+  min-width: 80px;
+}
+
+@media (max-width: 1024px) {
+  .avatar-panel-content {
+    flex-direction: column;
+  }
+  
+  .avatar-panel-controls {
+    width: 100%;
+    min-width: auto;
+    max-height: 400px;
+  }
+  
+  .avatar-panel-canvas {
+    min-height: 400px;
+  }
+}
+

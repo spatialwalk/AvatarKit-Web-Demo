@@ -40,12 +40,17 @@ export class Logger {
    * @param {*} data - Optional data
    */
   log(level, message, data = null) {
-    createLogEntry(this.logPanel, level, message, data)
+    if (this.logPanel) {
+      createLogEntry(this.logPanel, level, message, data)
+    }
     
-    // Only output errors to console (for debugging)
-    // Info and success messages are shown in UI panel only
+    // Always output to console for debugging
     if (level === 'error') {
       console.error(`[ERROR]`, message, data || '')
+    } else if (level === 'warning') {
+      console.warn(`[WARNING]`, message, data || '')
+    } else {
+      console.log(`[${level.toUpperCase()}]`, message, data || '')
     }
   }
 
@@ -74,7 +79,9 @@ export class Logger {
    * Clear logs
    */
   clear() {
-    this.logPanel.innerHTML = ''
+    if (this.logPanel) {
+      this.logPanel.innerHTML = ''
+    }
   }
 }
 

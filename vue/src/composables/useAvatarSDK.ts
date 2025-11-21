@@ -3,17 +3,24 @@
  * Encapsulates SDK initialization and usage logic
  */
 
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, watch } from 'vue'
 import { AvatarKit, AvatarManager, AvatarView, Environment, AvatarPlaybackMode, type AvatarController, type ConnectionState, type AvatarState } from '@spatialwalk/avatarkit'
 
 export function useAvatarSDK() {
-  const isInitialized = ref(false)
   const isConnected = ref(false)
   const avatarManagerRef = ref<AvatarManager | null>(null)
   const avatarViewRef = ref<AvatarView | null>(null)
   const avatarController = ref<AvatarController | null>(null)
 
-  // Initialize SDK
+  // 获取 AvatarManager（延迟初始化）
+  const getAvatarManager = () => {
+    if (!avatarManagerRef.value && AvatarKit.isInitialized) {
+      avatarManagerRef.value = AvatarManager.shared
+    }
+    return avatarManagerRef.value
+  }
+
+  // Initialize SDK (保留用于向后兼容，但建议使用全局初始化)
   const initialize = async (environment: Environment, sessionToken?: string) => {
     try {
       await AvatarKit.initialize('demo', { environment })
@@ -22,9 +29,7 @@ export function useAvatarSDK() {
         AvatarKit.setSessionToken(sessionToken)
       }
 
-      const avatarManager = new AvatarManager()
-      avatarManagerRef.value = avatarManager
-      isInitialized.value = true
+      avatarManagerRef.value = AvatarManager.shared
     } catch (error) {
       throw new Error(`SDK initialization failed: ${error instanceof Error ? error.message : String(error)}`)
     }
@@ -41,13 +46,14 @@ export function useAvatarSDK() {
       onError?: (error: Error) => void
     },
   ) => {
-    if (!avatarManagerRef.value) {
+    const avatarManager = getAvatarManager()
+    if (!avatarManager) {
       throw new Error('SDK not initialized')
     }
 
     try {
       // 1. Load Avatar
-      const avatar = await avatarManagerRef.value.load(characterId)
+      const avatar = await avatarManager.load(characterId)
       
       // 2. Create AvatarView with new API
       const avatarView = new AvatarView(avatar, {
@@ -141,6 +147,22 @@ export function useAvatarSDK() {
     avatarController.value.interrupt()
   }
 
+  // Pause playback
+  const pause = () => {
+    if (!avatarController.value) {
+      throw new Error('Character not loaded')
+    }
+    avatarController.value.pause()
+  }
+
+  // Resume playback
+  const resume = async () => {
+    if (!avatarController.value) {
+      throw new Error('Character not loaded')
+    }
+    await avatarController.value.resume()
+  }
+
   // Disconnect (network mode only)
   const disconnect = async () => {
     if (avatarViewRef.value?.controller) {
@@ -174,7 +196,6 @@ export function useAvatarSDK() {
   })
 
   return {
-    isInitialized,
     isConnected,
     avatarView: avatarViewRef,
     avatarController,
@@ -186,6 +207,8 @@ export function useAvatarSDK() {
     sendAudioChunk,
     sendKeyframes,
     interrupt,
+    pause,
+    resume,
     disconnect,
     unloadCharacter,
   }

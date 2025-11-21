@@ -176,6 +176,28 @@ export class AvatarSDKManager {
   }
 
   /**
+   * Pause playback
+   */
+  pause() {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    this.avatarView.controller.pause()
+    this.logger.info('Playback paused')
+  }
+
+  /**
+   * Resume playback
+   */
+  async resume() {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    await this.avatarView.controller.resume()
+    this.logger.info('Playback resumed')
+  }
+
+  /**
    * Interrupt conversation
    */
   interrupt() {

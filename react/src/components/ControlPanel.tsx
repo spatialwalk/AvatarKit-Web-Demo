@@ -3,13 +3,12 @@
  */
 
 import { Environment } from '../types'
-import { AvatarPlaybackMode } from '@spatialwalk/avatarkit'
+import { AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
 
 interface ControlPanelProps {
   environment: Environment
   characterId: string
   sessionToken: string
-  playbackMode: AvatarPlaybackMode
   isInitialized: boolean
   avatarView: any
   avatarController: any
@@ -20,22 +19,23 @@ interface ControlPanelProps {
   onEnvironmentChange: (env: Environment) => void
   onCharacterIdChange: (id: string) => void
   onSessionTokenChange: (token: string) => void
-  onPlaybackModeChange: (mode: AvatarPlaybackMode) => void
-  onInit: () => void
+  onInit?: () => void
   onLoadCharacter: (mode: AvatarPlaybackMode) => void
   onConnect: () => void
   onStartRecord: () => void
   onStopRecord: () => void
+  onPause: () => void
+  onResume: () => void
   onInterrupt: () => void
   onDisconnect: () => void
   onUnloadCharacter: () => void
+  avatarState: any
 }
 
 export function ControlPanel({
   environment,
   characterId,
   sessionToken,
-  playbackMode,
   isInitialized,
   avatarView,
   avatarController,
@@ -46,15 +46,17 @@ export function ControlPanel({
   onEnvironmentChange,
   onCharacterIdChange,
   onSessionTokenChange,
-  onPlaybackModeChange,
   onInit,
   onLoadCharacter,
   onConnect,
   onStartRecord,
   onStopRecord,
+  onPause,
+  onResume,
   onInterrupt,
   onDisconnect,
   onUnloadCharacter,
+  avatarState,
 }: ControlPanelProps) {
   return (
     <div className="control-panel">
@@ -94,35 +96,32 @@ export function ControlPanel({
         </select>
       </div>
 
-      <div className="form-group">
-        <label>Playback Mode</label>
-        <select
-          value={playbackMode}
-          onChange={(e) => onPlaybackModeChange(e.target.value as AvatarPlaybackMode)}
-        >
-          <option value={AvatarPlaybackMode.network}>Network Mode</option>
-          <option value={AvatarPlaybackMode.external}>External Data Mode</option>
-        </select>
-      </div>
-
       <div className="button-group">
-        <button disabled={isInitialized || isLoading} onClick={onInit}>
-          1. Initialize SDK
-        </button>
+        {onInit && (
+          <button disabled={isInitialized || isLoading} onClick={onInit}>
+            1. Initialize SDK
+          </button>
+        )}
         <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={() => onLoadCharacter(AvatarPlaybackMode.network)}>
-          2. Load Character (Network)
+          {onInit ? '2. Load Character (Network)' : '1. Load Character (Network)'}
         </button>
         <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={() => onLoadCharacter(AvatarPlaybackMode.external)}>
-          2. Load Character (External)
+          {onInit ? '2. Load Character (External)' : '1. Load Character (External)'}
         </button>
         <button disabled={!avatarView || currentPlaybackMode !== AvatarPlaybackMode.network || isConnected || isLoading} onClick={onConnect}>
-          3. Connect Service
+          {onInit ? '3. Connect Service' : '2. Connect Service'}
         </button>
         <button disabled={!avatarController || currentPlaybackMode !== AvatarPlaybackMode.network || !isConnected || isRecording || isLoading} onClick={onStartRecord}>
-          4. Start Recording
+          {onInit ? '4. Start Recording' : '3. Start Recording'}
         </button>
         <button disabled={!avatarController || (currentPlaybackMode === AvatarPlaybackMode.network && !isRecording) || (currentPlaybackMode === AvatarPlaybackMode.external && isLoading)} onClick={onStopRecord}>
           {currentPlaybackMode === AvatarPlaybackMode.network ? 'Stop Recording' : 'Play Data'}
+        </button>
+        <button disabled={!avatarController || avatarState === AvatarState.paused || isLoading || !avatarView} onClick={onPause}>
+          ⏸️ Pause
+        </button>
+        <button disabled={!avatarController || avatarState !== AvatarState.paused || isLoading || !avatarView} onClick={onResume}>
+          ▶️ Resume
         </button>
         <button disabled={!avatarController || (currentPlaybackMode === AvatarPlaybackMode.network && !isConnected)} onClick={onInterrupt}>
           Interrupt

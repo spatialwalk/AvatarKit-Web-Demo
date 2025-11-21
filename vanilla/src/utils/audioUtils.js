@@ -3,7 +3,8 @@
  */
 
 /**
- * Resample audio data
+ * Resample audio data using linear interpolation (fallback for simple cases)
+ * For high-quality resampling, use resampleAudioWithWebAudioAPI
  * @param {Float32Array} inputData - Input audio data
  * @param {number} fromSampleRate - Source sample rate
  * @param {number} toSampleRate - Target sample rate
@@ -29,6 +30,46 @@ export function resampleAudio(inputData, fromSampleRate, toSampleRate) {
   }
 
   return outputData
+}
+
+/**
+ * Resample audio data using Web Audio API's OfflineAudioContext (high-quality with anti-aliasing)
+ * This is the recommended method for quality-critical resampling (e.g., 24kHz to 16kHz)
+ * @param {Float32Array} inputData - Input audio data
+ * @param {number} fromSampleRate - Source sample rate
+ * @param {number} toSampleRate - Target sample rate
+ * @returns {Promise<Float32Array>} Resampled audio data
+ */
+export async function resampleAudioWithWebAudioAPI(inputData, fromSampleRate, toSampleRate) {
+  if (fromSampleRate === toSampleRate) {
+    return inputData
+  }
+
+  // Create an AudioContext and AudioBuffer at the source sample rate
+  const sourceContext = new AudioContext({ sampleRate: fromSampleRate })
+  const sourceBuffer = sourceContext.createBuffer(1, inputData.length, fromSampleRate)
+  sourceBuffer.getChannelData(0).set(inputData)
+
+  // Create an OfflineAudioContext at the target sample rate
+  const duration = inputData.length / fromSampleRate
+  const targetLength = Math.round(duration * toSampleRate)
+  const offlineContext = new OfflineAudioContext(1, targetLength, toSampleRate)
+
+  // Create a source node and connect it to the offline context
+  // The browser will resample to the target sample rate with built-in anti-aliasing
+  const sourceNode = offlineContext.createBufferSource()
+  sourceNode.buffer = sourceBuffer
+  sourceNode.connect(offlineContext.destination)
+  sourceNode.start(0)
+
+  // Render to get the resampled buffer
+  const resampledBuffer = await offlineContext.startRendering()
+  const resampledFloat32 = resampledBuffer.getChannelData(0)
+
+  // Close the temporary AudioContext
+  await sourceContext.close()
+
+  return resampledFloat32
 }
 
 /**

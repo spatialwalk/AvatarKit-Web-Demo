@@ -29,32 +29,30 @@
       </select>
     </div>
 
-    <div class="form-group">
-      <label>Playback Mode</label>
-      <select :value="playbackMode" @change="handlePlaybackModeChange">
-        <option :value="AvatarPlaybackMode.network">Network Mode</option>
-        <option :value="AvatarPlaybackMode.external">External Data Mode</option>
-      </select>
-    </div>
-
     <div class="button-group">
-      <button :disabled="isInitialized || isLoading" @click="onInit">
+      <button v-if="onInit" :disabled="isInitialized || isLoading" @click="onInit">
         1. Initialize SDK
       </button>
       <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="() => onLoadCharacter(AvatarPlaybackMode.network)">
-        2. Load Character (Network)
+        {{ onInit ? '2. Load Character (Network)' : '1. Load Character (Network)' }}
       </button>
       <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="() => onLoadCharacter(AvatarPlaybackMode.external)">
-        2. Load Character (External)
+        {{ onInit ? '2. Load Character (External)' : '1. Load Character (External)' }}
       </button>
       <button :disabled="!avatarView || currentPlaybackMode !== AvatarPlaybackMode.network || isConnected || isLoading" @click="onConnect">
-        3. Connect Service
+        {{ onInit ? '3. Connect Service' : '2. Connect Service' }}
       </button>
       <button :disabled="!avatarController || currentPlaybackMode !== AvatarPlaybackMode.network || !isConnected || isLoading || isRecording" @click="onStartRecord">
-        4. Start Recording
+        {{ onInit ? '4. Start Recording' : '3. Start Recording' }}
       </button>
       <button :disabled="!avatarController || (currentPlaybackMode === AvatarPlaybackMode.network && !isRecording) || (currentPlaybackMode === AvatarPlaybackMode.external && isLoading)" @click="onStopRecord">
         {{ currentPlaybackMode === AvatarPlaybackMode.network ? 'Stop Recording' : 'Play Data' }}
+      </button>
+      <button :disabled="!avatarController || avatarState === AvatarState.paused || isLoading || !avatarView" @click="onPause">
+        ⏸️ Pause
+      </button>
+      <button :disabled="!avatarController || avatarState !== AvatarState.paused || isLoading || !avatarView" @click="onResume">
+        ▶️ Resume
       </button>
       <button :disabled="!avatarController || (currentPlaybackMode === AvatarPlaybackMode.network && !isConnected)" @click="onInterrupt">
         Interrupt
@@ -71,13 +69,12 @@
 
 <script setup lang="ts">
 import { Environment } from '../types'
-import { AvatarPlaybackMode } from '@spatialwalk/avatarkit'
+import { AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
 
-defineProps<{
+const props = defineProps<{
   environment: Environment
   characterId: string
   sessionToken: string
-  playbackMode: AvatarPlaybackMode
   isInitialized: boolean
   avatarView: any
   avatarController: any
@@ -85,18 +82,21 @@ defineProps<{
   isLoading: boolean
   isConnected: boolean
   currentPlaybackMode: AvatarPlaybackMode
+  avatarState: any
+  init?: () => void
 }>()
 
 const emit = defineEmits<{
   environmentChange: [env: Environment]
   characterIdChange: [id: string]
   sessionTokenChange: [token: string]
-  playbackModeChange: [mode: AvatarPlaybackMode]
-  init: []
+  init?: []
   loadCharacter: [mode: AvatarPlaybackMode]
   connect: []
   startRecord: []
   stopRecord: []
+  pause: []
+  resume: []
   interrupt: []
   disconnect: []
   unloadCharacter: []
@@ -114,15 +114,13 @@ const handleSessionTokenChange = (e: Event) => {
   emit('sessionTokenChange', (e.target as HTMLInputElement).value)
 }
 
-const handlePlaybackModeChange = (e: Event) => {
-  emit('playbackModeChange', (e.target as HTMLSelectElement).value as AvatarPlaybackMode)
-}
-
-const onInit = () => emit('init')
+const onInit = props.init ? () => emit('init') : undefined
 const onLoadCharacter = (mode: AvatarPlaybackMode) => emit('loadCharacter', mode)
 const onConnect = () => emit('connect')
 const onStartRecord = () => emit('startRecord')
 const onStopRecord = () => emit('stopRecord')
+const onPause = () => emit('pause')
+const onResume = () => emit('resume')
 const onInterrupt = () => emit('interrupt')
 const onDisconnect = () => emit('disconnect')
 const onUnloadCharacter = () => emit('unloadCharacter')

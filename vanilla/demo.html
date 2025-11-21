@@ -3,65 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SPAvatar SDK - Demo</title>
+  <title>SPAvatar SDK - Demo (Multi-Character)</title>
   <link rel="stylesheet" href="./src/styles/main.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>🚀 SPAvatar SDK - Demo</h1>
-      <p>Demo Application</p>
+      <h1>🚀 SPAvatar SDK - Demo (Multi-Character)</h1>
+      <p>支持同时显示多个角色视图</p>
     </div>
     <div class="content">
-      <div class="left-panel">
-        <div class="canvas-container" id="canvasContainer"></div>
-      </div>
-      <div class="right-panel">
-        <div class="control-panel">
-          <h2>🎮 Control Panel</h2>
-          <div class="form-group">
-            <label>Environment</label>
-            <select id="environment">
-              <option value="us">US</option>
-              <option value="cn">CN</option>
-              <option value="test" selected>Test</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Character ID</label>
-            <select id="characterId">
-              <option value="b7ba14f6-f9aa-4f89-9934-3753d75aee39">b7ba14f6-f9aa-4f89-9934-3753d75aee39</option>
-              <option value="35692117-ece1-4f77-b014-02cfa22bfb7b">35692117-ece1-4f77-b014-02cfa22bfb7b</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Session Token</label>
-            <input type="text" id="sessionToken" placeholder="Enter Session Token (optional)">
-          </div>
-          <div class="form-group">
-            <label>Playback Mode</label>
-            <select id="playbackMode">
-              <option value="network" selected>Network Mode</option>
-              <option value="external">External Data Mode</option>
-            </select>
-          </div>
-          <div id="status" class="status info">Ready</div>
-          <button id="btnInit" class="btn btn-primary">1. Initialize SDK</button>
-          <button id="btnLoadNetwork" class="btn btn-primary" disabled>2. Load Character (Network)</button>
-          <button id="btnLoadExternal" class="btn btn-primary" disabled>2. Load Character (External)</button>
-          <button id="btnConnect" class="btn btn-primary" disabled>3. Connect Service</button>
-          <button id="btnStartRecord" class="btn btn-primary" disabled>4. Start Recording</button>
-          <button id="btnStopRecord" class="btn btn-danger" disabled>Stop Recording / Play Data</button>
-          <button id="btnInterrupt" class="btn btn-warning" disabled>Interrupt</button>
-          <button id="btnDisconnect" class="btn btn-danger" disabled>Disconnect</button>
-          <button id="btnUnload" class="btn btn-danger" disabled>Unload Character</button>
-        </div>
-        <div class="control-panel log-panel-container">
-          <h2>📋 Logs</h2>
-          <div class="log-panel" id="logPanel"></div>
-          <button id="btnClearLog" class="btn btn-primary">Clear Logs</button>
-        </div>
-      </div>
+      <div class="panels-container" id="panelsContainer"></div>
     </div>
   </div>
 

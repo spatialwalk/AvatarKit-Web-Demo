@@ -1,6 +1,6 @@
 # SPAvatarKit SDK Examples
 
-SPAvatarKit practice demos in vanilla, Vue, and React
+SPAvatarKit practice demos in vanilla, Vue, React, and Next.js
 
 This is a complete SDK usage example collection demonstrating how to integrate and use the SPAvatarKit SDK in different frameworks.
 
@@ -28,7 +28,7 @@ cd AvatarKit-Web-Demo
 ### 2. Choose an Example and Install Dependencies
 
 ```bash
-cd vanilla  # or react, vue
+cd vanilla  # or react, vue, nextjs
 npm install
 ```
 
@@ -51,6 +51,7 @@ npm run dev
 - **Vanilla JS**: http://localhost:5174/demo.html
 - **Vue 3**: http://localhost:5175
 - **React**: http://localhost:5176
+- **Next.js**: http://localhost:5177
 
 ### 6. Start Using
 
@@ -100,12 +101,13 @@ npm run dev
 
 ### 2. Vue 3 Example (`vue/`)
 
-Complete example using Vue 3 Composition API.
+Complete example using Vue 3 Composition API with multi-character panel support.
 
 **Use Cases:**
 - Vue 3 project integration
 - Reactive state management needed
 - Component-based development
+- Multiple character instances display
 
 **Run:**
 ```bash
@@ -120,15 +122,19 @@ npm run dev
 - Vue 3 Composition API
 - TypeScript support
 - Reactive data binding
+- Multi-character panel support (up to 4 simultaneous instances)
+- Global SDK initialization pattern
+- Independent panel state management
 
 ### 3. React Example (`react/`)
 
-Complete example using React Hooks.
+Complete example using React Hooks with multi-character panel support.
 
 **Use Cases:**
 - React project integration
 - Functional programming style needed
 - Modern React development
+- Multiple character instances display
 
 **Run:**
 ```bash
@@ -140,9 +146,48 @@ npm run dev
 **Access:** `http://localhost:5176`
 
 **Features:**
-- React Hooks
+- React Hooks with `useCallback` optimization
 - TypeScript support
 - Functional components
+- Multi-character panel support (up to 4 simultaneous instances)
+- Global SDK initialization pattern
+- Independent panel state management
+
+### 4. Next.js Example (`nextjs/`)
+
+Complete example using Next.js 14+ with App Router.
+
+**Use Cases:**
+- Next.js project integration
+- Server-side rendering (SSR) considerations
+- WASM in Next.js environment
+- Production deployment with Vercel
+
+**Run:**
+```bash
+cd nextjs
+npm install
+npm run dev
+```
+
+**Access:** `http://localhost:5177`
+
+**Features:**
+- Next.js 14+ App Router
+- Complete WASM configuration for Next.js
+- Client-side rendering optimization
+- Dynamic SDK imports
+- TypeScript support
+- Production-ready configuration
+
+**Key Considerations:**
+- ✅ Properly configured WASM support in `next.config.js`
+- ✅ All browser API components use `'use client'` directive
+- ✅ Dynamic imports for SDK to avoid SSR issues
+- ✅ SSR disabled for components requiring browser APIs
+- ✅ Detailed documentation for common Next.js + WASM issues
+
+**See:** `nextjs/README.md` for detailed Next.js-specific documentation
 
 ## ⚙️ Prerequisites
 
@@ -156,7 +201,7 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** installed (run `npm install @spatialwalk/avatarkit` in the example directory)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.16` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
@@ -281,10 +326,12 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm:
+A: Install via npm (SDK version 1.0.0-beta.16 or later):
 ```bash
-npm install @spatialwalk/avatarkit
+npm install @spatialwalk/avatarkit@^1.0.0-beta.16
 ```
+
+The examples automatically install the correct version when you run `npm install`.
 
 ### Q: Which browsers are supported?
 

@@ -21,9 +21,11 @@ export function LogPanel({ logs, onClear }: LogPanelProps) {
           </div>
         ))}
       </div>
-      <button className="btn btn-primary" onClick={onClear}>
-        Clear Logs
-      </button>
+      <div className="log-drawer-footer">
+        <button className="btn btn-primary" onClick={onClear}>
+          Clear Logs
+        </button>
+      </div>
     </>
   )
 }

@@ -1,6 +1,6 @@
 # React Example
 
-This is a SPAvatarKit SDK example using React Hooks, demonstrating how to integrate the SDK in a React application.
+This is a SPAvatarKit SDK example using React Hooks with multi-character panel support, demonstrating how to integrate the SDK in a React application.
 
 ## 🚀 Quick Start
 
@@ -26,13 +26,16 @@ Open browser and visit: `http://localhost:5176`
 
 ## 📋 Features
 
-- ✅ SDK state management using React Hooks
+- ✅ SDK state management using React Hooks with `useCallback` optimization
 - ✅ Functional components
 - ✅ Lifecycle management (useEffect)
 - ✅ TypeScript support
 - ✅ Reactive state updates
 - ✅ Complete error handling
 - ✅ Resource cleanup (on component unmount)
+- ✅ Multi-character panel support (up to 4 simultaneous instances)
+- ✅ Global SDK initialization with lazy loading
+- ✅ Independent panel state management
 - ✅ Network Mode: Real-time audio streaming via WebSocket
 - ✅ External Data Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
 

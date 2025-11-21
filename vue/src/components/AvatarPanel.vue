@@ -1,0 +1,826 @@
+<template>
+  <div class="avatar-panel">
+    <div class="avatar-panel-header">
+      <h3>角色面板 {{ panelId }}</h3>
+      <button v-if="onRemove" class="btn-remove" @click="onRemove" title="移除面板">
+        ×
+      </button>
+    </div>
+    
+    <div class="avatar-panel-content">
+      <div class="avatar-panel-controls">
+        <StatusBar :message="logger.statusMessage.value" :type="logger.statusClass.value" />
+        <ControlPanel
+          :environment="environment"
+          :character-id="characterId"
+          :session-token="sessionToken"
+          :is-initialized="globalSDKInitialized"
+          :avatar-view="sdk.avatarView.value"
+          :avatar-controller="sdk.avatarController.value"
+          :is-recording="audioRecorder.isRecording.value"
+          :is-loading="isLoading"
+          :is-connected="sdk.isConnected.value"
+          :current-playback-mode="currentPlaybackMode"
+          @environment-change="handleEnvironmentChange"
+          @character-id-change="handleCharacterIdChange"
+          @session-token-change="handleSessionTokenChange"
+          @load-character="handleLoadCharacter"
+          @connect="handleConnect"
+          @start-record="handleStartRecord"
+          @stop-record="handleStopRecord"
+          @pause="handlePause"
+          @resume="handleResume"
+          @interrupt="handleInterrupt"
+          @disconnect="handleDisconnect"
+          @unload-character="handleUnloadCharacter"
+          :avatar-state="avatarState"
+        />
+        <button 
+          class="btn btn-primary" 
+          @click="toggleLogDrawer"
+          style="margin-top: 12px"
+        >
+          {{ isLogDrawerOpen ? '📋 隐藏日志' : '📋 显示日志' }}
+        </button>
+      </div>
+      <div class="avatar-panel-canvas">
+        <AvatarCanvas ref="avatarCanvasRef" :avatar-view="sdk.avatarView.value" />
+      </div>
+    </div>
+    
+    <!-- Log Drawer -->
+    <div class="log-drawer" :class="{ open: isLogDrawerOpen }">
+      <div class="log-drawer-header">
+        <h2>📋 Logs</h2>
+        <button class="btn-close-drawer" @click="closeLogDrawer" title="关闭日志面板">
+          ×
+        </button>
+      </div>
+      <LogPanel :logs="logger.logs.value" @clear="logger.clear" />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onUnmounted, nextTick, watch } from 'vue'
+import { useAvatarSDK } from '../composables/useAvatarSDK'
+import { Environment } from '../types'
+import { AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
+import { useLogger } from '../composables/useLogger'
+import { useAudioRecorder } from '../composables/useAudioRecorder'
+import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
+import StatusBar from './StatusBar.vue'
+import ControlPanel from './ControlPanel.vue'
+import AvatarCanvas from './AvatarCanvas.vue'
+import LogPanel from './LogPanel.vue'
+
+const AUDIO_SAMPLE_RATE = 16000
+
+interface Props {
+  panelId: string
+  globalSDKInitialized: boolean
+  onRemove?: () => void
+}
+
+const props = defineProps<Props>()
+
+// Configuration state
+const environment = ref<Environment>(Environment.test)
+const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
+const sessionToken = ref('')
+const isLoading = ref(false)
+const currentPlaybackMode = ref<AvatarPlaybackMode>(AvatarPlaybackMode.network)
+const avatarState = ref<AvatarState | null>(null)
+
+// Operation state flags
+const isProcessing = ref({
+  loadCharacter: false,
+  connect: false,
+  startRecord: false,
+  stopRecord: false,
+  interrupt: false,
+  pause: false,
+  resume: false,
+  disconnect: false,
+  unload: false,
+})
+
+// Composables
+const logger = useLogger()
+const audioRecorder = useAudioRecorder()
+const sdk = useAvatarSDK()
+
+// Refs
+const avatarCanvasRef = ref<InstanceType<typeof AvatarCanvas> | null>(null)
+const shouldContinueSendingData = ref(false)
+
+// Log drawer state
+const isLogDrawerOpen = ref(false)
+
+const toggleLogDrawer = () => {
+  isLogDrawerOpen.value = !isLogDrawerOpen.value
+}
+
+const closeLogDrawer = () => {
+  isLogDrawerOpen.value = false
+}
+
+// Load character
+const handleLoadCharacter = async (mode: AvatarPlaybackMode) => {
+  if (isProcessing.value.loadCharacter || sdk.avatarView.value) {
+    return
+  }
+
+  if (!props.globalSDKInitialized || !characterId.value.trim()) {
+    logger.updateStatus('Please wait for SDK initialization and enter character ID', 'warning')
+    return
+  }
+
+  const canvasContainer = avatarCanvasRef.value?.canvasContainerRef
+  if (!canvasContainer) {
+    logger.updateStatus('Canvas container not found', 'error')
+    return
+  }
+
+  try {
+    isProcessing.value.loadCharacter = true
+    isLoading.value = true
+    currentPlaybackMode.value = mode
+    logger.updateStatus(`Loading character (${mode === AvatarPlaybackMode.network ? 'network' : 'external'} mode)...`, 'info')
+    logger.log('info', `Starting to load character: ${characterId.value} (mode: ${mode === AvatarPlaybackMode.network ? 'network' : 'external'})`)
+
+    await sdk.loadCharacter(
+      characterId.value,
+      canvasContainer,
+      mode,
+      {
+        onConnectionState: (state) => {
+          logger.log('info', `Connection state: ${state}`)
+          if (state === 'connected') {
+            logger.updateStatus('Connected', 'success')
+          } else if (state === 'disconnected') {
+            logger.updateStatus('Disconnected', 'info')
+          }
+        },
+        onAvatarState: (state: AvatarState) => {
+          avatarState.value = state
+          logger.log('info', `Avatar state: ${state}`)
+        },
+        onError: (error: Error) => {
+          logger.log('error', `Error: ${error.message}`)
+          logger.updateStatus(`Error: ${error.message}`, 'error')
+        },
+      },
+    )
+
+    logger.updateStatus('Character loaded successfully', 'success')
+    logger.log('success', 'Character loaded successfully')
+    
+    await nextTick()
+    isLoading.value = false
+  } catch (error) {
+    logger.updateStatus(
+      `Load failed: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    )
+    logger.log('error', `Load failed: ${error instanceof Error ? error.message : String(error)}`)
+    isLoading.value = false
+  } finally {
+    isProcessing.value.loadCharacter = false
+  }
+}
+
+// Connect service (network mode only)
+const handleConnect = async () => {
+  if (isProcessing.value.connect) {
+    return
+  }
+
+  if (currentPlaybackMode.value !== AvatarPlaybackMode.network) {
+    logger.updateStatus('Connect is only available in network mode', 'warning')
+    return
+  }
+
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('Please load character first', 'warning')
+    return
+  }
+
+  if (sdk.isConnected.value) {
+    logger.updateStatus('Already connected', 'warning')
+    return
+  }
+  
+  try {
+    isProcessing.value.connect = true
+    isLoading.value = true
+    logger.updateStatus('Connecting to service...', 'info')
+    logger.log('info', 'Connecting to service...')
+
+    await sdk.connect()
+
+    logger.updateStatus('Connected successfully', 'success')
+    logger.log('success', 'Connected successfully')
+  } catch (error) {
+    logger.updateStatus(
+      `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    )
+    logger.log('error', `Connection failed: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isLoading.value = false
+    isProcessing.value.connect = false
+  }
+}
+
+// Start recording (network mode only)
+const handleStartRecord = async () => {
+  if (isProcessing.value.startRecord || audioRecorder.isRecording.value) {
+    return
+  }
+
+  if (currentPlaybackMode.value === AvatarPlaybackMode.network && !sdk.isConnected.value) {
+    logger.updateStatus('Please connect to service first', 'warning')
+    return
+  }
+
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('Please load character first', 'warning')
+    return
+  }
+
+  try {
+    isProcessing.value.startRecord = true
+    logger.log('info', 'Starting recording...')
+
+    await audioRecorder.start()
+
+    logger.updateStatus('Recording...', 'success')
+    logger.log('success', 'Recording started')
+  } catch (error) {
+    logger.updateStatus(
+      `Recording failed: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    )
+    logger.log('error', `Recording failed: ${error instanceof Error ? error.message : String(error)}`)
+    isProcessing.value.startRecord = false
+  } finally {
+    isProcessing.value.startRecord = false
+  }
+}
+
+// Stop recording / Play external data
+const handleStopRecord = async () => {
+  if (isProcessing.value.stopRecord) {
+    return
+  }
+
+  if (currentPlaybackMode.value === AvatarPlaybackMode.network) {
+    if (!audioRecorder.isRecording.value) {
+      logger.updateStatus('Not recording', 'warning')
+      return
+    }
+  } else {
+    if (!sdk.avatarView.value) {
+      logger.updateStatus('Please load character first', 'warning')
+      return
+    }
+  }
+
+  try {
+    isProcessing.value.stopRecord = true
+    
+    if (currentPlaybackMode.value === AvatarPlaybackMode.network) {
+      const audioBuffer = await audioRecorder.stop()
+
+      if (audioBuffer && sdk.avatarController.value) {
+        const duration = (audioBuffer.byteLength / 2 / AUDIO_SAMPLE_RATE).toFixed(2)
+        logger.log('info', `Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${AUDIO_SAMPLE_RATE / 1000}kHz PCM16)`)
+        sdk.sendAudio(audioBuffer, true)
+        logger.log('success', 'Complete audio data sent')
+      } else if (!audioBuffer) {
+        logger.log('warning', 'No audio data collected')
+      }
+
+      logger.updateStatus('Recording stopped', 'info')
+      logger.log('success', 'Recording stopped')
+    } else {
+      await handleExternalDataMode()
+    }
+  } catch (error) {
+    logger.log('error', `Operation failed: ${error instanceof Error ? error.message : String(error)}`)
+    logger.updateStatus(`Error: ${error instanceof Error ? error.message : String(error)}`, 'error')
+  } finally {
+    isProcessing.value.stopRecord = false
+  }
+}
+
+// Handle external data mode
+const handleExternalDataMode = async () => {
+  if (sdk.avatarView.value?.controller) {
+    try {
+      sdk.interrupt()
+      await new Promise(resolve => setTimeout(resolve, 100))
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+
+  shouldContinueSendingData.value = true
+
+  try {
+    isLoading.value = true
+    logger.updateStatus('Loading external data...', 'info')
+    
+    const dataDir = `/src/data/${characterId.value}`
+    
+    const fileMap: Record<string, { audio: string; flame: string }> = {
+      '35692117-ece1-4f77-b014-02cfa22bfb7b': {
+        audio: 'audio_20251114042834_pHhATY2emf0w_1763065720879.pcm',
+        flame: 'flame_20251114042841_veGlAmGfiEZ2_1763065740224.json',
+      },
+      'b7ba14f6-f9aa-4f89-9934-3753d75aee39': {
+        audio: 'audio_20251113162847_qyozNRfGKI5C_1763022543772.pcm',
+        flame: 'flame_20251113162847_qyozNRfGKI5C_1763022545208.json',
+      },
+    }
+    
+    const files = fileMap[characterId.value]
+    if (!files) {
+      throw new Error(`No data files configured for character ${characterId.value}`)
+    }
+    
+    // Load audio file
+    const audioFile = `${dataDir}/${files.audio}`
+    const audioResponse = await fetch(audioFile)
+    if (!audioResponse.ok) {
+      throw new Error(`Failed to load audio file: ${audioResponse.status}`)
+    }
+    const audioArrayBuffer = await audioResponse.arrayBuffer()
+    const rawAudioData = new Uint8Array(audioArrayBuffer)
+    
+    // Convert PCM16 (24kHz) to Float32Array
+    const int16Data = new Int16Array(rawAudioData.buffer, rawAudioData.byteOffset, rawAudioData.length / 2)
+    const float32Data = new Float32Array(int16Data.length)
+    for (let i = 0; i < int16Data.length; i++) {
+      float32Data[i] = int16Data[i] / 32768.0
+    }
+    
+    // Resample from 24kHz to 16kHz
+    const resampledFloat32 = await resampleAudioWithWebAudioAPI(float32Data, 24000, AUDIO_SAMPLE_RATE)
+    const resampledInt16 = convertToInt16PCM(resampledFloat32)
+    const audioData = convertToUint8Array(resampledInt16)
+    
+    // Load animation file
+    const flameFile = `${dataDir}/${files.flame}`
+    const flameResponse = await fetch(flameFile)
+    if (!flameResponse.ok) {
+      throw new Error(`Failed to load animation file: ${flameResponse.status}`)
+    }
+    const json = await flameResponse.json()
+    const keyframes = json.keyframes || []
+    
+    if (!keyframes || keyframes.length === 0) {
+      throw new Error(`No keyframes found in animation file for character ${characterId.value}`)
+    }
+    
+    isLoading.value = false
+    logger.updateStatus('Playing external data...', 'info')
+    
+    const playbackRateBytesPerSecond = AUDIO_SAMPLE_RATE * 2 * 2
+    const sendInterval = 50
+    const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
+    
+    const initialDataSize = playbackRateBytesPerSecond
+    const initialAudioChunks: Array<{ data: Uint8Array; isLast: boolean }> = []
+    let audioOffset = 0
+    
+    while (audioOffset < initialDataSize && audioOffset < audioData.length) {
+      const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length, initialDataSize)
+      const chunk = audioData.slice(audioOffset, chunkEnd)
+      const isLast = chunkEnd >= audioData.length && chunkEnd >= initialDataSize
+      initialAudioChunks.push({ data: chunk, isLast })
+      audioOffset = chunkEnd
+    }
+    
+    const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
+    
+    await sdk.play(initialAudioChunks, initialKeyframes)
+    
+    Promise.resolve().then(async () => {
+      while (audioOffset < audioData.length && shouldContinueSendingData.value) {
+        const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
+        const chunk = audioData.slice(audioOffset, chunkEnd)
+        const isLast = chunkEnd >= audioData.length
+        
+        if (!shouldContinueSendingData.value) {
+          break
+        }
+        
+        sdk.sendAudioChunk(chunk, isLast)
+        audioOffset = chunkEnd
+        
+        await new Promise(resolve => setTimeout(resolve, sendInterval))
+      }
+      
+      if (shouldContinueSendingData.value && keyframes.length > initialKeyframes.length) {
+        const remainingKeyframes = keyframes.slice(initialKeyframes.length)
+        sdk.sendKeyframes(remainingKeyframes)
+      }
+      
+      if (shouldContinueSendingData.value) {
+        logger.log('success', `External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+      }
+    })
+    
+    logger.updateStatus('External data playback started', 'success')
+  } catch (error) {
+    isLoading.value = false
+    throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+// Pause playback
+const handlePause = () => {
+  if (isProcessing.value.pause) {
+    return
+  }
+
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('No character loaded', 'warning')
+    return
+  }
+
+  // SDK内部会检查状态，这里不需要严格检查
+  if (avatarState.value === AvatarState.paused) {
+    logger.updateStatus('Already paused', 'warning')
+    return
+  }
+
+  try {
+    isProcessing.value.pause = true
+    sdk.pause()
+    logger.updateStatus('Playback paused', 'info')
+    logger.log('info', 'Playback paused')
+  } catch (error) {
+    logger.updateStatus(
+      `Pause failed: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    )
+    logger.log('error', `Pause failed: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isProcessing.value.pause = false
+  }
+}
+
+// Resume playback
+const handleResume = async () => {
+  if (isProcessing.value.resume) {
+    return
+  }
+
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('No character loaded', 'warning')
+    return
+  }
+
+  if (avatarState.value !== AvatarState.paused) {
+    logger.updateStatus('Not paused, cannot resume', 'warning')
+    return
+  }
+
+  try {
+    isProcessing.value.resume = true
+    isLoading.value = true
+    await sdk.resume()
+    logger.updateStatus('Playback resumed', 'success')
+    logger.log('success', 'Playback resumed')
+  } catch (error) {
+    logger.updateStatus(
+      `Resume failed: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    )
+    logger.log('error', `Resume failed: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isLoading.value = false
+    isProcessing.value.resume = false
+  }
+}
+
+// Interrupt conversation
+const handleInterrupt = () => {
+  if (isProcessing.value.interrupt) {
+    return
+  }
+
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('No character loaded', 'warning')
+    return
+  }
+
+  try {
+    isProcessing.value.interrupt = true
+    
+    if (currentPlaybackMode.value === AvatarPlaybackMode.external) {
+      shouldContinueSendingData.value = false
+    }
+    
+    sdk.interrupt()
+    logger.updateStatus('Current conversation interrupted', 'info')
+    logger.log('info', 'Current conversation interrupted')
+  } catch (error) {
+    logger.updateStatus(
+      `Interrupt failed: ${error instanceof Error ? error.message : String(error)}`,
+      'error',
+    )
+    logger.log('error', `Interrupt failed: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isProcessing.value.interrupt = false
+  }
+}
+
+// Disconnect
+const handleDisconnect = async () => {
+  if (isProcessing.value.disconnect) {
+    return
+  }
+
+  if (currentPlaybackMode.value !== AvatarPlaybackMode.network) {
+    logger.updateStatus('Disconnect is only available in network mode', 'warning')
+    return
+  }
+
+  if (!sdk.isConnected.value) {
+    logger.updateStatus('Not connected', 'warning')
+    return
+  }
+
+  try {
+    isProcessing.value.disconnect = true
+    isLoading.value = true
+
+    if (audioRecorder.isRecording.value) {
+      await handleStopRecord()
+    }
+  
+    await sdk.disconnect()
+    logger.updateStatus('Disconnected', 'info')
+    logger.log('info', 'Disconnected')
+  } catch (error) {
+    logger.log('error', `Disconnect failed: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isLoading.value = false
+    isProcessing.value.disconnect = false
+  }
+}
+
+// Unload character
+const handleUnloadCharacter = () => {
+  if (isProcessing.value.unload) {
+    return
+  }
+
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('No character loaded', 'warning')
+    return
+  }
+
+  try {
+    isProcessing.value.unload = true
+
+    // Stop external data playback if active
+    if (currentPlaybackMode.value === AvatarPlaybackMode.external) {
+      shouldContinueSendingData.value = false
+    }
+
+    if (audioRecorder.isRecording.value) {
+      audioRecorder.stop().catch(() => {
+        // Ignore errors
+      })
+    }
+
+    if (sdk.isConnected.value) {
+      sdk.disconnect().catch(() => {
+        // Ignore errors
+      })
+    }
+
+    sdk.unloadCharacter()
+    
+    // Reset state
+    isLoading.value = false
+    currentPlaybackMode.value = AvatarPlaybackMode.network
+    avatarState.value = null
+    shouldContinueSendingData.value = false
+    
+    logger.updateStatus('Character unloaded', 'info')
+    logger.log('info', 'Character unloaded, can reload new character')
+  } catch (error) {
+    logger.log('error', `Unload character failed: ${error instanceof Error ? error.message : String(error)}`)
+  } finally {
+    isProcessing.value.unload = false
+  }
+}
+
+// 监听全局 SDK 初始化状态
+watch(() => props.globalSDKInitialized, (initialized) => {
+  if (initialized) {
+    logger.updateStatus('SDK initialized, ready to load character', 'success')
+  } else {
+    logger.updateStatus('Waiting for initialization...', 'info')
+  }
+}, { immediate: true })
+
+// Event handlers
+const handleEnvironmentChange = (env: Environment) => {
+  environment.value = env
+}
+
+const handleCharacterIdChange = (id: string) => {
+  characterId.value = id
+}
+
+const handleSessionTokenChange = (token: string) => {
+  sessionToken.value = token
+}
+
+
+// Cleanup on component unmount
+onUnmounted(() => {
+  // Stop recording if active (demo state management)
+  if (audioRecorder.isRecording.value) {
+    audioRecorder.stop().catch(() => {
+      // Ignore errors
+    })
+  }
+
+  // Unload character - SDK will handle disconnect and other cleanup automatically
+  if (sdk.avatarView.value) {
+    sdk.unloadCharacter()
+  }
+
+  // Cleanup audio recorder (demo state management)
+  audioRecorder.cleanup()
+})
+</script>
+
+<style scoped>
+.avatar-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+  max-height: 600px;
+}
+
+.avatar-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.avatar-panel-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.btn-remove {
+  width: auto;
+  padding: 4px 12px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  margin: 0;
+  transition: background 0.2s;
+}
+
+.btn-remove:hover {
+  background: #dc2626;
+}
+
+.avatar-panel-content {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.avatar-panel-controls {
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.avatar-panel-canvas {
+  flex: 1;
+  min-width: 0;
+  min-height: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 1024px) {
+  .avatar-panel-content {
+    flex-direction: column;
+  }
+  
+  .avatar-panel-controls {
+    width: 100%;
+    min-width: auto;
+    max-height: 400px;
+  }
+  
+  .avatar-panel-canvas {
+    min-height: 400px;
+  }
+  
+  .log-drawer {
+    width: 100%;
+    right: -100%;
+  }
+  
+  .log-drawer.open {
+    right: 0;
+  }
+}
+
+/* Log Drawer */
+.log-drawer {
+  position: fixed;
+  top: 0;
+  right: -450px;
+  width: 450px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e5e7eb;
+}
+
+.log-drawer.open {
+  right: 0;
+}
+
+.log-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.log-drawer-header h2 {
+  font-size: 18px;
+  margin: 0;
+  color: #333;
+}
+
+.btn-close-drawer {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-drawer:hover {
+  background: #e5e7eb;
+  color: #333;
+}
+</style>
+

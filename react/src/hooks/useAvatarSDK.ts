@@ -3,18 +3,25 @@
  * Encapsulates SDK initialization and usage logic
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { AvatarKit, AvatarManager, AvatarView, Environment, AvatarPlaybackMode, type AvatarController, type ConnectionState, type AvatarState } from '@spatialwalk/avatarkit'
 
 export function useAvatarSDK() {
-  const [isInitialized, setIsInitialized] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const [avatarView, setAvatarView] = useState<AvatarView | null>(null)
   const [avatarController, setAvatarController] = useState<AvatarController | null>(null)
   const avatarManagerRef = useRef<AvatarManager | null>(null)
   const avatarViewRef = useRef<AvatarView | null>(null)
 
-  // Initialize SDK
+  // 获取 AvatarManager（延迟初始化）
+  const getAvatarManager = () => {
+    if (!avatarManagerRef.current && AvatarKit.isInitialized) {
+      avatarManagerRef.current = AvatarManager.shared
+    }
+    return avatarManagerRef.current
+  }
+
+  // Initialize SDK (保留用于向后兼容，但建议使用全局初始化)
   const initialize = async (environment: Environment, sessionToken?: string) => {
     try {
       await AvatarKit.initialize('demo', { environment })
@@ -23,9 +30,7 @@ export function useAvatarSDK() {
         AvatarKit.setSessionToken(sessionToken)
       }
 
-      const avatarManager = new AvatarManager()
-      avatarManagerRef.current = avatarManager
-      setIsInitialized(true)
+      avatarManagerRef.current = AvatarManager.shared
     } catch (error) {
       throw new Error(`SDK initialization failed: ${error instanceof Error ? error.message : String(error)}`)
     }
@@ -42,13 +47,14 @@ export function useAvatarSDK() {
       onError?: (error: Error) => void
     },
   ) => {
-    if (!avatarManagerRef.current) {
+    const avatarManager = getAvatarManager()
+    if (!avatarManager) {
       throw new Error('SDK not initialized')
     }
 
     try {
       // 1. Load Avatar
-      const avatar = await avatarManagerRef.current.load(characterId)
+      const avatar = await avatarManager.load(characterId)
       
       // 2. Create AvatarView with new API
       const avatarView = new AvatarView(avatar, {
@@ -79,16 +85,16 @@ export function useAvatarSDK() {
   }
 
   // Connect service (network mode only)
-  const connect = async () => {
+  const connect = useCallback(async () => {
     if (!avatarView?.controller) {
       throw new Error('Character not loaded')
     }
 
     await avatarView.controller.start()
-  }
+  }, [avatarView])
 
   // Send audio data (network mode only)
-  const sendAudio = (audioData: ArrayBuffer, isFinal: boolean = false) => {
+  const sendAudio = useCallback((audioData: ArrayBuffer, isFinal: boolean = false) => {
     if (!avatarController) {
       throw new Error('Character not loaded or not connected')
     }
@@ -96,7 +102,7 @@ export function useAvatarSDK() {
       throw new Error('send() is only available in network mode')
     }
     avatarController.send(audioData, isFinal)
-  }
+  }, [avatarController])
 
   // Play (external data mode)
   const play = async (
@@ -135,25 +141,41 @@ export function useAvatarSDK() {
   }
 
   // Interrupt conversation
-  const interrupt = () => {
+  const interrupt = useCallback(() => {
     if (!avatarController) {
       throw new Error('Character not loaded or not connected')
     }
     avatarController.interrupt()
-  }
+  }, [avatarController])
+
+  // Pause playback
+  const pause = useCallback(() => {
+    if (!avatarController) {
+      throw new Error('Character not loaded')
+    }
+    avatarController.pause()
+  }, [avatarController])
+
+  // Resume playback
+  const resume = useCallback(async () => {
+    if (!avatarController) {
+      throw new Error('Character not loaded')
+    }
+    await avatarController.resume()
+  }, [avatarController])
 
   // Disconnect (network mode only)
-  const disconnect = async () => {
+  const disconnect = useCallback(async () => {
     if (avatarView?.controller) {
       avatarView.controller.close()
       setIsConnected(false)
       // Don't clear avatarView and avatarController when disconnecting, allow reconnection
     }
-  }
+  }, [avatarView])
 
   // Unload character
   // ⚠️ Important: SDK currently only supports one character at a time. If you want to load a new character, you must unload the current one first
-  const unloadCharacter = () => {
+  const unloadCharacter = useCallback(() => {
     if (avatarView) {
       avatarView.dispose() // Clean up all resources, including closing connection, releasing WASM resources, removing Canvas, etc.
       setAvatarView(null)
@@ -161,7 +183,7 @@ export function useAvatarSDK() {
       setAvatarController(null)
       setIsConnected(false)
     }
-  }
+  }, [avatarView])
 
   // Cleanup resources (only executed on component unmount)
   useEffect(() => {
@@ -179,7 +201,6 @@ export function useAvatarSDK() {
   }, []) // Empty dependency array, only executed on component unmount
 
   return {
-    isInitialized,
     isConnected,
     avatarView,
     avatarController,
@@ -191,6 +212,8 @@ export function useAvatarSDK() {
     sendAudioChunk,
     sendKeyframes,
     interrupt,
+    pause,
+    resume,
     disconnect,
     unloadCharacter,
   }

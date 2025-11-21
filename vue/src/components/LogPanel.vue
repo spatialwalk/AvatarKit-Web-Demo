@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="display: flex; flex-direction: column; height: 100%;">
     <div class="log-panel">
       <div
         v-for="(log, index) in logs"
@@ -12,9 +12,11 @@
         {{ log?.message || '' }}
       </div>
     </div>
-    <button class="btn btn-primary" @click="onClear">
-      Clear Logs
-    </button>
+    <div class="log-drawer-footer">
+      <button class="btn btn-primary" @click="onClear">
+        Clear Logs
+      </button>
+    </div>
   </div>
 </template>
 
@@ -34,15 +36,20 @@ const onClear = () => emit('clear')
 
 <style scoped>
 .log-panel {
-  background: #1e1e1e;
-  border-radius: 12px;
-  padding: 16px;
   flex: 1;
-  min-height: 300px;
+  background: #1e1e1e;
+  padding: 16px;
   overflow-y: auto;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: #d4d4d4;
+  min-height: 0;
+}
+
+.log-drawer-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
 
 .log-entry {

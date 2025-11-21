@@ -1,6 +1,6 @@
 # Vue 3 Example
 
-This is a SPAvatarKit SDK example using Vue 3 Composition API, demonstrating how to integrate the SDK in a Vue application.
+This is a SPAvatarKit SDK example using Vue 3 Composition API with multi-character panel support, demonstrating how to integrate the SDK in a Vue application.
 
 ## 🚀 Quick Start
 
@@ -34,6 +34,9 @@ Open browser and visit: `http://localhost:5175`
 - ✅ Computed properties control button state
 - ✅ Complete error handling
 - ✅ Resource cleanup (on component unmount)
+- ✅ Multi-character panel support (up to 4 simultaneous instances)
+- ✅ Global SDK initialization with lazy loading
+- ✅ Independent panel state management
 - ✅ Network Mode: Real-time audio streaming via WebSocket
 - ✅ External Data Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
 

@@ -79,7 +79,8 @@ export function convertToInt16PCM(float32Data: Float32Array): Int16Array {
   const pcm16 = new Int16Array(float32Data.length)
   for (let i = 0; i < float32Data.length; i++) {
     const s = Math.max(-1, Math.min(1, float32Data[i]))
-    pcm16[i] = Math.round(s * 32768)
+    // Use 0x7FFF (32767) for positive values to avoid overflow
+    pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
   }
   return pcm16
 }

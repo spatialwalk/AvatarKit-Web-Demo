@@ -36,8 +36,8 @@ Open browser and visit: `http://localhost:5176`
 - ✅ Multi-character panel support (up to 4 simultaneous instances)
 - ✅ Global SDK initialization with lazy loading
 - ✅ Independent panel state management
-- ✅ Network Mode: Real-time audio streaming via WebSocket
-- ✅ External Data Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
+- ✅ SDK Mode: Real-time audio streaming via WebSocket
+- ✅ Host Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
 
 ## 🎯 Use Cases
 
@@ -217,7 +217,7 @@ Use `useState` to manage reactive state, use `useRef` to store values that need 
 - Requires user authorization for microphone permission
 - Ensure `@spatialwalk/avatarkit` SDK is installed: `npm install @spatialwalk/avatarkit`
 - Resources are automatically cleaned up on component unmount, no manual management needed
-- **External Data Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
+- **Host Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
 
 ## 🔍 View Code
 

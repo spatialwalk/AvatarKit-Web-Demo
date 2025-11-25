@@ -51,26 +51,26 @@ npm run dev
 - **Vanilla JS**: http://localhost:5174/demo.html
 - **Vue 3**: http://localhost:5175
 - **React**: http://localhost:5176
-- **Next.js**: http://localhost:5177
+- **Next.js iframe**: http://localhost:5177 (requires iframe-content server on port 5178)
 
 ### 6. Start Using
 
-**Network Mode (Real-time Audio Streaming):**
-1. Enter the character ID in the interface
-2. (Optional) Enter Session Token (if server requires authentication)
-3. Click "Initialize SDK"
-4. Click "Load Character (Network)"
-5. Click "Connect Service"
+**SDK Mode (Real-time Audio Streaming):**
+1. Click "初始化 SDK (SDK Mode)" to initialize the SDK
+2. Enter the character ID in the interface
+3. (Optional) Enter Session Token (if server requires authentication)
+4. Click "Load Character" to load the character
+5. Click "Connect Service" to establish WebSocket connection
 6. Click "Start Recording" and start speaking
 7. Click "Stop Recording" to send audio and receive animation
 8. Observe the character's real-time animation effects
 
-**External Data Mode (Pre-recorded Audio/Animation):**
-> ⚠️ **Note**: External Data Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
+**Host Mode (Pre-recorded Audio/Animation):**
+> ⚠️ **Note**: Host Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
 
-1. Enter the character ID in the interface
-2. Click "Initialize SDK"
-3. Click "Load Character (External)"
+1. Click "初始化 SDK (Host Mode)" to initialize the SDK in Host mode
+2. Enter the character ID in the interface
+3. Click "Load Character" to load the character
 4. Click "Play Data" to load and play pre-recorded audio and animation files
 5. Observe the character's animation synchronized with audio
 
@@ -153,41 +153,47 @@ npm run dev
 - Global SDK initialization pattern
 - Independent panel state management
 
-### 4. Next.js Example (`nextjs/`)
+### 4. Next.js iframe Example (`nextjs/`)
 
-Complete example using Next.js 14+ with App Router.
+Complete example using Next.js 14+ with App Router and iframe integration to avoid WASM packaging conflicts.
 
 **Use Cases:**
 - Next.js project integration
-- Server-side rendering (SSR) considerations
-- WASM in Next.js environment
-- Production deployment with Vercel
+- Avoiding WASM packaging compatibility issues (Vite vs webpack)
+- Maintaining clean separation between Next.js app and SDK code
+- Production deployment with Vercel (single deployment)
 
 **Run:**
 ```bash
 cd nextjs
-npm install
-npm run dev
+npm run install:all  # Install dependencies for both Next.js and iframe content
+npm run dev          # Starts both services automatically
 ```
 
 **Access:** `http://localhost:5177`
 
 **Features:**
 - Next.js 14+ App Router
-- Complete WASM configuration for Next.js
-- Client-side rendering optimization
-- Dynamic SDK imports
+- iframe integration (SDK runs in separate Vite app)
+- **Development**: Two services (iframe Vite server + Next.js) with hot reload
+- **Production**: Single deployment (iframe content bundled as static files)
+- No WASM configuration needed in Next.js
+- postMessage communication between Next.js and iframe
 - TypeScript support
 - Production-ready configuration
 
 **Key Considerations:**
-- ✅ Properly configured WASM support in `next.config.js`
-- ✅ All browser API components use `'use client'` directive
-- ✅ Dynamic imports for SDK to avoid SSR issues
-- ✅ SSR disabled for components requiring browser APIs
-- ✅ Detailed documentation for common Next.js + WASM issues
+- ✅ SDK runs in separate iframe (Vite app) to avoid packaging conflicts
+- ✅ No special WASM configuration needed in Next.js
+- ✅ **Development**: Two services for hot reload (standard practice)
+- ✅ **Production**: Single deployment (iframe content included in build)
+- ✅ Clean separation of concerns
+- ✅ Cross-origin communication via postMessage
 
-**See:** `nextjs/README.md` for detailed Next.js-specific documentation
+**Why iframe?**
+Due to incompatibility between Vite-packaged WASM files and Next.js webpack configuration, directly integrating the SDK can cause packaging issues. Using an iframe approach completely isolates the SDK environment while keeping deployment simple.
+
+**See:** `nextjs/README.md` for detailed Next.js iframe integration documentation
 
 ## ⚙️ Prerequisites
 
@@ -201,15 +207,18 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.16` or later (automatically installed with `npm install`)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.21` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
-All examples support two playback modes:
+All examples support two initialization modes:
 
-### Network Mode (Real-time Audio Streaming)
+### SDK Mode (Real-time Audio Streaming)
 
-1. **Initialize SDK** - Configure environment and authentication
+The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)" button.
+
+1. **Initialize SDK** - Initialize SDK in SDK mode
+   - Click "初始化 SDK (SDK Mode)" button
    - Select environment (US/CN/Test)
    - (Optional) Enter Session Token
 
@@ -219,6 +228,7 @@ All examples support two playback modes:
 3. **Load Character** - Download and initialize character resources
    - SDK will automatically download character models and textures
    - Display loading progress
+   - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
 
 4. **Connect Service** - Establish WebSocket connection
    - Connect to animation service
@@ -235,11 +245,14 @@ All examples support two playback modes:
    - Character will generate animations based on audio in real-time
    - You can see character's mouth, expressions, and other animations
 
-### External Data Mode (Pre-recorded Audio/Animation)
+### Host Mode (Pre-recorded Audio/Animation)
 
-> ⚠️ **Important**: External Data Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the SPAvatar server-side SDK to generate animation keyframes from audio.
+The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode)" button.
 
-1. **Initialize SDK** - Configure environment
+> ⚠️ **Important**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the SPAvatar server-side SDK to generate animation keyframes from audio.
+
+1. **Initialize SDK** - Initialize SDK in Host mode
+   - Click "初始化 SDK (Host Mode)" button
    - Select environment (US/CN/Test)
 
 2. **Enter Character ID** - Specify the character to load
@@ -248,11 +261,13 @@ All examples support two playback modes:
 3. **Load Character** - Download and initialize character resources
    - SDK will automatically download character models and textures
    - Display loading progress
+   - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
 
 4. **Play Data** - Load and play pre-recorded audio and animation files
    - Audio files are automatically resampled from 24kHz to 16kHz
+   - First, audio data is sent via `yieldAudioData()` to get a `conversationId`
+   - Then, animation keyframes are sent via `yieldFramesData()` with the `conversationId`
    - Animation keyframes are synchronized with audio playback
-   - Data is streamed at 2x playback speed to ensure smooth playback
    - **Note**: The animation keyframes must be generated using the SPAvatar server-side SDK
 
 ## 🔧 Configuration
@@ -279,14 +294,26 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
-- **Playback Modes**: 
-  - **Network Mode**: Real-time audio streaming via WebSocket, server generates animation
-  - **External Data Mode**: Pre-recorded audio and animation files, client-side playback
-    - ⚠️ **Requires SPAvatar Server-side SDK**: External Data Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
+- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.21`
+- **Initialization Modes**: 
+  - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
+  - **Host Mode**: Pre-recorded audio and animation files, client-side playback
+    - ⚠️ **Requires SPAvatar Server-side SDK**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
+  - **Mode Selection**: The mode is selected during SDK initialization via `AvatarKit.initialize()`, not when loading characters
+- **Key API Changes (v18+)**: 
+  - `sendAudioChunk()` → `yieldAudioData()` (returns `conversationId`)
+  - `sendKeyframes()` → `yieldFramesData()` (requires `conversationId`)
+  - `play()` → `playback()` (for one-time replay of existing data)
+  - `reqId` → `conversationId` (renamed throughout)
+  - `getCurrentReqId()` → `getCurrentConversationId()`
+  - `generateReqId()` → `generateConversationId()`
+- **Host Mode Streaming Flow**: 
+  1. Send audio chunks via `yieldAudioData()` to get `conversationId`
+  2. Send animation keyframes via `yieldFramesData()` with the `conversationId`
 - **Animation Data**: FLAME parameter keyframe sequences
 - **Audio Data Source**: 
-  - Network Mode: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
-  - External Data Mode: Pre-recorded PCM16 audio files (24kHz, automatically resampled to 16kHz). Animation keyframes must be generated using the SPAvatar server-side SDK.
+  - SDK Mode: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
+  - Host Mode: Pre-recorded PCM16 audio files (24kHz, automatically resampled to 16kHz). Animation keyframes must be generated using the SPAvatar server-side SDK.
 - **Audio Resampling**: High-quality resampling using Web Audio API's OfflineAudioContext with anti-aliasing
 - **WASM Support**: All examples are configured with correct WASM MIME types
 - **Rendering Backend**: Automatically selects WebGPU or WebGL
@@ -326,9 +353,9 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm (SDK version 1.0.0-beta.16 or later):
+A: Install via npm (SDK version 1.0.0-beta.21 or later):
 ```bash
-npm install @spatialwalk/avatarkit@^1.0.0-beta.16
+npm install @spatialwalk/avatarkit@^1.0.0-beta.21
 ```
 
 The examples automatically install the correct version when you run `npm install`.
@@ -352,14 +379,17 @@ A: Yes, but requires:
 
 A: Modify the `server.port` configuration in each example's `vite.config.ts`.
 
-### Q: How to use External Data Mode in production?
+### Q: How to use Host Mode in production?
 
-A: External Data Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files for demonstration purposes. In production:
+A: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files for demonstration purposes. In production:
 
-1. Integrate the SPAvatar server-side SDK into your backend service
-2. Use the server-side SDK to generate animation keyframes from your audio files
-3. Store the generated keyframes (FLAME parameter sequences) along with the audio files
-4. Load and play both audio and animation keyframes in the client using External Data Mode
+1. Initialize SDK in Host Mode: `AvatarKit.initialize('demo', { drivingServiceMode: DrivingServiceMode.host })`
+2. Integrate the SPAvatar server-side SDK into your backend service
+3. Use the server-side SDK to generate animation keyframes from your audio files
+4. Store the generated keyframes (FLAME parameter sequences) along with the audio files
+5. Load and play both audio and animation keyframes in the client using Host Mode:
+   - First, send audio chunks via `yieldAudioData()` to get a `conversationId`
+   - Then, send animation keyframes via `yieldFramesData()` with the `conversationId`
 
 For more information about the server-side SDK, please contact the SDK provider or check the server-side SDK documentation.
 

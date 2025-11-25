@@ -20,7 +20,7 @@
           :is-recording="audioRecorder.isRecording.value"
           :is-loading="isLoading"
           :is-connected="sdk.isConnected.value"
-          :current-playback-mode="currentPlaybackMode"
+          :current-playback-mode="(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? AvatarPlaybackMode.network : AvatarPlaybackMode.external"
           @environment-change="handleEnvironmentChange"
           @character-id-change="handleCharacterIdChange"
           @session-token-change="handleSessionTokenChange"
@@ -44,7 +44,7 @@
         </button>
       </div>
       <div class="avatar-panel-canvas">
-        <AvatarCanvas ref="avatarCanvasRef" :avatar-view="sdk.avatarView.value" />
+        <AvatarCanvas ref="avatarCanvasRef" :avatarView="(sdk.avatarView.value as any) ?? null" />
       </div>
     </div>
     
@@ -65,7 +65,7 @@
 import { ref, onUnmounted, nextTick, watch } from 'vue'
 import { useAvatarSDK } from '../composables/useAvatarSDK'
 import { Environment } from '../types'
-import { AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
+import { AvatarKit, DrivingServiceMode, AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../composables/useLogger'
 import { useAudioRecorder } from '../composables/useAudioRecorder'
 import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
@@ -89,7 +89,6 @@ const environment = ref<Environment>(Environment.test)
 const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
 const sessionToken = ref('')
 const isLoading = ref(false)
-const currentPlaybackMode = ref<AvatarPlaybackMode>(AvatarPlaybackMode.network)
 const avatarState = ref<AvatarState | null>(null)
 
 // Operation state flags
@@ -125,8 +124,8 @@ const closeLogDrawer = () => {
   isLogDrawerOpen.value = false
 }
 
-// Load character
-const handleLoadCharacter = async (mode: AvatarPlaybackMode) => {
+// Load character (mode is determined by SDK initialization)
+const handleLoadCharacter = async () => {
   if (isProcessing.value.loadCharacter || sdk.avatarView.value) {
     return
   }
@@ -136,23 +135,34 @@ const handleLoadCharacter = async (mode: AvatarPlaybackMode) => {
     return
   }
 
-  const canvasContainer = avatarCanvasRef.value?.canvasContainerRef
-  if (!canvasContainer) {
+  // Wait for next tick to ensure component is mounted
+  await nextTick()
+  
+  // Get canvas container
+  // avatarCanvasRef.value.canvasContainerRef is a ref, so we need to access .value to get the DOM element
+  const canvasContainer = 
+    (avatarCanvasRef.value?.canvasContainer as HTMLElement | undefined) ||
+    ((avatarCanvasRef.value?.canvasContainerRef as any)?.value as HTMLElement | undefined)
+  
+  if (!canvasContainer || !(canvasContainer instanceof HTMLElement)) {
     logger.updateStatus('Canvas container not found', 'error')
+    logger.log('error', `Canvas container is not available. avatarCanvasRef exists: ${!!avatarCanvasRef.value}`)
     return
   }
 
   try {
     isProcessing.value.loadCharacter = true
     isLoading.value = true
-    currentPlaybackMode.value = mode
-    logger.updateStatus(`Loading character (${mode === AvatarPlaybackMode.network ? 'network' : 'external'} mode)...`, 'info')
-    logger.log('info', `Starting to load character: ${characterId.value} (mode: ${mode === AvatarPlaybackMode.network ? 'network' : 'external'})`)
+    
+    // Get current driving service mode from SDK configuration
+    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const modeName = currentMode === DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
+    logger.updateStatus(`Loading character (${modeName})...`, 'info')
+    logger.log('info', `Starting to load character: ${characterId.value} (mode: ${modeName})`)
 
     await sdk.loadCharacter(
       characterId.value,
       canvasContainer,
-      mode,
       {
         onConnectionState: (state) => {
           logger.log('info', `Connection state: ${state}`)
@@ -196,8 +206,9 @@ const handleConnect = async () => {
     return
   }
 
-  if (currentPlaybackMode.value !== AvatarPlaybackMode.network) {
-    logger.updateStatus('Connect is only available in network mode', 'warning')
+  const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+  if (currentMode !== DrivingServiceMode.sdk) {
+    logger.updateStatus('Connect is only available in SDK mode (network mode)', 'warning')
     return
   }
 
@@ -239,7 +250,8 @@ const handleStartRecord = async () => {
     return
   }
 
-  if (currentPlaybackMode.value === AvatarPlaybackMode.network && !sdk.isConnected.value) {
+  const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+  if (currentMode === DrivingServiceMode.sdk && !sdk.isConnected.value) {
     logger.updateStatus('Please connect to service first', 'warning')
     return
   }
@@ -275,7 +287,8 @@ const handleStopRecord = async () => {
     return
   }
 
-  if (currentPlaybackMode.value === AvatarPlaybackMode.network) {
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      if (currentMode === DrivingServiceMode.sdk) {
     if (!audioRecorder.isRecording.value) {
       logger.updateStatus('Not recording', 'warning')
       return
@@ -290,7 +303,8 @@ const handleStopRecord = async () => {
   try {
     isProcessing.value.stopRecord = true
     
-    if (currentPlaybackMode.value === AvatarPlaybackMode.network) {
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      if (currentMode === DrivingServiceMode.sdk) {
       const audioBuffer = await audioRecorder.stop()
 
       if (audioBuffer && sdk.avatarController.value) {
@@ -391,57 +405,75 @@ const handleExternalDataMode = async () => {
     const sendInterval = 50
     const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
     
-    const initialDataSize = playbackRateBytesPerSecond
-    const initialAudioChunks: Array<{ data: Uint8Array; isLast: boolean }> = []
-    let audioOffset = 0
-    
-    while (audioOffset < initialDataSize && audioOffset < audioData.length) {
-      const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length, initialDataSize)
-      const chunk = audioData.slice(audioOffset, chunkEnd)
-      const isLast = chunkEnd >= audioData.length && chunkEnd >= initialDataSize
-      initialAudioChunks.push({ data: chunk, isLast })
-      audioOffset = chunkEnd
-    }
-    
-    const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
-    
-    await sdk.play(initialAudioChunks, initialKeyframes)
-    
-    Promise.resolve().then(async () => {
-      while (audioOffset < audioData.length && shouldContinueSendingData.value) {
-        const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
-        const chunk = audioData.slice(audioOffset, chunkEnd)
-        const isLast = chunkEnd >= audioData.length
-        
-        if (!shouldContinueSendingData.value) {
-          break
+      // Normal streaming flow: send audio first to get conversationId, then send animation data
+      let audioOffset = 0
+      let conversationId: string | null = null
+      
+      // Step 1: Send initial audio chunk to get conversationId
+      const initialChunkSize = Math.min(bytesPerInterval, audioData.length)
+      const initialChunk = audioData.slice(0, initialChunkSize)
+      audioOffset = initialChunkSize
+      
+      conversationId = sdk.yieldAudioData(initialChunk, false)
+      if (!conversationId) {
+        throw new Error('Failed to get conversationId from initial audio data')
+      }
+      logger.log('info', `Got conversationId: ${conversationId}`)
+      
+      // Step 2: Send initial keyframes with conversationId
+      const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
+      if (initialKeyframes.length > 0) {
+        sdk.yieldFramesData(initialKeyframes, conversationId)
+      }
+      
+      // Step 3: Stream remaining audio and animation data
+      Promise.resolve().then(async () => {
+        // Stream remaining audio chunks
+        while (audioOffset < audioData.length && shouldContinueSendingData.value) {
+          const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
+          const chunk = audioData.slice(audioOffset, chunkEnd)
+          const isLast = chunkEnd >= audioData.length
+          
+          if (!shouldContinueSendingData.value) {
+            break
+          }
+          
+          const currentConversationId = sdk.yieldAudioData(chunk, isLast)
+          if (currentConversationId) {
+            conversationId = currentConversationId
+          }
+          audioOffset = chunkEnd
+          
+          await new Promise(resolve => setTimeout(resolve, sendInterval))
         }
         
-        sdk.sendAudioChunk(chunk, isLast)
-        audioOffset = chunkEnd
+        // Stream remaining keyframes with conversationId
+        if (shouldContinueSendingData.value && keyframes.length > initialKeyframes.length && conversationId) {
+          const remainingKeyframes = keyframes.slice(initialKeyframes.length)
+          // Send keyframes in batches
+          const batchSize = 30
+          for (let i = 0; i < remainingKeyframes.length && shouldContinueSendingData.value; i += batchSize) {
+            const batch = remainingKeyframes.slice(i, i + batchSize)
+            sdk.yieldFramesData(batch, conversationId)
+            await new Promise(resolve => setTimeout(resolve, sendInterval))
+          }
+        }
         
-        await new Promise(resolve => setTimeout(resolve, sendInterval))
-      }
+        if (shouldContinueSendingData.value) {
+          logger.log('success', `Host mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+        }
+      })
       
-      if (shouldContinueSendingData.value && keyframes.length > initialKeyframes.length) {
-        const remainingKeyframes = keyframes.slice(initialKeyframes.length)
-        sdk.sendKeyframes(remainingKeyframes)
-      }
-      
-      if (shouldContinueSendingData.value) {
-        logger.log('success', `External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
-      }
-    })
-    
-    logger.updateStatus('External data playback started', 'success')
-  } catch (error) {
-    isLoading.value = false
-    throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
+      logger.updateStatus('Host mode playback started', 'success')
+    } catch (error) {
+      isLoading.value = false
+      throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }
-}
 
-// Pause playback
-const handlePause = () => {
+
+  // Pause playback
+  const handlePause = () => {
   if (isProcessing.value.pause) {
     return
   }
@@ -521,7 +553,8 @@ const handleInterrupt = () => {
   try {
     isProcessing.value.interrupt = true
     
-    if (currentPlaybackMode.value === AvatarPlaybackMode.external) {
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      if (currentMode === DrivingServiceMode.host) {
       shouldContinueSendingData.value = false
     }
     
@@ -545,10 +578,11 @@ const handleDisconnect = async () => {
     return
   }
 
-  if (currentPlaybackMode.value !== AvatarPlaybackMode.network) {
-    logger.updateStatus('Disconnect is only available in network mode', 'warning')
-    return
-  }
+    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    if (currentMode !== DrivingServiceMode.sdk) {
+      logger.updateStatus('Disconnect is only available in SDK mode (network mode)', 'warning')
+      return
+    }
 
   if (!sdk.isConnected.value) {
     logger.updateStatus('Not connected', 'warning')
@@ -589,7 +623,8 @@ const handleUnloadCharacter = () => {
     isProcessing.value.unload = true
 
     // Stop external data playback if active
-    if (currentPlaybackMode.value === AvatarPlaybackMode.external) {
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      if (currentMode === DrivingServiceMode.host) {
       shouldContinueSendingData.value = false
     }
 
@@ -609,7 +644,6 @@ const handleUnloadCharacter = () => {
     
     // Reset state
     isLoading.value = false
-    currentPlaybackMode.value = AvatarPlaybackMode.network
     avatarState.value = null
     shouldContinueSendingData.value = false
     

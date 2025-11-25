@@ -13,6 +13,13 @@ export class App {
   constructor() {
     this.panels = []
     this.panelsContainer = document.getElementById('panelsContainer')
+    
+    // Check if panelsContainer exists
+    if (!this.panelsContainer) {
+      console.error('[App] panelsContainer not found. Make sure demo.html has the correct HTML structure.')
+      return
+    }
+    
     this.globalSDKInitialized = false
     this.sdkInitializing = false
     this.currentDrivingServiceMode = null
@@ -26,7 +33,53 @@ export class App {
     // Initialize with one panel
     this.addPanel()
     
+    // Setup postMessage communication with parent window (Next.js app)
+    this.setupPostMessage()
+    
     // 不再需要内容区域的添加按钮，按钮已在header中创建
+  }
+
+  setupPostMessage() {
+    // Listen for messages from parent window (Next.js app)
+    window.addEventListener('message', (event) => {
+      // In production, verify the origin for security
+      // if (event.origin !== 'http://localhost:5177') return
+
+      console.log('[iframe] Message from parent:', event.data)
+
+      if (event.data.type === 'parent-ready') {
+        // Notify parent that SDK iframe is ready
+        window.parent.postMessage(
+          { type: 'sdk-ready', message: 'SDK iframe is loaded and ready' },
+          '*'
+        )
+      }
+
+      // Handle other commands from parent
+      if (event.data.type === 'command') {
+        this.handleCommand(event.data)
+      }
+    })
+
+    // Notify parent when iframe is loaded
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        { type: 'iframe-loaded', message: 'Iframe content loaded' },
+        '*'
+      )
+    }
+  }
+
+  handleCommand(command) {
+    // Handle commands from parent Next.js app
+    // Example: Load character, connect, etc.
+    console.log('[iframe] Handling command:', command)
+    
+    // You can extend this to control SDK operations from Next.js
+    // For example:
+    // if (command.action === 'loadCharacter') {
+    //   // Load character with command.characterId
+    // }
   }
 
   checkSDKStatus() {

@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAvatarSDK } from '../hooks/useAvatarSDK'
 import { Environment } from '../types'
-import { AvatarPlaybackMode, AvatarManager, AvatarState } from '@spatialwalk/avatarkit'
+import { AvatarKit, DrivingServiceMode, AvatarPlaybackMode, AvatarManager, AvatarState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../hooks/useLogger'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
 import { StatusBar } from './StatusBar'
@@ -30,7 +30,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
   const [characterId, setCharacterId] = useState('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
   const [sessionToken, setSessionToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [currentPlaybackMode, setCurrentPlaybackMode] = useState<AvatarPlaybackMode>(AvatarPlaybackMode.network)
   const [avatarState, setAvatarState] = useState<AvatarState | null>(null)
   
   // Operation state flags
@@ -76,8 +75,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalSDKInitialized])
 
-  // Load character
-  const handleLoadCharacter = async (mode: AvatarPlaybackMode) => {
+  // Load character (mode is determined by SDK initialization)
+  const handleLoadCharacter = async () => {
     if (isProcessing.loadCharacter || sdk.avatarView) {
       return
     }
@@ -95,14 +94,16 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     try {
       setIsProcessing(prev => ({ ...prev, loadCharacter: true }))
       setIsLoading(true)
-      setCurrentPlaybackMode(mode)
-      logger.updateStatus(`Loading character (${mode === AvatarPlaybackMode.network ? 'network' : 'external'} mode)...`, 'info')
-      logger.log('info', `Starting to load character: ${characterId} (mode: ${mode === AvatarPlaybackMode.network ? 'network' : 'external'})`)
+      
+      // Get current driving service mode from SDK configuration
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const modeName = currentMode === DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
+      logger.updateStatus(`Loading character (${modeName})...`, 'info')
+      logger.log('info', `Starting to load character: ${characterId} (mode: ${modeName})`)
 
       await sdk.loadCharacter(
         characterId,
         canvasContainerRef.current,
-        mode,
         {
           onConnectionState: (state: string) => {
             logger.log('info', `Connection state: ${state}`)
@@ -147,8 +148,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    if (currentPlaybackMode !== AvatarPlaybackMode.network) {
-      logger.updateStatus('Connect is only available in network mode', 'warning')
+    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    if (currentMode !== DrivingServiceMode.sdk) {
+      logger.updateStatus('Connect is only available in SDK mode (network mode)', 'warning')
       return
     }
 
@@ -190,7 +192,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    if (currentPlaybackMode === AvatarPlaybackMode.network && !sdk.isConnected) {
+    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    if (currentMode === DrivingServiceMode.sdk && !sdk.isConnected) {
       logger.updateStatus('Please connect to service first', 'warning')
       return
     }
@@ -226,6 +229,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
+    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentPlaybackMode = (currentMode === DrivingServiceMode.sdk) ? AvatarPlaybackMode.network : AvatarPlaybackMode.external
+
     if (currentPlaybackMode === AvatarPlaybackMode.network) {
       if (!audioRecorder.isRecording) {
         logger.updateStatus('Not recording', 'warning')
@@ -241,7 +247,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     try {
       setIsProcessing(prev => ({ ...prev, stopRecord: true }))
       
-      if (currentPlaybackMode === AvatarPlaybackMode.network) {
+      if (currentMode === DrivingServiceMode.sdk) {
         const audioBuffer = await audioRecorder.stop()
 
         if (audioBuffer && sdk.avatarController) {
@@ -342,23 +348,30 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       const sendInterval = 50
       const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
       
-      const initialDataSize = playbackRateBytesPerSecond
-      const initialAudioChunks: Array<{ data: Uint8Array; isLast: boolean }> = []
+      // Normal streaming flow: send audio first to get conversationId, then send animation data
       let audioOffset = 0
+      let conversationId: string | null = null
       
-      while (audioOffset < initialDataSize && audioOffset < audioData.length) {
-        const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length, initialDataSize)
-        const chunk = audioData.slice(audioOffset, chunkEnd)
-        const isLast = chunkEnd >= audioData.length && chunkEnd >= initialDataSize
-        initialAudioChunks.push({ data: chunk, isLast })
-        audioOffset = chunkEnd
+      // Step 1: Send initial audio chunk to get conversationId
+      const initialChunkSize = Math.min(bytesPerInterval, audioData.length)
+      const initialChunk = audioData.slice(0, initialChunkSize)
+      audioOffset = initialChunkSize
+      
+      conversationId = sdk.yieldAudioData(initialChunk, false)
+      if (!conversationId) {
+        throw new Error('Failed to get conversationId from initial audio data')
+      }
+      logger.log('info', `Got conversationId: ${conversationId}`)
+      
+      // Step 2: Send initial keyframes with conversationId
+      const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
+      if (initialKeyframes.length > 0) {
+        sdk.yieldFramesData(initialKeyframes, conversationId)
       }
       
-      const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
-      
-      await sdk.play(initialAudioChunks, initialKeyframes)
-      
+      // Step 3: Stream remaining audio and animation data
       Promise.resolve().then(async () => {
+        // Stream remaining audio chunks
         while (audioOffset < audioData.length && shouldContinueSendingDataRef.current) {
           const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
           const chunk = audioData.slice(audioOffset, chunkEnd)
@@ -368,23 +381,33 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             break
           }
           
-          sdk.sendAudioChunk(chunk, isLast)
+          const currentConversationId = sdk.yieldAudioData(chunk, isLast)
+          if (currentConversationId) {
+            conversationId = currentConversationId
+          }
           audioOffset = chunkEnd
           
           await new Promise(resolve => setTimeout(resolve, sendInterval))
         }
         
-        if (shouldContinueSendingDataRef.current && keyframes.length > initialKeyframes.length) {
+        // Stream remaining keyframes with conversationId
+        if (shouldContinueSendingDataRef.current && keyframes.length > initialKeyframes.length && conversationId) {
           const remainingKeyframes = keyframes.slice(initialKeyframes.length)
-          sdk.sendKeyframes(remainingKeyframes)
+          // Send keyframes in batches
+          const batchSize = 30
+          for (let i = 0; i < remainingKeyframes.length && shouldContinueSendingDataRef.current; i += batchSize) {
+            const batch = remainingKeyframes.slice(i, i + batchSize)
+            sdk.yieldFramesData(batch, conversationId)
+            await new Promise(resolve => setTimeout(resolve, sendInterval))
+          }
         }
         
         if (shouldContinueSendingDataRef.current) {
-          logger.log('success', `External data mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+          logger.log('success', `Host mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
         }
       })
       
-      logger.updateStatus('External data playback started', 'success')
+      logger.updateStatus('Host mode playback started', 'success')
     } catch (error) {
       setIsLoading(false)
       throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
@@ -472,7 +495,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     try {
       setIsProcessing(prev => ({ ...prev, interrupt: true }))
       
-      if (currentPlaybackMode === AvatarPlaybackMode.external) {
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      if (currentMode === DrivingServiceMode.host) {
         shouldContinueSendingDataRef.current = false
       }
       
@@ -496,8 +520,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    if (currentPlaybackMode !== AvatarPlaybackMode.network) {
-      logger.updateStatus('Disconnect is only available in network mode', 'warning')
+    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    if (currentMode !== DrivingServiceMode.sdk) {
+      logger.updateStatus('Disconnect is only available in SDK mode (network mode)', 'warning')
       return
     }
 
@@ -540,7 +565,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       setIsProcessing(prev => ({ ...prev, unload: true }))
 
       // Stop external data playback if active
-      if (currentPlaybackMode === AvatarPlaybackMode.external) {
+      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      if (currentMode === DrivingServiceMode.host) {
         shouldContinueSendingDataRef.current = false
       }
 
@@ -560,7 +586,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       
       // Reset state
       setIsLoading(false)
-      setCurrentPlaybackMode(AvatarPlaybackMode.network)
       setAvatarState(null)
       shouldContinueSendingDataRef.current = false
       
@@ -618,11 +643,11 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             isRecording={audioRecorder.isRecording}
             isLoading={isLoading}
             isConnected={sdk.isConnected}
-            currentPlaybackMode={currentPlaybackMode}
+            currentPlaybackMode={(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? AvatarPlaybackMode.network : AvatarPlaybackMode.external}
             onEnvironmentChange={setEnvironment}
             onCharacterIdChange={setCharacterId}
             onSessionTokenChange={setSessionToken}
-            onLoadCharacter={handleLoadCharacter}
+            onLoadCharacter={() => handleLoadCharacter()}
             onConnect={handleConnect}
             onStartRecord={handleStartRecord}
             onStopRecord={handleStopRecord}

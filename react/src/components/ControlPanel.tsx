@@ -3,7 +3,7 @@
  */
 
 import { Environment } from '../types'
-import { AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
+import { DrivingServiceMode, AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
 
 interface ControlPanelProps {
   environment: Environment
@@ -20,7 +20,7 @@ interface ControlPanelProps {
   onCharacterIdChange: (id: string) => void
   onSessionTokenChange: (token: string) => void
   onInit?: () => void
-  onLoadCharacter: (mode: AvatarPlaybackMode) => void
+  onLoadCharacter: () => void
   onConnect: () => void
   onStartRecord: () => void
   onStopRecord: () => void
@@ -102,11 +102,8 @@ export function ControlPanel({
             1. Initialize SDK
           </button>
         )}
-        <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={() => onLoadCharacter(AvatarPlaybackMode.network)}>
-          {onInit ? '2. Load Character (Network)' : '1. Load Character (Network)'}
-        </button>
-        <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={() => onLoadCharacter(AvatarPlaybackMode.external)}>
-          {onInit ? '2. Load Character (External)' : '1. Load Character (External)'}
+        <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={onLoadCharacter}>
+          {onInit ? '2. Load Character' : '1. Load Character'}
         </button>
         <button disabled={!avatarView || currentPlaybackMode !== AvatarPlaybackMode.network || isConnected || isLoading} onClick={onConnect}>
           {onInit ? '3. Connect Service' : '2. Connect Service'}

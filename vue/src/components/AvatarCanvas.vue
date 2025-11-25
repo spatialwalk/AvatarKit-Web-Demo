@@ -51,6 +51,10 @@ onUnmounted(() => {
 
 defineExpose({
   canvasContainerRef: canvasContainerRef,
+  // Expose the DOM element directly for easier access
+  get canvasContainer() {
+    return canvasContainerRef.value
+  }
 })
 </script>
 

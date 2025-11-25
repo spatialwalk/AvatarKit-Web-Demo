@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { AvatarKit, AvatarManager, AvatarView, Environment, AvatarPlaybackMode, type AvatarController, type ConnectionState, type AvatarState } from '@spatialwalk/avatarkit'
+import { AvatarKit, AvatarManager, AvatarView, Environment, DrivingServiceMode, type AvatarController, type ConnectionState, type AvatarState } from '@spatialwalk/avatarkit'
 
 export function useAvatarSDK() {
   const [isConnected, setIsConnected] = useState(false)
@@ -22,9 +22,12 @@ export function useAvatarSDK() {
   }
 
   // Initialize SDK (保留用于向后兼容，但建议使用全局初始化)
-  const initialize = async (environment: Environment, sessionToken?: string) => {
+  const initialize = async (environment: Environment, drivingServiceMode: DrivingServiceMode = DrivingServiceMode.sdk, sessionToken?: string) => {
     try {
-      await AvatarKit.initialize('demo', { environment })
+      await AvatarKit.initialize('demo', { 
+        environment,
+        drivingServiceMode 
+      })
       
       if (sessionToken) {
         AvatarKit.setSessionToken(sessionToken)
@@ -40,7 +43,6 @@ export function useAvatarSDK() {
   const loadCharacter = async (
     characterId: string,
     container: HTMLElement,
-    playbackMode: AvatarPlaybackMode = AvatarPlaybackMode.network,
     callbacks?: {
       onConnectionState?: (state: ConnectionState) => void
       onAvatarState?: (state: AvatarState) => void
@@ -56,13 +58,15 @@ export function useAvatarSDK() {
       // 1. Load Avatar
       const avatar = await avatarManager.load(characterId)
       
-      // 2. Create AvatarView with new API
-      const avatarView = new AvatarView(avatar, {
-        container,
-        playbackMode,
-      })
+      // 2. Validate container is a valid HTMLElement
+      if (!container || !(container instanceof HTMLElement)) {
+        throw new Error(`Invalid container: expected HTMLElement, got ${typeof container}`)
+      }
       
-      // 3. Set callbacks (use controller instead of avatarController)
+      // 3. Create AvatarView (playback mode is determined by drivingServiceMode in AvatarKit.initialize())
+      const avatarView = new AvatarView(avatar, container)
+      
+      // 4. Set callbacks (use controller instead of avatarController)
       // Reset connection state before attaching callback to avoid race conditions
       setIsConnected(false)
       avatarView.controller.onConnectionState = (state: ConnectionState) => {
@@ -104,41 +108,57 @@ export function useAvatarSDK() {
     avatarController.send(audioData, isFinal)
   }, [avatarController])
 
-  // Play (external data mode)
-  const play = async (
+  // Playback (external data mode) - For one-time replay of existing audio and animation data
+  const playback = async (
     initialAudioChunks?: Array<{ data: Uint8Array, isLast: boolean }>,
     initialKeyframes?: any[],
-  ) => {
+  ): Promise<string | null> => {
     if (!avatarController) {
       throw new Error('Character not loaded')
     }
-    if (!avatarController.play) {
-      throw new Error('play() is only available in external data mode')
+    if (!avatarController.playback) {
+      throw new Error('playback() is only available in host mode')
     }
-    await avatarController.play(initialAudioChunks, initialKeyframes)
+    return await avatarController.playback(initialAudioChunks, initialKeyframes)
   }
 
-  // Send audio chunk (external data mode)
-  const sendAudioChunk = (data: Uint8Array, isLast: boolean = false) => {
+  // Yield audio data (external data mode) - Streams audio data and returns conversationId
+  const yieldAudioData = (data: Uint8Array, isLast: boolean = false): string | null => {
     if (!avatarController) {
       throw new Error('Character not loaded')
     }
-    if (!avatarController.sendAudioChunk) {
-      throw new Error('sendAudioChunk() is only available in external data mode')
+    if (!avatarController.yieldAudioData) {
+      throw new Error('yieldAudioData() is only available in host mode')
     }
-    avatarController.sendAudioChunk(data, isLast)
+    return avatarController.yieldAudioData(data, isLast)
   }
 
-  // Send keyframes (external data mode)
-  const sendKeyframes = (keyframes: any[]) => {
+  // Yield frames data (external data mode) - Streams animation keyframes with conversationId
+  const yieldFramesData = (keyframes: any[], conversationId: string | null) => {
     if (!avatarController) {
       throw new Error('Character not loaded')
     }
-    if (!avatarController.sendKeyframes) {
-      throw new Error('sendKeyframes() is only available in external data mode')
+    if (!avatarController.yieldFramesData) {
+      throw new Error('yieldFramesData() is only available in host mode')
     }
-    avatarController.sendKeyframes(keyframes)
+    if (!conversationId) {
+      throw new Error('conversationId is required for yieldFramesData()')
+    }
+    avatarController.yieldFramesData(keyframes, conversationId)
   }
+
+  // Get current conversation ID
+  const getCurrentConversationId = useCallback((): string | null => {
+    if (!avatarController) {
+      return null
+    }
+    // Type assertion needed as TypeScript definitions may not be updated yet
+    const controller = avatarController as any
+    if (typeof controller.getCurrentConversationId === 'function') {
+      return controller.getCurrentConversationId()
+    }
+    return null
+  }, [avatarController])
 
   // Interrupt conversation
   const interrupt = useCallback(() => {
@@ -208,9 +228,10 @@ export function useAvatarSDK() {
     loadCharacter,
     connect,
     sendAudio,
-    play,
-    sendAudioChunk,
-    sendKeyframes,
+    playback,
+    yieldAudioData,
+    yieldFramesData,
+    getCurrentConversationId,
     interrupt,
     pause,
     resume,

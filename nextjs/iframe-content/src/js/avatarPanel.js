@@ -55,9 +55,6 @@ export class AvatarPanel {
 
     // Create panel HTML structure
     this.createPanelHTML()
-
-    // Bind events
-    this.bindEvents()
   }
 
   createPanelHTML() {
@@ -131,7 +128,7 @@ export class AvatarPanel {
 
     this.container.insertAdjacentHTML('beforeend', panelHTML)
     
-    // Store element references
+    // Store element references - verify elements exist
     this.elements = {
       status: document.getElementById(`status-${this.panelId}`),
       logPanel: document.getElementById(`logPanel-${this.panelId}`),
@@ -155,18 +152,34 @@ export class AvatarPanel {
       characterId: document.getElementById(`characterId-${this.panelId}`),
       sessionToken: document.getElementById(`sessionToken-${this.panelId}`),
     }
+    
+    // Debug: Log missing elements
+    const requiredElements = ['btnLoadCharacter', 'btnConnect', 'btnStartRecord', 'btnStopRecord', 'btnPause', 'btnResume', 'btnInterrupt', 'btnDisconnect', 'btnUnload', 'btnToggleLogs', 'btnClearLog', 'btnCloseLogDrawer']
+    const missingElements = requiredElements.filter(key => !this.elements[key])
+    if (missingElements.length > 0) {
+      console.error(`[AvatarPanel ${this.panelId}] Missing elements:`, missingElements)
+      console.error(`[AvatarPanel ${this.panelId}] Container:`, this.container)
+      console.error(`[AvatarPanel ${this.panelId}] Panel ID:`, this.panelId)
+    }
 
     // Set logger logPanel
-    this.logger.logPanel = this.elements.logPanel
+    if (this.elements.logPanel) {
+      this.logger.logPanel = this.elements.logPanel
+    }
 
     // Start FPS monitoring (每个面板独立监控)
     this.startFPSMonitoring()
 
     // CPU和GPU监控由App全局管理，这里不需要启动
-    this.updateStatus = (message, type) => updateStatus(this.elements.status, message, type)
+    if (this.elements.status) {
+      this.updateStatus = (message, type) => updateStatus(this.elements.status, message, type)
+    }
 
     // 初始化时检查全局 SDK 状态并更新按钮
     this.checkSDKStatus()
+    
+    // Bind events after all elements are initialized
+    this.bindEvents()
   }
 
   // 检查全局 SDK 状态并更新按钮
@@ -226,18 +239,42 @@ export class AvatarPanel {
       })
     }
 
-    this.elements.btnLoadCharacter.addEventListener('click', () => this.handleLoadCharacter())
-    this.elements.btnConnect.addEventListener('click', () => this.handleConnect())
-    this.elements.btnStartRecord.addEventListener('click', () => this.handleStartRecord())
-    this.elements.btnStopRecord.addEventListener('click', () => this.handleStopRecord())
-    this.elements.btnPause.addEventListener('click', () => this.handlePause())
-    this.elements.btnResume.addEventListener('click', () => this.handleResume())
-    this.elements.btnInterrupt.addEventListener('click', () => this.handleInterrupt())
-    this.elements.btnDisconnect.addEventListener('click', () => this.handleDisconnect())
-    this.elements.btnUnload.addEventListener('click', () => this.handleUnloadCharacter())
-    this.elements.btnToggleLogs.addEventListener('click', () => this.toggleLogDrawer())
-    this.elements.btnCloseLogDrawer.addEventListener('click', () => this.closeLogDrawer())
-    this.elements.btnClearLog.addEventListener('click', () => this.logger.clear())
+    if (this.elements.btnLoadCharacter) {
+      this.elements.btnLoadCharacter.addEventListener('click', () => this.handleLoadCharacter())
+    }
+    if (this.elements.btnConnect) {
+      this.elements.btnConnect.addEventListener('click', () => this.handleConnect())
+    }
+    if (this.elements.btnStartRecord) {
+      this.elements.btnStartRecord.addEventListener('click', () => this.handleStartRecord())
+    }
+    if (this.elements.btnStopRecord) {
+      this.elements.btnStopRecord.addEventListener('click', () => this.handleStopRecord())
+    }
+    if (this.elements.btnPause) {
+      this.elements.btnPause.addEventListener('click', () => this.handlePause())
+    }
+    if (this.elements.btnResume) {
+      this.elements.btnResume.addEventListener('click', () => this.handleResume())
+    }
+    if (this.elements.btnInterrupt) {
+      this.elements.btnInterrupt.addEventListener('click', () => this.handleInterrupt())
+    }
+    if (this.elements.btnDisconnect) {
+      this.elements.btnDisconnect.addEventListener('click', () => this.handleDisconnect())
+    }
+    if (this.elements.btnUnload) {
+      this.elements.btnUnload.addEventListener('click', () => this.handleUnloadCharacter())
+    }
+    if (this.elements.btnToggleLogs) {
+      this.elements.btnToggleLogs.addEventListener('click', () => this.toggleLogDrawer())
+    }
+    if (this.elements.btnCloseLogDrawer) {
+      this.elements.btnCloseLogDrawer.addEventListener('click', () => this.closeLogDrawer())
+    }
+    if (this.elements.btnClearLog) {
+      this.elements.btnClearLog.addEventListener('click', () => this.logger.clear())
+    }
   }
 
   toggleLogDrawer() {

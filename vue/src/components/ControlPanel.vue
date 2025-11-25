@@ -33,11 +33,8 @@
       <button v-if="onInit" :disabled="isInitialized || isLoading" @click="onInit">
         1. Initialize SDK
       </button>
-      <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="() => onLoadCharacter(AvatarPlaybackMode.network)">
-        {{ onInit ? '2. Load Character (Network)' : '1. Load Character (Network)' }}
-      </button>
-      <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="() => onLoadCharacter(AvatarPlaybackMode.external)">
-        {{ onInit ? '2. Load Character (External)' : '1. Load Character (External)' }}
+      <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="onLoadCharacter">
+        {{ onInit ? '2. Load Character' : '1. Load Character' }}
       </button>
       <button :disabled="!avatarView || currentPlaybackMode !== AvatarPlaybackMode.network || isConnected || isLoading" @click="onConnect">
         {{ onInit ? '3. Connect Service' : '2. Connect Service' }}
@@ -69,7 +66,7 @@
 
 <script setup lang="ts">
 import { Environment } from '../types'
-import { AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
+import { DrivingServiceMode, AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
 
 const props = defineProps<{
   environment: Environment
@@ -91,7 +88,7 @@ const emit = defineEmits<{
   characterIdChange: [id: string]
   sessionTokenChange: [token: string]
   init?: []
-  loadCharacter: [mode: AvatarPlaybackMode]
+  loadCharacter: []
   connect: []
   startRecord: []
   stopRecord: []
@@ -115,7 +112,7 @@ const handleSessionTokenChange = (e: Event) => {
 }
 
 const onInit = props.init ? () => emit('init') : undefined
-const onLoadCharacter = (mode: AvatarPlaybackMode) => emit('loadCharacter', mode)
+const onLoadCharacter = () => emit('loadCharacter')
 const onConnect = () => emit('connect')
 const onStartRecord = () => emit('startRecord')
 const onStopRecord = () => emit('stopRecord')

@@ -5,16 +5,28 @@
       <p>支持同时显示多个角色视图</p>
       <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative">
         <template v-if="!globalSDKInitialized && !sdkInitializing">
-          <span class="arrow-pointing-right" style="color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1">→</span>
-          <button 
-            @click="handleInitSDK"
-            class="btn-init-sdk"
-          >
-            🔧 初始化 SDK
-          </button>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap">
+            <span class="arrow-pointing-right" style="color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; flex-shrink: 0">→</span>
+            <div style="display: flex; gap: 12px; flex-wrap: nowrap">
+              <button 
+                @click="() => handleInitSDK(DrivingServiceMode.sdk)"
+                class="btn-init-sdk"
+              >
+                🔧 初始化 SDK (SDK Mode)
+              </button>
+              <button 
+                @click="() => handleInitSDK(DrivingServiceMode.host)"
+                class="btn-init-sdk"
+              >
+                🔧 初始化 SDK (Host Mode)
+              </button>
+            </div>
+          </div>
         </template>
         <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ 正在初始化 SDK...</p>
-        <p v-if="globalSDKInitialized" style="color: #10b981; margin: 0">✅ SDK 已初始化</p>
+        <p v-if="globalSDKInitialized && currentDrivingServiceMode" style="color: #10b981; margin: 0">
+          ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }})
+        </p>
         <button 
           v-if="panels.length < 4"
           class="btn-add-panel-header" 
@@ -42,7 +54,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import AvatarPanel from './components/AvatarPanel.vue'
-import { AvatarKit, Environment } from '@spatialwalk/avatarkit'
+import { AvatarKit, Environment, DrivingServiceMode } from '@spatialwalk/avatarkit'
 
 interface Panel {
   id: string
@@ -51,23 +63,29 @@ interface Panel {
 const panels = ref<Panel[]>([{ id: '1' }])
 const globalSDKInitialized = ref(false)
 const sdkInitializing = ref(false)
+const currentDrivingServiceMode = ref<DrivingServiceMode | null>(null)
 
 // 检查是否已经初始化
 onMounted(() => {
   if (AvatarKit.isInitialized) {
     globalSDKInitialized.value = true
+    currentDrivingServiceMode.value = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
   }
 })
 
 // 手动初始化 SDK
-const handleInitSDK = async () => {
+const handleInitSDK = async (mode: DrivingServiceMode) => {
   if (AvatarKit.isInitialized || sdkInitializing.value) {
     return
   }
 
   try {
     sdkInitializing.value = true
-    await AvatarKit.initialize('demo', { environment: Environment.test })
+    await AvatarKit.initialize('demo', { 
+      environment: Environment.test,
+      drivingServiceMode: mode
+    })
+    currentDrivingServiceMode.value = mode
     globalSDKInitialized.value = true
   } catch (error) {
     console.error('Failed to initialize global SDK:', error)
@@ -155,16 +173,18 @@ body {
 }
 
 .btn-init-sdk {
-  padding: 12px 24px;
+  padding: 12px 20px;
   background: #ffffff;
   color: #667eea;
   border: 2px solid #ffffff;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-init-sdk:hover {

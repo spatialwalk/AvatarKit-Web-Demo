@@ -4,9 +4,9 @@
     <div class="form-group">
       <label>Environment</label>
       <select :value="environment" @change="handleEnvironmentChange">
-        <option :value="Environment.us">US</option>
-        <option :value="Environment.cn">CN</option>
-        <option :value="Environment.test">Test</option>
+        <option :value="SDKEnvironment.intl">International</option>
+        <option :value="SDKEnvironment.cn">CN</option>
+        <option :value="SDKEnvironment.test">Test</option>
       </select>
     </div>
 
@@ -36,37 +36,46 @@
       <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="onLoadCharacter">
         {{ onInit ? '2. Load Character' : '1. Load Character' }}
       </button>
-      <button :disabled="!avatarView || currentPlaybackMode !== AvatarPlaybackMode.network || isConnected || isLoading" @click="onConnect">
+      <button :disabled="!avatarView || currentPlaybackMode !== 'network' || isConnected || isLoading" @click="onConnect">
         {{ onInit ? '3. Connect Service' : '2. Connect Service' }}
       </button>
-      <button :disabled="!avatarController || currentPlaybackMode !== AvatarPlaybackMode.network || !isConnected || isLoading || isRecording" @click="onStartRecord">
+      <button :disabled="!avatarController || currentPlaybackMode !== 'network' || !isConnected || isLoading || isRecording" @click="onStartRecord">
         {{ onInit ? '4. Start Recording' : '3. Start Recording' }}
       </button>
-      <button :disabled="!avatarController || (currentPlaybackMode === AvatarPlaybackMode.network && !isRecording) || (currentPlaybackMode === AvatarPlaybackMode.external && isLoading)" @click="onStopRecord">
-        {{ currentPlaybackMode === AvatarPlaybackMode.network ? 'Stop Recording' : 'Play Data' }}
+      <button :disabled="!avatarController || (currentPlaybackMode === 'network' && !isRecording) || (currentPlaybackMode === 'external' && isLoading)" @click="onStopRecord">
+        {{ currentPlaybackMode === 'network' ? 'Stop Recording' : 'Play Data' }}
       </button>
-      <button :disabled="!avatarController || avatarState === AvatarState.paused || isLoading || !avatarView" @click="onPause">
-        ⏸️ Pause
-      </button>
-      <button :disabled="!avatarController || avatarState !== AvatarState.paused || isLoading || !avatarView" @click="onResume">
-        ▶️ Resume
-      </button>
-      <button :disabled="!avatarController || (currentPlaybackMode === AvatarPlaybackMode.network && !isConnected)" @click="onInterrupt">
+      <button :disabled="!avatarController || (currentPlaybackMode === 'network' && !isConnected)" @click="onInterrupt">
         Interrupt
       </button>
-      <button :disabled="!avatarController || currentPlaybackMode !== AvatarPlaybackMode.network || !isConnected" @click="onDisconnect">
+      <button :disabled="!avatarController || currentPlaybackMode !== 'network' || !isConnected" @click="onDisconnect">
         Disconnect
       </button>
       <button :disabled="!avatarView || isLoading" @click="onUnloadCharacter" style="background: #ef4444;">
         Unload Character
       </button>
     </div>
+
+    <div class="form-group" style="margin-top: 16px;">
+      <label>
+        🔊 Volume: {{ volume }}%
+      </label>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        :value="volume"
+        @input="(e) => $emit('volumeChange', parseInt((e.target as HTMLInputElement).value))"
+        :disabled="!avatarView"
+        style="width: 100%; cursor: pointer;"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Environment } from '../types'
-import { DrivingServiceMode, AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
+import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
 
 const props = defineProps<{
   environment: Environment
@@ -78,8 +87,9 @@ const props = defineProps<{
   isRecording: boolean
   isLoading: boolean
   isConnected: boolean
-  currentPlaybackMode: AvatarPlaybackMode
-  avatarState: any
+  currentPlaybackMode: 'network' | 'external'
+  conversationState: 'idle' | 'playing' | null
+  volume: number
   init?: () => void
 }>()
 
@@ -87,16 +97,15 @@ const emit = defineEmits<{
   environmentChange: [env: Environment]
   characterIdChange: [id: string]
   sessionTokenChange: [token: string]
-  init?: []
+  init: []
   loadCharacter: []
   connect: []
   startRecord: []
   stopRecord: []
-  pause: []
-  resume: []
   interrupt: []
   disconnect: []
   unloadCharacter: []
+  volumeChange: [volume: number]
 }>()
 
 const handleEnvironmentChange = (e: Event) => {
@@ -116,8 +125,6 @@ const onLoadCharacter = () => emit('loadCharacter')
 const onConnect = () => emit('connect')
 const onStartRecord = () => emit('startRecord')
 const onStopRecord = () => emit('stopRecord')
-const onPause = () => emit('pause')
-const onResume = () => emit('resume')
 const onInterrupt = () => emit('interrupt')
 const onDisconnect = () => emit('disconnect')
 const onUnloadCharacter = () => emit('unloadCharacter')

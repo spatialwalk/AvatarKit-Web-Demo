@@ -36,6 +36,7 @@ Open browser and visit: `http://localhost:5176`
 - ✅ Multi-character panel support (up to 4 simultaneous instances)
 - ✅ Global SDK initialization with lazy loading
 - ✅ Independent panel state management
+- ✅ Audio volume control (0-100% slider)
 - ✅ SDK Mode: Real-time audio streaming via WebSocket
 - ✅ Host Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
 

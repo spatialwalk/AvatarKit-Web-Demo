@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAvatarSDK } from '../hooks/useAvatarSDK'
 import { Environment } from '../types'
-import { AvatarKit, DrivingServiceMode, AvatarPlaybackMode, AvatarManager, AvatarState } from '@spatialwalk/avatarkit'
+import { AvatarKit, DrivingServiceMode, AvatarManager, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../hooks/useLogger'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
 import { StatusBar } from './StatusBar'
@@ -30,7 +30,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
   const [characterId, setCharacterId] = useState('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
   const [sessionToken, setSessionToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [avatarState, setAvatarState] = useState<AvatarState | null>(null)
+  const [conversationState, setConversationState] = useState<ConversationState | null>(null)
+  const [volume, setVolume] = useState(100)
   
   // Operation state flags
   const [isProcessing, setIsProcessing] = useState({
@@ -39,8 +40,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     startRecord: false,
     stopRecord: false,
     interrupt: false,
-    pause: false,
-    resume: false,
     disconnect: false,
     unload: false,
   })
@@ -113,9 +112,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
               logger.updateStatus('Disconnected', 'info')
             }
           },
-          onAvatarState: (state: AvatarState) => {
-            setAvatarState(state)
-            logger.log('info', `Avatar state: ${state}`)
+          onConversationState: (state: ConversationState) => {
+            setConversationState(state)
+            logger.log('info', `Conversation state: ${state}`)
           },
           onError: (error: Error) => {
             logger.log('error', `Error: ${error.message}`)
@@ -123,6 +122,14 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
           },
         },
       )
+
+      // Set initial volume
+      try {
+        const currentVolume = sdk.getVolume()
+        setVolume(Math.round(currentVolume * 100))
+      } catch (error) {
+        // Ignore if volume not available
+      }
 
       logger.updateStatus('Character loaded successfully', 'success')
       logger.log('success', 'Character loaded successfully')
@@ -230,9 +237,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     }
 
     const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
-    const currentPlaybackMode = (currentMode === DrivingServiceMode.sdk) ? AvatarPlaybackMode.network : AvatarPlaybackMode.external
+    const currentPlaybackMode = (currentMode === DrivingServiceMode.sdk) ? 'network' : 'external'
 
-    if (currentPlaybackMode === AvatarPlaybackMode.network) {
+    if (currentPlaybackMode === 'network') {
       if (!audioRecorder.isRecording) {
         logger.updateStatus('Not recording', 'warning')
         return
@@ -274,6 +281,13 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
 
   // Handle external data mode
   const handleExternalDataMode = async () => {
+    // Stop any ongoing data sending first
+    if (shouldContinueSendingDataRef.current) {
+      shouldContinueSendingDataRef.current = false
+      // Wait a bit to ensure the previous sending loop has stopped
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+    
     if (sdk.avatarView?.controller) {
       try {
         sdk.interrupt()
@@ -345,7 +359,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       logger.updateStatus('Playing external data...', 'info')
       
       const playbackRateBytesPerSecond = AUDIO_SAMPLE_RATE * 2 * 2
-      const sendInterval = 50
+      const sendInterval = 30
       const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
       
       // Normal streaming flow: send audio first to get conversationId, then send animation data
@@ -363,15 +377,13 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       }
       logger.log('info', `Got conversationId: ${conversationId}`)
       
-      // Step 2: Send initial keyframes with conversationId
-      const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
-      if (initialKeyframes.length > 0) {
-        sdk.yieldFramesData(initialKeyframes, conversationId)
-      }
-      
-      // Step 3: Stream remaining audio and animation data
+      // Step 2: Stream audio and corresponding keyframes together in sync
       Promise.resolve().then(async () => {
-        // Stream remaining audio chunks
+        let keyframeIndex = 0
+        // 假设每秒30帧，计算每个音频块（30ms）对应的帧数
+        const keyframesPerSecond = 30
+        const framesPerChunk = Math.ceil(keyframesPerSecond * sendInterval / 1000) // 每个音频块约1帧
+        
         while (audioOffset < audioData.length && shouldContinueSendingDataRef.current) {
           const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
           const chunk = audioData.slice(audioOffset, chunkEnd)
@@ -381,24 +393,31 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             break
           }
           
+          // Send audio chunk
           const currentConversationId = sdk.yieldAudioData(chunk, isLast)
           if (currentConversationId) {
             conversationId = currentConversationId
           }
-          audioOffset = chunkEnd
           
+          // Immediately send corresponding keyframes for this audio chunk
+          if (conversationId && keyframeIndex < keyframes.length) {
+            const endIndex = Math.min(keyframeIndex + framesPerChunk, keyframes.length)
+            const framesToSend = keyframes.slice(keyframeIndex, endIndex)
+            if (framesToSend.length > 0) {
+              sdk.yieldFramesData(framesToSend, conversationId)
+              keyframeIndex = endIndex
+            }
+          }
+          
+          audioOffset = chunkEnd
           await new Promise(resolve => setTimeout(resolve, sendInterval))
         }
         
-        // Stream remaining keyframes with conversationId
-        if (shouldContinueSendingDataRef.current && keyframes.length > initialKeyframes.length && conversationId) {
-          const remainingKeyframes = keyframes.slice(initialKeyframes.length)
-          // Send keyframes in batches
-          const batchSize = 30
-          for (let i = 0; i < remainingKeyframes.length && shouldContinueSendingDataRef.current; i += batchSize) {
-            const batch = remainingKeyframes.slice(i, i + batchSize)
-            sdk.yieldFramesData(batch, conversationId)
-            await new Promise(resolve => setTimeout(resolve, sendInterval))
+        // Send any remaining keyframes if audio finished but keyframes remain
+        if (shouldContinueSendingDataRef.current && keyframeIndex < keyframes.length && conversationId) {
+          const remainingKeyframes = keyframes.slice(keyframeIndex)
+          if (remainingKeyframes.length > 0) {
+            sdk.yieldFramesData(remainingKeyframes, conversationId)
           }
         }
         
@@ -414,72 +433,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     }
   }
 
-  // Pause playback
-  const handlePause = () => {
-    if (isProcessing.pause) {
-      return
-    }
-
-    if (!sdk.avatarView) {
-      logger.updateStatus('No character loaded', 'warning')
-      return
-    }
-
-    // SDK内部会检查状态，这里不需要严格检查
-    if (avatarState === AvatarState.paused) {
-      logger.updateStatus('Already paused', 'warning')
-      return
-    }
-
-    try {
-      setIsProcessing(prev => ({ ...prev, pause: true }))
-      sdk.pause()
-      logger.updateStatus('Playback paused', 'info')
-      logger.log('info', 'Playback paused')
-    } catch (error) {
-      logger.updateStatus(
-        `Pause failed: ${error instanceof Error ? error.message : String(error)}`,
-        'error',
-      )
-      logger.log('error', `Pause failed: ${error instanceof Error ? error.message : String(error)}`)
-    } finally {
-      setIsProcessing(prev => ({ ...prev, pause: false }))
-    }
-  }
-
-  // Resume playback
-  const handleResume = async () => {
-    if (isProcessing.resume) {
-      return
-    }
-
-    if (!sdk.avatarView) {
-      logger.updateStatus('No character loaded', 'warning')
-      return
-    }
-
-    if (avatarState !== AvatarState.paused) {
-      logger.updateStatus('Not paused, cannot resume', 'warning')
-      return
-    }
-
-    try {
-      setIsProcessing(prev => ({ ...prev, resume: true }))
-      setIsLoading(true)
-      await sdk.resume()
-      logger.updateStatus('Playback resumed', 'success')
-      logger.log('success', 'Playback resumed')
-    } catch (error) {
-      logger.updateStatus(
-        `Resume failed: ${error instanceof Error ? error.message : String(error)}`,
-        'error',
-      )
-      logger.log('error', `Resume failed: ${error instanceof Error ? error.message : String(error)}`)
-    } finally {
-      setIsLoading(false)
-      setIsProcessing(prev => ({ ...prev, resume: false }))
-    }
-  }
 
   // Interrupt conversation
   const handleInterrupt = () => {
@@ -586,7 +539,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       
       // Reset state
       setIsLoading(false)
-      setAvatarState(null)
+      setConversationState(null)
+      setIsPaused(false)
       shouldContinueSendingDataRef.current = false
       
       logger.updateStatus('Character unloaded', 'info')
@@ -643,7 +597,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             isRecording={audioRecorder.isRecording}
             isLoading={isLoading}
             isConnected={sdk.isConnected}
-            currentPlaybackMode={(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? AvatarPlaybackMode.network : AvatarPlaybackMode.external}
+            currentPlaybackMode={(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
             onEnvironmentChange={setEnvironment}
             onCharacterIdChange={setCharacterId}
             onSessionTokenChange={setSessionToken}
@@ -651,12 +605,19 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             onConnect={handleConnect}
             onStartRecord={handleStartRecord}
             onStopRecord={handleStopRecord}
-            onPause={handlePause}
-            onResume={handleResume}
             onInterrupt={handleInterrupt}
             onDisconnect={handleDisconnect}
             onUnloadCharacter={handleUnloadCharacter}
-            avatarState={avatarState}
+            conversationState={conversationState}
+            volume={volume}
+            onVolumeChange={(v) => {
+              setVolume(v)
+              try {
+                sdk.setVolume(v / 100)
+              } catch (error) {
+                logger.updateStatus(`Volume change failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
+              }
+            }}
           />
           <button 
             className="btn btn-primary" 

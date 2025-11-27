@@ -64,6 +64,7 @@ npm run dev
 6. Click "Start Recording" and start speaking
 7. Click "Stop Recording" to send audio and receive animation
 8. Observe the character's real-time animation effects
+9. Adjust volume using the volume slider (0-100%)
 
 **Host Mode (Pre-recorded Audio/Animation):**
 > ⚠️ **Note**: Host Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
@@ -73,6 +74,7 @@ npm run dev
 3. Click "Load Character" to load the character
 4. Click "Play Data" to load and play pre-recorded audio and animation files
 5. Observe the character's animation synchronized with audio
+6. Adjust volume using the volume slider (0-100%)
 
 ## 📦 Example List
 
@@ -207,7 +209,7 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.21` or later (automatically installed with `npm install`)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.23` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
@@ -294,22 +296,30 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
-- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.21`
+- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.23`
+- **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI.
 - **Initialization Modes**: 
   - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
   - **Host Mode**: Pre-recorded audio and animation files, client-side playback
     - ⚠️ **Requires SPAvatar Server-side SDK**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
   - **Mode Selection**: The mode is selected during SDK initialization via `AvatarKit.initialize()`, not when loading characters
+- **Key API Changes (v22)**: 
+  - `onAvatarState` → `onConversationState` (callback renamed)
+  - `AvatarState` → `ConversationState` (enum renamed, values: `idle`, `playing`)
+  - `Environment.us` → `Environment.intl` (renamed for internationalization)
+  - `AvatarPlaybackMode` enum removed, use `DrivingServiceMode` or string literals (`'network'`, `'external'`)
+  - Added `setVolume(volume: number)` and `getVolume(): number` for audio volume control
 - **Key API Changes (v18+)**: 
   - `sendAudioChunk()` → `yieldAudioData()` (returns `conversationId`)
   - `sendKeyframes()` → `yieldFramesData()` (requires `conversationId`)
-  - `play()` → `playback()` (for one-time replay of existing data)
   - `reqId` → `conversationId` (renamed throughout)
   - `getCurrentReqId()` → `getCurrentConversationId()`
   - `generateReqId()` → `generateConversationId()`
 - **Host Mode Streaming Flow**: 
-  1. Send audio chunks via `yieldAudioData()` to get `conversationId`
-  2. Send animation keyframes via `yieldFramesData()` with the `conversationId`
+  1. Send initial audio chunk via `yieldAudioData()` to get `conversationId`
+  2. Stream audio chunks and corresponding keyframes in sync (audio chunk → matching keyframes)
+  3. Send any remaining keyframes after audio completes
+  4. Uses 30ms send interval to maintain buffer and prevent stuttering
 - **Animation Data**: FLAME parameter keyframe sequences
 - **Audio Data Source**: 
   - SDK Mode: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
@@ -353,9 +363,9 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm (SDK version 1.0.0-beta.21 or later):
+A: Install via npm (SDK version 1.0.0-beta.23 or later):
 ```bash
-npm install @spatialwalk/avatarkit@^1.0.0-beta.21
+npm install @spatialwalk/avatarkit@^1.0.0-beta.23
 ```
 
 The examples automatically install the correct version when you run `npm install`.

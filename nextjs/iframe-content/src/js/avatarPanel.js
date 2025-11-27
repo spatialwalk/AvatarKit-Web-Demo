@@ -18,7 +18,7 @@ export class AvatarPanel {
     this.onRemove = onRemove
     this.currentPlaybackMode = 'sdk'
     this.shouldContinueSendingData = false
-    this.avatarState = null
+    this.conversationState = null
 
     // FPS monitoring (每个面板独立监控)
     this.fpsFrameCount = 0
@@ -35,8 +35,6 @@ export class AvatarPanel {
       startRecord: false,
       stopRecord: false,
       interrupt: false,
-      pause: false,
-      resume: false,
       disconnect: false,
       unload: false,
     }
@@ -74,7 +72,7 @@ export class AvatarPanel {
               <div class="form-group">
                 <label>Environment</label>
                 <select id="environment-${this.panelId}">
-                  <option value="us">US</option>
+                  <option value="intl">International</option>
                   <option value="cn">CN</option>
                   <option value="test" selected>Test</option>
                 </select>
@@ -94,11 +92,14 @@ export class AvatarPanel {
               <button id="btnConnect-${this.panelId}" class="btn btn-primary" disabled>2. Connect Service</button>
               <button id="btnStartRecord-${this.panelId}" class="btn btn-primary" disabled>3. Start Recording</button>
               <button id="btnStopRecord-${this.panelId}" class="btn btn-danger" disabled>Stop Recording / Play Data</button>
-              <button id="btnPause-${this.panelId}" class="btn btn-warning" disabled>⏸️ Pause</button>
-              <button id="btnResume-${this.panelId}" class="btn btn-warning" disabled>▶️ Resume</button>
               <button id="btnInterrupt-${this.panelId}" class="btn btn-warning" disabled>Interrupt</button>
               <button id="btnDisconnect-${this.panelId}" class="btn btn-danger" disabled>Disconnect</button>
               <button id="btnUnload-${this.panelId}" class="btn btn-danger" disabled>Unload Character</button>
+              <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                <label for="volumeSlider-${this.panelId}" style="font-size: 14px; min-width: 60px;">🔊 Volume:</label>
+                <input type="range" id="volumeSlider-${this.panelId}" min="0" max="100" value="100" style="flex: 1; cursor: pointer;" disabled>
+                <span id="volumeValue-${this.panelId}" style="font-size: 14px; min-width: 40px; text-align: right;">100%</span>
+              </div>
               <button id="btnToggleLogs-${this.panelId}" class="btn btn-primary" style="margin-top: 12px;">📋 显示日志</button>
             </div>
             
@@ -136,11 +137,11 @@ export class AvatarPanel {
       btnConnect: document.getElementById(`btnConnect-${this.panelId}`),
       btnStartRecord: document.getElementById(`btnStartRecord-${this.panelId}`),
       btnStopRecord: document.getElementById(`btnStopRecord-${this.panelId}`),
-      btnPause: document.getElementById(`btnPause-${this.panelId}`),
-      btnResume: document.getElementById(`btnResume-${this.panelId}`),
       btnInterrupt: document.getElementById(`btnInterrupt-${this.panelId}`),
       btnDisconnect: document.getElementById(`btnDisconnect-${this.panelId}`),
       btnUnload: document.getElementById(`btnUnload-${this.panelId}`),
+      volumeSlider: document.getElementById(`volumeSlider-${this.panelId}`),
+      volumeValue: document.getElementById(`volumeValue-${this.panelId}`),
       btnToggleLogs: document.getElementById(`btnToggleLogs-${this.panelId}`),
       btnClearLog: document.getElementById(`btnClearLog-${this.panelId}`),
       btnCloseLogDrawer: document.getElementById(`btnCloseLogDrawer-${this.panelId}`),
@@ -154,7 +155,7 @@ export class AvatarPanel {
     }
     
     // Debug: Log missing elements
-    const requiredElements = ['btnLoadCharacter', 'btnConnect', 'btnStartRecord', 'btnStopRecord', 'btnPause', 'btnResume', 'btnInterrupt', 'btnDisconnect', 'btnUnload', 'btnToggleLogs', 'btnClearLog', 'btnCloseLogDrawer']
+    const requiredElements = ['btnLoadCharacter', 'btnConnect', 'btnStartRecord', 'btnStopRecord', 'btnInterrupt', 'btnDisconnect', 'btnUnload', 'volumeSlider', 'volumeValue', 'btnToggleLogs', 'btnClearLog', 'btnCloseLogDrawer']
     const missingElements = requiredElements.filter(key => !this.elements[key])
     if (missingElements.length > 0) {
       console.error(`[AvatarPanel ${this.panelId}] Missing elements:`, missingElements)
@@ -251,17 +252,14 @@ export class AvatarPanel {
     if (this.elements.btnStopRecord) {
       this.elements.btnStopRecord.addEventListener('click', () => this.handleStopRecord())
     }
-    if (this.elements.btnPause) {
-      this.elements.btnPause.addEventListener('click', () => this.handlePause())
-    }
-    if (this.elements.btnResume) {
-      this.elements.btnResume.addEventListener('click', () => this.handleResume())
-    }
     if (this.elements.btnInterrupt) {
       this.elements.btnInterrupt.addEventListener('click', () => this.handleInterrupt())
     }
     if (this.elements.btnDisconnect) {
       this.elements.btnDisconnect.addEventListener('click', () => this.handleDisconnect())
+    }
+    if (this.elements.volumeSlider) {
+      this.elements.volumeSlider.addEventListener('input', (e) => this.handleVolumeChange(e))
     }
     if (this.elements.btnUnload) {
       this.elements.btnUnload.addEventListener('click', () => this.handleUnloadCharacter())
@@ -356,7 +354,7 @@ export class AvatarPanel {
         characterId,
         this.elements.canvasContainer,
         (state) => this.onConnectionState(state),
-        (state) => this.onAvatarState(state),
+        (state) => this.onConversationState(state),
         (error) => this.onError(error)
       )
 
@@ -366,20 +364,25 @@ export class AvatarPanel {
         this.elements.btnConnect.disabled = false
         this.elements.btnStartRecord.disabled = true
         this.elements.btnStopRecord.disabled = true
-        this.elements.btnPause.disabled = true
-        this.elements.btnResume.disabled = true
         this.elements.btnInterrupt.disabled = true
         this.elements.btnDisconnect.disabled = true
       } else {
         this.elements.btnConnect.disabled = true
         this.elements.btnStartRecord.disabled = true
         this.elements.btnStopRecord.disabled = false
-        this.elements.btnPause.disabled = true
-        this.elements.btnResume.disabled = true
         this.elements.btnInterrupt.disabled = true
         this.elements.btnDisconnect.disabled = true
       }
       this.elements.btnUnload.disabled = false
+      
+      // Enable volume control and set initial volume
+      if (this.elements.volumeSlider) {
+        this.elements.volumeSlider.disabled = false
+        const currentVolume = this.sdkManager.getVolume()
+        const volumePercent = Math.round(currentVolume * 100)
+        this.elements.volumeSlider.value = volumePercent
+        this.elements.volumeValue.textContent = `${volumePercent}%`
+      }
     } catch (error) {
       this.logger.error('Character load failed', error)
       this.updateStatus(`Load failed: ${error.message}`, 'error')
@@ -502,13 +505,9 @@ export class AvatarPanel {
         if (this.shouldContinueSendingData) {
         this.updateStatus('External data playback started', 'success')
         this.elements.btnStopRecord.disabled = true
-        this.elements.btnPause.disabled = false
-        this.elements.btnResume.disabled = true
         this.elements.btnInterrupt.disabled = false
         } else {
         this.elements.btnStopRecord.disabled = false
-        this.elements.btnPause.disabled = true
-        this.elements.btnResume.disabled = true
         this.elements.btnInterrupt.disabled = true
         this.updateStatus('Playback interrupted', 'info')
         }
@@ -528,6 +527,13 @@ export class AvatarPanel {
   }
 
   async handleExternalDataMode() {
+    // Stop any ongoing data sending first
+    if (this.shouldContinueSendingData) {
+      this.shouldContinueSendingData = false
+      // Wait a bit to ensure the previous sending loop has stopped
+      await new Promise(resolve => setTimeout(resolve, 200))
+    }
+    
     if (this.sdkManager.avatarView?.controller) {
       try {
         this.sdkManager.interrupt()
@@ -593,7 +599,7 @@ export class AvatarPanel {
       }
       
       const playbackRateBytesPerSecond = AUDIO_SAMPLE_RATE * 2 * 2
-      const sendInterval = 50
+      const sendInterval = 30
       const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
       
       // Normal streaming flow: send audio and keyframes together in sync
@@ -615,9 +621,9 @@ export class AvatarPanel {
       // Step 2: Stream audio and corresponding keyframes together in sync
       Promise.resolve().then(async () => {
         let keyframeIndex = 0
-        // 假设每秒30帧，计算每个音频块（50ms）对应的帧数
+        // 假设每秒30帧，计算每个音频块（30ms）对应的帧数
         const keyframesPerSecond = 30
-        const framesPerChunk = Math.ceil(keyframesPerSecond * sendInterval / 1000) // 每个音频块约1-2帧
+        const framesPerChunk = Math.ceil(keyframesPerSecond * sendInterval / 1000) // 每个音频块约1帧
         
         while (audioOffset < audioData.length && this.shouldContinueSendingData) {
           const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
@@ -667,70 +673,17 @@ export class AvatarPanel {
   }
 
 
-  handlePause() {
-    if (this.isProcessing.pause) {
-      return
-    }
 
-    if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
-      return
-    }
-
-    // SDK内部会检查状态，这里不需要严格检查
-    if (this.avatarState === 'paused') {
-      this.logger.warn('Already paused')
-      this.updateStatus('Already paused', 'warning')
-      return
-    }
-
+  handleVolumeChange(event) {
+    const volume = parseInt(event.target.value) / 100 // Convert 0-100 to 0.0-1.0
     try {
-      this.isProcessing.pause = true
-      this.elements.btnPause.disabled = true
-      this.sdkManager.pause()
-      // 立即更新按钮状态，onAvatarState 回调也会更新，但这里确保UI立即响应
-      this.elements.btnPause.disabled = true
-      this.elements.btnResume.disabled = false
-      this.updateStatus('Playback paused', 'info')
+      if (this.sdkManager.avatarView?.controller) {
+        this.sdkManager.setVolume(volume)
+        this.elements.volumeValue.textContent = `${event.target.value}%`
+      }
     } catch (error) {
-      this.logger.error('Pause failed', error)
-      this.updateStatus(`Pause failed: ${error.message}`, 'error')
-      this.elements.btnPause.disabled = false
-    } finally {
-      this.isProcessing.pause = false
-    }
-  }
-
-  async handleResume() {
-    if (this.isProcessing.resume) {
-      return
-    }
-
-    if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
-      return
-    }
-
-    if (this.avatarState !== 'paused') {
-      this.logger.warn('Not paused, cannot resume')
-      this.updateStatus('Not paused, cannot resume', 'warning')
-      return
-    }
-
-    try {
-      this.isProcessing.resume = true
-      this.elements.btnResume.disabled = true
-      await this.sdkManager.resume()
-      // 立即更新按钮状态，onAvatarState 回调也会更新，但这里确保UI立即响应
-      this.elements.btnPause.disabled = false
-      this.elements.btnResume.disabled = true
-      this.updateStatus('Playback resumed', 'success')
-    } catch (error) {
-      this.logger.error('Resume failed', error)
-      this.updateStatus(`Resume failed: ${error.message}`, 'error')
-      this.elements.btnResume.disabled = false
-    } finally {
-      this.isProcessing.resume = false
+      this.logger.error('Volume change failed', error)
+      this.updateStatus(`Volume change failed: ${error.message}`, 'error')
     }
   }
 
@@ -757,22 +710,15 @@ export class AvatarPanel {
       
       if (this.currentPlaybackMode === 'host') {
         this.elements.btnStopRecord.disabled = false
-        this.elements.btnPause.disabled = true
-        this.elements.btnResume.disabled = true
         this.elements.btnInterrupt.disabled = true
       } else if (this.currentPlaybackMode === 'sdk') {
         if (this.sdkManager.isConnected) {
           this.elements.btnStartRecord.disabled = false
           this.elements.btnStopRecord.disabled = true
         }
-        this.elements.btnPause.disabled = true
-        this.elements.btnResume.disabled = true
         this.elements.btnInterrupt.disabled = false
       }
       
-      // Reset pause/resume button states
-      this.elements.btnPause.disabled = true
-      this.elements.btnResume.disabled = true
     } catch (error) {
       this.logger.error('Interrupt failed', error)
       this.updateStatus(`Interrupt failed: ${error.message}`, 'error')
@@ -858,18 +804,20 @@ export class AvatarPanel {
       
       // Reset state
       this.currentPlaybackMode = 'sdk'
-      this.avatarState = null
+      this.conversationState = null
       this.shouldContinueSendingData = false
       
       this.elements.btnLoadCharacter.disabled = false
       this.elements.btnConnect.disabled = true
       this.elements.btnStartRecord.disabled = true
       this.elements.btnStopRecord.disabled = true
-      this.elements.btnPause.disabled = true
-      this.elements.btnResume.disabled = true
       this.elements.btnInterrupt.disabled = true
       this.elements.btnDisconnect.disabled = true
       this.elements.btnUnload.disabled = true
+      if (this.elements.volumeSlider) {
+        this.elements.volumeSlider.disabled = true
+        this.elements.volumeValue.textContent = '100%'
+      }
     } catch (error) {
       this.logger.error(`Unload character failed: ${error.message}`, error)
       this.updateStatus(`Unload character failed: ${error.message}`, 'error')
@@ -892,8 +840,6 @@ export class AvatarPanel {
       this.updateStatus('Connected', 'success')
       this.elements.btnConnect.disabled = true
       this.elements.btnStartRecord.disabled = false
-      this.elements.btnPause.disabled = true
-      this.elements.btnResume.disabled = true
       this.elements.btnInterrupt.disabled = false
       this.elements.btnDisconnect.disabled = false
       this.elements.btnUnload.disabled = false
@@ -902,40 +848,24 @@ export class AvatarPanel {
       this.elements.btnConnect.disabled = false
       this.elements.btnStartRecord.disabled = true
       this.elements.btnStopRecord.disabled = true
-      this.elements.btnPause.disabled = true
-      this.elements.btnResume.disabled = true
       this.elements.btnInterrupt.disabled = true
       this.elements.btnDisconnect.disabled = true
       this.elements.btnUnload.disabled = false
     }
   }
 
-  onAvatarState(state) {
-    this.avatarState = state
+  onConversationState(state) {
+    this.conversationState = state
     
     if (!this.sdkManager.avatarView) {
       return
     }
     
     if (state === 'playing') {
-      // 播放中：可以暂停
-      this.elements.btnPause.disabled = false
-      this.elements.btnResume.disabled = true
       if (this.currentPlaybackMode === 'host') {
         this.elements.btnInterrupt.disabled = false
       }
-    } else if (state === 'paused') {
-      // 已暂停：可以继续
-      this.elements.btnPause.disabled = true
-      this.elements.btnResume.disabled = false
-      this.updateStatus('Playback paused', 'info')
     } else {
-      // idle 或 active 状态：允许尝试暂停（SDK内部会检查）
-      if (this.sdkManager.avatarView && state !== 'paused') {
-        this.elements.btnPause.disabled = false
-      }
-      this.elements.btnResume.disabled = true
-      
       if (state === 'idle') {
         if (this.currentPlaybackMode === 'host') {
           this.elements.btnStopRecord.disabled = false

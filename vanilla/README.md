@@ -32,6 +32,7 @@ Open browser and visit: `http://localhost:5174/demo.html`
 - ✅ Real-time audio recording and sending
 - ✅ Real-time animation rendering
 - ✅ Conversation interruption (supports interruption in both network and external data modes)
+- ✅ Audio volume control (0-100% slider)
 - ✅ Log panel (real-time status display)
 - ✅ SDK Mode: Real-time audio streaming via WebSocket
 - ✅ Host Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)

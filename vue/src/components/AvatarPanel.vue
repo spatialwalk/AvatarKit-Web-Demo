@@ -20,7 +20,7 @@
           :is-recording="audioRecorder.isRecording.value"
           :is-loading="isLoading"
           :is-connected="sdk.isConnected.value"
-          :current-playback-mode="(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? AvatarPlaybackMode.network : AvatarPlaybackMode.external"
+          :current-playback-mode="(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'"
           @environment-change="handleEnvironmentChange"
           @character-id-change="handleCharacterIdChange"
           @session-token-change="handleSessionTokenChange"
@@ -28,12 +28,19 @@
           @connect="handleConnect"
           @start-record="handleStartRecord"
           @stop-record="handleStopRecord"
-          @pause="handlePause"
-          @resume="handleResume"
           @interrupt="handleInterrupt"
           @disconnect="handleDisconnect"
           @unload-character="handleUnloadCharacter"
-          :avatar-state="avatarState"
+          :conversation-state="conversationState"
+          :volume="volume"
+          @volume-change="(v) => {
+            volume = v
+            try {
+              sdk.setVolume(v / 100)
+            } catch (error) {
+              logger.updateStatus(`Volume change failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
+            }
+          }"
         />
         <button 
           class="btn btn-primary" 
@@ -65,7 +72,7 @@
 import { ref, onUnmounted, nextTick, watch } from 'vue'
 import { useAvatarSDK } from '../composables/useAvatarSDK'
 import { Environment } from '../types'
-import { AvatarKit, DrivingServiceMode, AvatarPlaybackMode, AvatarState } from '@spatialwalk/avatarkit'
+import { AvatarKit, DrivingServiceMode, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../composables/useLogger'
 import { useAudioRecorder } from '../composables/useAudioRecorder'
 import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
@@ -89,7 +96,8 @@ const environment = ref<Environment>(Environment.test)
 const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
 const sessionToken = ref('')
 const isLoading = ref(false)
-const avatarState = ref<AvatarState | null>(null)
+const conversationState = ref<ConversationState | null>(null)
+const volume = ref(100)
 
 // Operation state flags
 const isProcessing = ref({
@@ -98,8 +106,6 @@ const isProcessing = ref({
   startRecord: false,
   stopRecord: false,
   interrupt: false,
-  pause: false,
-  resume: false,
   disconnect: false,
   unload: false,
 })
@@ -172,9 +178,9 @@ const handleLoadCharacter = async () => {
             logger.updateStatus('Disconnected', 'info')
           }
         },
-        onAvatarState: (state: AvatarState) => {
-          avatarState.value = state
-          logger.log('info', `Avatar state: ${state}`)
+        onConversationState: (state: ConversationState) => {
+          conversationState.value = state
+          logger.log('info', `Conversation state: ${state}`)
         },
         onError: (error: Error) => {
           logger.log('error', `Error: ${error.message}`)
@@ -182,6 +188,14 @@ const handleLoadCharacter = async () => {
         },
       },
     )
+
+    // Set initial volume
+    try {
+      const currentVolume = sdk.getVolume()
+      volume.value = Math.round(currentVolume * 100)
+    } catch (error) {
+      // Ignore if volume not available
+    }
 
     logger.updateStatus('Character loaded successfully', 'success')
     logger.log('success', 'Character loaded successfully')
@@ -331,6 +345,13 @@ const handleStopRecord = async () => {
 
 // Handle external data mode
 const handleExternalDataMode = async () => {
+  // Stop any ongoing data sending first
+  if (shouldContinueSendingData.value) {
+    shouldContinueSendingData.value = false
+    // Wait a bit to ensure the previous sending loop has stopped
+    await new Promise(resolve => setTimeout(resolve, 200))
+  }
+  
   if (sdk.avatarView.value?.controller) {
     try {
       sdk.interrupt()
@@ -402,11 +423,11 @@ const handleExternalDataMode = async () => {
     logger.updateStatus('Playing external data...', 'info')
     
     const playbackRateBytesPerSecond = AUDIO_SAMPLE_RATE * 2 * 2
-    const sendInterval = 50
+      const sendInterval = 30
     const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
     
       // Normal streaming flow: send audio first to get conversationId, then send animation data
-      let audioOffset = 0
+    let audioOffset = 0
       let conversationId: string | null = null
       
       // Step 1: Send initial audio chunk to get conversationId
@@ -420,124 +441,63 @@ const handleExternalDataMode = async () => {
       }
       logger.log('info', `Got conversationId: ${conversationId}`)
       
-      // Step 2: Send initial keyframes with conversationId
-      const initialKeyframes = keyframes.slice(0, Math.min(30, keyframes.length))
-      if (initialKeyframes.length > 0) {
-        sdk.yieldFramesData(initialKeyframes, conversationId)
-      }
-      
-      // Step 3: Stream remaining audio and animation data
+      // Step 2: Stream audio and corresponding keyframes together in sync
       Promise.resolve().then(async () => {
-        // Stream remaining audio chunks
-        while (audioOffset < audioData.length && shouldContinueSendingData.value) {
-          const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
-          const chunk = audioData.slice(audioOffset, chunkEnd)
-          const isLast = chunkEnd >= audioData.length
-          
-          if (!shouldContinueSendingData.value) {
-            break
-          }
-          
+        let keyframeIndex = 0
+        // 假设每秒30帧，计算每个音频块（30ms）对应的帧数
+        const keyframesPerSecond = 30
+        const framesPerChunk = Math.ceil(keyframesPerSecond * sendInterval / 1000) // 每个音频块约1帧
+        
+      while (audioOffset < audioData.length && shouldContinueSendingData.value) {
+        const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
+        const chunk = audioData.slice(audioOffset, chunkEnd)
+        const isLast = chunkEnd >= audioData.length
+        
+        if (!shouldContinueSendingData.value) {
+          break
+        }
+        
+          // Send audio chunk
           const currentConversationId = sdk.yieldAudioData(chunk, isLast)
           if (currentConversationId) {
             conversationId = currentConversationId
           }
-          audioOffset = chunkEnd
           
-          await new Promise(resolve => setTimeout(resolve, sendInterval))
-        }
-        
-        // Stream remaining keyframes with conversationId
-        if (shouldContinueSendingData.value && keyframes.length > initialKeyframes.length && conversationId) {
-          const remainingKeyframes = keyframes.slice(initialKeyframes.length)
-          // Send keyframes in batches
-          const batchSize = 30
-          for (let i = 0; i < remainingKeyframes.length && shouldContinueSendingData.value; i += batchSize) {
-            const batch = remainingKeyframes.slice(i, i + batchSize)
-            sdk.yieldFramesData(batch, conversationId)
-            await new Promise(resolve => setTimeout(resolve, sendInterval))
+          // Immediately send corresponding keyframes for this audio chunk
+          if (conversationId && keyframeIndex < keyframes.length) {
+            const endIndex = Math.min(keyframeIndex + framesPerChunk, keyframes.length)
+            const framesToSend = keyframes.slice(keyframeIndex, endIndex)
+            if (framesToSend.length > 0) {
+              sdk.yieldFramesData(framesToSend, conversationId)
+              keyframeIndex = endIndex
+            }
           }
-        }
-        
-        if (shouldContinueSendingData.value) {
-          logger.log('success', `Host mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
-        }
-      })
+          
+        audioOffset = chunkEnd
+        await new Promise(resolve => setTimeout(resolve, sendInterval))
+      }
       
+        // Send any remaining keyframes if audio finished but keyframes remain
+        if (shouldContinueSendingData.value && keyframeIndex < keyframes.length && conversationId) {
+          const remainingKeyframes = keyframes.slice(keyframeIndex)
+          if (remainingKeyframes.length > 0) {
+            sdk.yieldFramesData(remainingKeyframes, conversationId)
+          }
+      }
+      
+      if (shouldContinueSendingData.value) {
+          logger.log('success', `Host mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
+      }
+    })
+    
       logger.updateStatus('Host mode playback started', 'success')
-    } catch (error) {
-      isLoading.value = false
-      throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
-  }
-
-
-  // Pause playback
-  const handlePause = () => {
-  if (isProcessing.value.pause) {
-    return
-  }
-
-  if (!sdk.avatarView.value) {
-    logger.updateStatus('No character loaded', 'warning')
-    return
-  }
-
-  // SDK内部会检查状态，这里不需要严格检查
-  if (avatarState.value === AvatarState.paused) {
-    logger.updateStatus('Already paused', 'warning')
-    return
-  }
-
-  try {
-    isProcessing.value.pause = true
-    sdk.pause()
-    logger.updateStatus('Playback paused', 'info')
-    logger.log('info', 'Playback paused')
   } catch (error) {
-    logger.updateStatus(
-      `Pause failed: ${error instanceof Error ? error.message : String(error)}`,
-      'error',
-    )
-    logger.log('error', `Pause failed: ${error instanceof Error ? error.message : String(error)}`)
-  } finally {
-    isProcessing.value.pause = false
-  }
-}
-
-// Resume playback
-const handleResume = async () => {
-  if (isProcessing.value.resume) {
-    return
-  }
-
-  if (!sdk.avatarView.value) {
-    logger.updateStatus('No character loaded', 'warning')
-    return
-  }
-
-  if (avatarState.value !== AvatarState.paused) {
-    logger.updateStatus('Not paused, cannot resume', 'warning')
-    return
-  }
-
-  try {
-    isProcessing.value.resume = true
-    isLoading.value = true
-    await sdk.resume()
-    logger.updateStatus('Playback resumed', 'success')
-    logger.log('success', 'Playback resumed')
-  } catch (error) {
-    logger.updateStatus(
-      `Resume failed: ${error instanceof Error ? error.message : String(error)}`,
-      'error',
-    )
-    logger.log('error', `Resume failed: ${error instanceof Error ? error.message : String(error)}`)
-  } finally {
     isLoading.value = false
-    isProcessing.value.resume = false
+    throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
+
+
 
 // Interrupt conversation
 const handleInterrupt = () => {
@@ -581,8 +541,8 @@ const handleDisconnect = async () => {
     const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     if (currentMode !== DrivingServiceMode.sdk) {
       logger.updateStatus('Disconnect is only available in SDK mode (network mode)', 'warning')
-      return
-    }
+    return
+  }
 
   if (!sdk.isConnected.value) {
     logger.updateStatus('Not connected', 'warning')
@@ -644,7 +604,7 @@ const handleUnloadCharacter = () => {
     
     // Reset state
     isLoading.value = false
-    avatarState.value = null
+    conversationState.value = null
     shouldContinueSendingData.value = false
     
     logger.updateStatus('Character unloaded', 'info')

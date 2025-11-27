@@ -137,6 +137,20 @@ window.addEventListener('message', (event) => {
 })
 ```
 
+## 📋 Features
+
+- ✅ SDK initialization
+- ✅ Character loading (with progress display)
+- ✅ WebSocket connection management
+- ✅ Real-time audio recording and sending
+- ✅ Real-time animation rendering
+- ✅ Conversation interruption (supports interruption in both network and external data modes)
+- ✅ Audio volume control (0-100% slider)
+- ✅ Log panel (real-time status display)
+- ✅ SDK Mode: Real-time audio streaming via WebSocket
+- ✅ Host Mode: Pre-recorded audio and animation playback (requires server-side SDK for keyframe generation)
+- ✅ iframe integration to avoid WASM packaging conflicts
+
 ## 🎯 Use Cases
 
 - Next.js projects that need to integrate SPAvatar SDK

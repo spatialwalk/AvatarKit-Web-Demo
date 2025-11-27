@@ -12,12 +12,11 @@ export class AvatarSDKManager {
     this.AvatarKit = null
     this.AvatarManager = null
     this.AvatarView = null
-    this.AvatarPlaybackMode = null
     this.avatarManager = null
     this.avatarView = null
     this.isInitialized = false
     this.isConnected = false
-    this.avatarState = null
+    this.conversationState = null
   }
 
   /**
@@ -32,7 +31,6 @@ export class AvatarSDKManager {
       this.AvatarKit = sdk.AvatarKit
       this.AvatarManager = sdk.AvatarManager
       this.AvatarView = sdk.AvatarView
-      this.AvatarPlaybackMode = sdk.AvatarPlaybackMode
       
       this.logger.success('SDK loaded successfully')
       return true
@@ -80,11 +78,11 @@ export class AvatarSDKManager {
    * @param {string} characterId - Character ID
    * @param {HTMLElement} canvasContainer - Canvas container
    * @param {Function} onConnectionState - Connection state callback
-   * @param {Function} onAvatarState - Avatar state callback
+   * @param {Function} onConversationState - Conversation state callback
    * @param {Function} onError - Error callback
    * @returns {Promise<void>}
    */
-  async loadCharacter(characterId, canvasContainer, onConnectionState, onAvatarState, onError) {
+  async loadCharacter(characterId, canvasContainer, onConnectionState, onConversationState, onError) {
     // Handle backward compatibility: if third parameter is not a function, 
     // it might be the old playbackMode parameter
     if (typeof canvasContainer !== 'object' || !(canvasContainer instanceof HTMLElement)) {
@@ -147,10 +145,10 @@ export class AvatarSDKManager {
         onConnectionState?.(state)
       }
 
-      this.avatarView.controller.onAvatarState = (state) => {
-        this.avatarState = state
-        this.logger.info(`Avatar state: ${state}`)
-        onAvatarState?.(state)
+      this.avatarView.controller.onConversationState = (state) => {
+        this.conversationState = state
+        this.logger.info(`Conversation state: ${state}`)
+        onConversationState?.(state)
       }
 
       this.avatarView.controller.onError = (error) => {
@@ -210,6 +208,32 @@ export class AvatarSDKManager {
   }
 
   /**
+   * Set audio volume
+   * @param {number} volume - Volume level (0.0 to 1.0)
+   */
+  setVolume(volume) {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    if (typeof volume !== 'number' || volume < 0 || volume > 1) {
+      throw new Error('Volume must be a number between 0.0 and 1.0')
+    }
+    this.avatarView.controller.setVolume(volume)
+    this.logger.info(`Volume set to ${(volume * 100).toFixed(0)}%`)
+  }
+
+  /**
+   * Get current audio volume
+   * @returns {number} Current volume (0.0 to 1.0)
+   */
+  getVolume() {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    return this.avatarView.controller.getVolume()
+  }
+
+  /**
    * Disconnect
    */
   async disconnect() {
@@ -229,7 +253,7 @@ export class AvatarSDKManager {
       this.avatarView.dispose() // Clean up all resources, including closing connection, releasing WASM resources, removing Canvas, etc.
       this.avatarView = null
       this.isConnected = false
-      this.avatarState = null
+      this.conversationState = null
       this.logger.info('Character unloaded, can reload new character')
     }
   }
@@ -246,21 +270,6 @@ export class AvatarSDKManager {
     this.avatarView.controller.send(audioData, isFinal)
   }
 
-  /**
-   * Playback (host mode) - For one-time replay of existing audio and animation data
-   * @param {Array} initialAudioChunks - Initial audio chunks for playback start
-   * @param {Array} initialKeyframes - Initial animation keyframes for playback start
-   * @returns {Promise<string>} conversationId
-   */
-  async playback(initialAudioChunks = null, initialKeyframes = null) {
-    if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
-    }
-    if (!this.avatarView.controller.playback) {
-      throw new Error('playback() is only available in host mode')
-    }
-    return await this.avatarView.controller.playback(initialAudioChunks, initialKeyframes)
-  }
 
   /**
    * Yield audio data (host mode) - Streams audio data and returns conversationId

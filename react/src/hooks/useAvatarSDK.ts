@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { AvatarKit, AvatarManager, AvatarView, Environment, DrivingServiceMode, type AvatarController, type ConnectionState, type AvatarState } from '@spatialwalk/avatarkit'
+import { AvatarKit, AvatarManager, AvatarView, Environment, DrivingServiceMode, type AvatarController, type ConnectionState, type ConversationState } from '@spatialwalk/avatarkit'
 
 export function useAvatarSDK() {
   const [isConnected, setIsConnected] = useState(false)
@@ -45,7 +45,7 @@ export function useAvatarSDK() {
     container: HTMLElement,
     callbacks?: {
       onConnectionState?: (state: ConnectionState) => void
-      onAvatarState?: (state: AvatarState) => void
+      onConversationState?: (state: ConversationState) => void
       onError?: (error: Error) => void
     },
   ) => {
@@ -73,8 +73,8 @@ export function useAvatarSDK() {
         setIsConnected(state === 'connected')
         callbacks?.onConnectionState?.(state)
       }
-      if (callbacks?.onAvatarState) {
-        avatarView.controller.onAvatarState = callbacks.onAvatarState
+      if (callbacks?.onConversationState) {
+        avatarView.controller.onConversationState = callbacks.onConversationState
       }
       if (callbacks?.onError) {
         avatarView.controller.onError = callbacks.onError
@@ -107,20 +107,6 @@ export function useAvatarSDK() {
     }
     avatarController.send(audioData, isFinal)
   }, [avatarController])
-
-  // Playback (external data mode) - For one-time replay of existing audio and animation data
-  const playback = async (
-    initialAudioChunks?: Array<{ data: Uint8Array, isLast: boolean }>,
-    initialKeyframes?: any[],
-  ): Promise<string | null> => {
-    if (!avatarController) {
-      throw new Error('Character not loaded')
-    }
-    if (!avatarController.playback) {
-      throw new Error('playback() is only available in host mode')
-    }
-    return await avatarController.playback(initialAudioChunks, initialKeyframes)
-  }
 
   // Yield audio data (external data mode) - Streams audio data and returns conversationId
   const yieldAudioData = (data: Uint8Array, isLast: boolean = false): string | null => {
@@ -193,6 +179,25 @@ export function useAvatarSDK() {
     }
   }, [avatarView])
 
+  // Set audio volume
+  const setVolume = useCallback((volume: number) => {
+    if (!avatarController) {
+      throw new Error('Character not loaded')
+    }
+    if (typeof volume !== 'number' || volume < 0 || volume > 1) {
+      throw new Error('Volume must be a number between 0.0 and 1.0')
+    }
+    avatarController.setVolume(volume)
+  }, [avatarController])
+
+  // Get current audio volume
+  const getVolume = useCallback((): number => {
+    if (!avatarController) {
+      throw new Error('Character not loaded')
+    }
+    return avatarController.getVolume()
+  }, [avatarController])
+
   // Unload character
   // ⚠️ Important: SDK currently only supports one character at a time. If you want to load a new character, you must unload the current one first
   const unloadCharacter = useCallback(() => {
@@ -228,7 +233,6 @@ export function useAvatarSDK() {
     loadCharacter,
     connect,
     sendAudio,
-    playback,
     yieldAudioData,
     yieldFramesData,
     getCurrentConversationId,
@@ -237,6 +241,8 @@ export function useAvatarSDK() {
     resume,
     disconnect,
     unloadCharacter,
+    setVolume,
+    getVolume,
   }
 }
 

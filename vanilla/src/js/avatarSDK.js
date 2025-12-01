@@ -147,9 +147,9 @@ export class AvatarSDKManager {
         onConnectionState?.(state)
       }
 
-      this.avatarView.controller.onAvatarState = (state) => {
+      this.avatarView.controller.onConversationState = (state) => {
         this.avatarState = state
-        this.logger.info(`Avatar state: ${state}`)
+        this.logger.info(`Conversation state: ${state}`)
         onAvatarState?.(state)
       }
 

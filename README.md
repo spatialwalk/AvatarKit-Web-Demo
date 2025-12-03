@@ -209,7 +209,7 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.25` or later (automatically installed with `npm install`)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.26` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
@@ -296,7 +296,7 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
-- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.25`
+- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.26`
 - **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI.
 - **Initialization Modes**: 
   - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
@@ -363,9 +363,9 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm (SDK version 1.0.0-beta.25 or later):
+A: Install via npm (SDK version 1.0.0-beta.26 or later):
 ```bash
-npm install @spatialwalk/avatarkit@^1.0.0-beta.25
+npm install @spatialwalk/avatarkit@^1.0.0-beta.26
 ```
 
 The examples automatically install the correct version when you run `npm install`.

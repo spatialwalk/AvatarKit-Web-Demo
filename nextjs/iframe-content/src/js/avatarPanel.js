@@ -71,11 +71,7 @@ export class AvatarPanel {
               <h2>🎮 Control Panel</h2>
               <div class="form-group">
                 <label>Environment</label>
-                <select id="environment-${this.panelId}">
-                  <option value="intl">International</option>
-                  <option value="cn">CN</option>
-                  <option value="test" selected>Test</option>
-                </select>
+                <div id="environment-${this.panelId}" style="padding: 8px 12px; background: #f0f0f0; border-radius: 6px; color: #666; font-size: 14px;">-</div>
               </div>
               <div class="form-group">
                 <label>Character ID</label>
@@ -149,7 +145,7 @@ export class AvatarPanel {
       btnRemove: this.onRemove ? this.container.querySelector(`[data-panel-id="${this.panelId}"] .btn-remove`) : null,
       canvasContainer: document.querySelector(`.canvas-container[data-panel-id="${this.panelId}"]`),
       fpsDisplay: document.getElementById(`fpsDisplay-${this.panelId}`),
-      environment: document.getElementById(`environment-${this.panelId}`),
+      environmentDisplay: document.getElementById(`environment-${this.panelId}`),
       characterId: document.getElementById(`characterId-${this.panelId}`),
       sessionToken: document.getElementById(`sessionToken-${this.panelId}`),
     }
@@ -178,6 +174,9 @@ export class AvatarPanel {
 
     // 初始化时检查全局 SDK 状态并更新按钮
     this.checkSDKStatus()
+    
+    // 更新环境显示
+    this.updateEnvironmentDisplay()
     
     // Bind events after all elements are initialized
     this.bindEvents()
@@ -228,6 +227,28 @@ export class AvatarPanel {
       }
       // 启用加载按钮
       this.elements.btnLoadCharacter.disabled = false
+      // 更新环境显示
+      this.updateEnvironmentDisplay()
+    }
+  }
+  
+  // 更新环境显示
+  async updateEnvironmentDisplay() {
+    if (!this.elements.environmentDisplay) return
+    
+    try {
+      const { AvatarKit, Environment } = await import('@spatialwalk/avatarkit')
+      if (AvatarKit.isInitialized && AvatarKit.configuration) {
+        const env = AvatarKit.configuration.environment
+        const envName = env === Environment.cn ? 'CN' : 
+                       env === Environment.intl ? 'International' : 
+                       'Test'
+        this.elements.environmentDisplay.textContent = envName
+      } else {
+        this.elements.environmentDisplay.textContent = '-'
+      }
+    } catch (error) {
+      this.elements.environmentDisplay.textContent = '-'
     }
   }
 

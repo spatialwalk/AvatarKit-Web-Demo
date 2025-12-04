@@ -3,11 +3,9 @@
     <h2>🎮 Control Panel</h2>
     <div class="form-group">
       <label>Environment</label>
-      <select :value="environment" @change="handleEnvironmentChange">
-        <option :value="SDKEnvironment.intl">International</option>
-        <option :value="SDKEnvironment.cn">CN</option>
-        <option :value="SDKEnvironment.test">Test</option>
-      </select>
+      <div style="padding: 8px 12px; background: #f0f0f0; border-radius: 6px; color: #666; font-size: 14px">
+        {{ environment === SDKEnvironment.cn ? 'CN' : environment === SDKEnvironment.intl ? 'International' : 'Test' }}
+      </div>
     </div>
 
     <div class="form-group">
@@ -94,7 +92,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  environmentChange: [env: Environment]
   characterIdChange: [id: string]
   sessionTokenChange: [token: string]
   init: []
@@ -107,10 +104,6 @@ const emit = defineEmits<{
   unloadCharacter: []
   volumeChange: [volume: number]
 }>()
-
-const handleEnvironmentChange = (e: Event) => {
-  emit('environmentChange', (e.target as HTMLSelectElement).value as Environment)
-}
 
 const handleCharacterIdChange = (e: Event) => {
   emit('characterIdChange', (e.target as HTMLSelectElement).value)

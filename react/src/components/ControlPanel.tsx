@@ -16,7 +16,6 @@ interface ControlPanelProps {
   isLoading: boolean
   isConnected: boolean
   currentPlaybackMode: 'network' | 'external'
-  onEnvironmentChange: (env: Environment) => void
   onCharacterIdChange: (id: string) => void
   onSessionTokenChange: (token: string) => void
   onInit?: () => void
@@ -43,7 +42,6 @@ export function ControlPanel({
   isLoading,
   isConnected,
   currentPlaybackMode,
-  onEnvironmentChange,
   onCharacterIdChange,
   onSessionTokenChange,
   onInit,
@@ -58,19 +56,18 @@ export function ControlPanel({
   volume,
   onVolumeChange,
 }: ControlPanelProps) {
+  const envName = environment === SDKEnvironment.cn ? 'CN' : 
+                 environment === SDKEnvironment.intl ? 'International' : 
+                 'Test'
+  
   return (
     <div className="control-panel">
       <h2>🎮 Control Panel</h2>
       <div className="form-group">
         <label>Environment</label>
-        <select
-          value={environment}
-          onChange={(e) => onEnvironmentChange(e.target.value as Environment)}
-        >
-          <option value={SDKEnvironment.intl}>International</option>
-          <option value={SDKEnvironment.cn}>CN</option>
-          <option value={SDKEnvironment.test}>Test</option>
-        </select>
+        <div style={{ padding: '8px 12px', background: '#f0f0f0', borderRadius: '6px', color: '#666', fontSize: '14px' }}>
+          {envName}
+        </div>
       </div>
 
 

@@ -7,7 +7,16 @@
         <template v-if="!globalSDKInitialized && !sdkInitializing">
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap">
             <span class="arrow-pointing-right" style="color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; flex-shrink: 0">→</span>
-            <div style="display: flex; gap: 12px; flex-wrap: nowrap">
+            <div style="display: flex; gap: 12px; flex-wrap: nowrap; align-items: center">
+              <label style="color: white; font-size: 14px; margin-right: 4px">Environment:</label>
+              <select
+                v-model="selectedEnvironment"
+                style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer"
+              >
+                <option :value="Environment.test">Test</option>
+                <option :value="Environment.cn">CN</option>
+                <option :value="Environment.intl">International</option>
+              </select>
               <button 
                 @click="() => handleInitSDK(DrivingServiceMode.sdk)"
                 class="btn-init-sdk"
@@ -25,7 +34,7 @@
         </template>
         <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ 正在初始化 SDK...</p>
         <p v-if="globalSDKInitialized && currentDrivingServiceMode" style="color: #10b981; margin: 0">
-          ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }})
+          ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }}, {{ selectedEnvironment === Environment.cn ? 'CN' : selectedEnvironment === Environment.intl ? 'International' : 'Test' }})
         </p>
         <button 
           v-if="panels.length < 4"
@@ -64,6 +73,7 @@ const panels = ref<Panel[]>([{ id: '1' }])
 const globalSDKInitialized = ref(false)
 const sdkInitializing = ref(false)
 const currentDrivingServiceMode = ref<DrivingServiceMode | null>(null)
+const selectedEnvironment = ref<Environment>(Environment.test)
 
 // 检查是否已经初始化
 onMounted(() => {
@@ -82,7 +92,7 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
   try {
     sdkInitializing.value = true
     await AvatarKit.initialize('demo', { 
-      environment: Environment.test,
+      environment: selectedEnvironment.value,
       drivingServiceMode: mode
     })
     currentDrivingServiceMode.value = mode

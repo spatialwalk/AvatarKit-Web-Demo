@@ -110,8 +110,15 @@ export class App {
       const DrivingServiceMode = sdk.DrivingServiceMode
       const drivingServiceMode = mode === 'host' ? DrivingServiceMode.host : DrivingServiceMode.sdk
       
+      // Get selected environment
+      const envSelect = document.getElementById('sdkEnvironmentSelect')
+      const envValue = envSelect ? envSelect.value : 'test'
+      const selectedEnvironment = envValue === 'cn' ? Environment.cn : 
+                                  envValue === 'intl' ? Environment.intl : 
+                                  Environment.test
+      
       await AvatarKit.initialize('demo', { 
-        environment: Environment.test,
+        environment: selectedEnvironment,
         drivingServiceMode
       })
       this.globalSDKInitialized = true
@@ -131,11 +138,17 @@ export class App {
   updateSDKStatusUI() {
     const statusText = document.getElementById('sdkStatusText')
     const initButtons = document.querySelectorAll('.btn-init-sdk')
+    const envSelect = document.getElementById('sdkEnvironmentSelect')
+    const envLabel = envSelect ? envSelect.previousElementSibling : null
     
     if (this.globalSDKInitialized) {
       if (statusText) {
         const modeName = this.currentDrivingServiceMode === 'host' ? 'Host Mode' : 'SDK Mode'
-        statusText.textContent = `✅ SDK 已初始化 (${modeName})`
+        const sdk = AvatarKit.configuration
+        const envName = sdk?.environment === Environment.cn ? 'CN' : 
+                       sdk?.environment === Environment.intl ? 'International' : 
+                       'Test'
+        statusText.textContent = `✅ SDK 已初始化 (${modeName}, ${envName})`
         statusText.style.color = '#10b981'
         statusText.style.display = 'block'
       }
@@ -144,6 +157,12 @@ export class App {
       })
       if (this.initArrow) {
         this.initArrow.style.display = 'none'
+      }
+      if (envSelect) {
+        envSelect.style.display = 'none'
+      }
+      if (envLabel) {
+        envLabel.style.display = 'none'
       }
       // 通知所有面板更新 SDK 状态
       this.updateAllPanelsSDKStatus()
@@ -172,6 +191,21 @@ export class App {
     arrow.className = 'arrow-pointing-right'
     arrow.style.cssText = 'color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; display: ' + (this.globalSDKInitialized ? 'none' : 'inline-block') + ';'
     arrow.textContent = '→'
+    
+    // Create environment selector
+    const envLabel = document.createElement('label')
+    envLabel.textContent = 'Environment:'
+    envLabel.style.cssText = 'color: white; font-size: 14px; margin-right: 4px;'
+    
+    const envSelect = document.createElement('select')
+    envSelect.id = 'sdkEnvironmentSelect'
+    envSelect.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer;'
+    envSelect.disabled = this.globalSDKInitialized
+    envSelect.innerHTML = `
+      <option value="test" selected>Test</option>
+      <option value="cn">CN</option>
+      <option value="intl">International</option>
+    `
     
     const initButtonSDK = document.createElement('button')
     initButtonSDK.className = 'btn-init-sdk'
@@ -202,6 +236,8 @@ export class App {
     })
     
     buttonContainer.appendChild(arrow)
+    buttonContainer.appendChild(envLabel)
+    buttonContainer.appendChild(envSelect)
     buttonContainer.appendChild(initButtonSDK)
     buttonContainer.appendChild(initButtonHost)
     buttonContainer.appendChild(statusText)

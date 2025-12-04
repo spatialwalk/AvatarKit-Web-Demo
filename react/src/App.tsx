@@ -17,6 +17,7 @@ function App() {
   const [globalSDKInitialized, setGlobalSDKInitialized] = useState(false)
   const [sdkInitializing, setSdkInitializing] = useState(false)
   const [currentDrivingServiceMode, setCurrentDrivingServiceMode] = useState<DrivingServiceMode | null>(null)
+  const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>(Environment.test)
 
   // 检查是否已经初始化
   useEffect(() => {
@@ -35,7 +36,7 @@ function App() {
     try {
       setSdkInitializing(true)
       await AvatarKit.initialize('demo', { 
-        environment: Environment.test,
+        environment: selectedEnvironment,
         drivingServiceMode: mode
       })
       setCurrentDrivingServiceMode(mode)
@@ -66,9 +67,21 @@ function App() {
         <p>支持同时显示多个角色视图</p>
         <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
           {!globalSDKInitialized && !sdkInitializing && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '100%' }}>
               <span className="arrow-pointing-right" style={{ color: '#ff0000', fontSize: '48px', fontWeight: 'bold', lineHeight: '1', flexShrink: 0 }}>→</span>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'nowrap' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <label style={{ color: 'white', fontSize: '14px', whiteSpace: 'nowrap' }}>Environment:</label>
+                  <select
+                    value={selectedEnvironment}
+                    onChange={(e) => setSelectedEnvironment(e.target.value as Environment)}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: 'white', color: '#333', cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    <option value={Environment.test}>Test</option>
+                    <option value={Environment.cn}>CN</option>
+                    <option value={Environment.intl}>International</option>
+                  </select>
+                </div>
                 <button 
                   onClick={() => handleInitSDK(DrivingServiceMode.sdk)}
                   className="btn-init-sdk"
@@ -89,7 +102,7 @@ function App() {
           )}
           {globalSDKInitialized && currentDrivingServiceMode && (
             <p style={{ color: '#10b981', margin: 0 }}>
-              ✅ SDK 已初始化 ({currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode'})
+              ✅ SDK 已初始化 ({currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode'}, {selectedEnvironment === Environment.cn ? 'CN' : selectedEnvironment === Environment.intl ? 'International' : 'Test'})
             </p>
           )}
           {panels.length < 4 && (

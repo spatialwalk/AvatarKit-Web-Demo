@@ -26,7 +26,6 @@ interface AvatarPanelProps {
 
 export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarPanelProps) {
   // Configuration state
-  const [environment, setEnvironment] = useState<Environment>(Environment.test)
   const [characterId, setCharacterId] = useState('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
   const [sessionToken, setSessionToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -588,7 +587,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
         <div className="avatar-panel-controls">
           <StatusBar message={logger.statusMessage} type={logger.statusClass} />
           <ControlPanel
-            environment={environment}
+            environment={AvatarKit.configuration?.environment || Environment.test}
             characterId={characterId}
             sessionToken={sessionToken}
             isInitialized={globalSDKInitialized}
@@ -598,7 +597,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             isLoading={isLoading}
             isConnected={sdk.isConnected}
             currentPlaybackMode={(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
-            onEnvironmentChange={setEnvironment}
             onCharacterIdChange={setCharacterId}
             onSessionTokenChange={setSessionToken}
             onLoadCharacter={() => handleLoadCharacter()}

@@ -11,7 +11,7 @@
       <div class="avatar-panel-controls">
         <StatusBar :message="logger.statusMessage.value" :type="logger.statusClass.value" />
         <ControlPanel
-          :environment="environment"
+          :environment="AvatarKit.configuration?.environment || Environment.test"
           :character-id="characterId"
           :session-token="sessionToken"
           :is-initialized="globalSDKInitialized"
@@ -21,7 +21,6 @@
           :is-loading="isLoading"
           :is-connected="sdk.isConnected.value"
           :current-playback-mode="(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'"
-          @environment-change="handleEnvironmentChange"
           @character-id-change="handleCharacterIdChange"
           @session-token-change="handleSessionTokenChange"
           @load-character="handleLoadCharacter"
@@ -92,7 +91,6 @@ interface Props {
 const props = defineProps<Props>()
 
 // Configuration state
-const environment = ref<Environment>(Environment.test)
 const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
 const sessionToken = ref('')
 const isLoading = ref(false)
@@ -626,10 +624,6 @@ watch(() => props.globalSDKInitialized, (initialized) => {
 }, { immediate: true })
 
 // Event handlers
-const handleEnvironmentChange = (env: Environment) => {
-  environment.value = env
-}
-
 const handleCharacterIdChange = (id: string) => {
   characterId.value = id
 }

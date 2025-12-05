@@ -13,6 +13,7 @@
         <ControlPanel
           :environment="AvatarKit.configuration?.environment || Environment.test"
           :character-id="characterId"
+          :character-id-list="characterIdList"
           :session-token="sessionToken"
           :is-initialized="globalSDKInitialized"
           :avatar-view="sdk.avatarView.value"
@@ -91,6 +92,10 @@ interface Props {
 const props = defineProps<Props>()
 
 // Configuration state
+const characterIdList = ref([
+  'b7ba14f6-f9aa-4f89-9934-3753d75aee39',
+  '35692117-ece1-4f77-b014-02cfa22bfb7b'
+])
 const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
 const sessionToken = ref('')
 const isLoading = ref(false)
@@ -626,6 +631,9 @@ watch(() => props.globalSDKInitialized, (initialized) => {
 // Event handlers
 const handleCharacterIdChange = (id: string) => {
   characterId.value = id
+  if (id && !characterIdList.value.includes(id)) {
+    characterIdList.value.push(id)
+  }
 }
 
 const handleSessionTokenChange = (token: string) => {

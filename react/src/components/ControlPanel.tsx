@@ -2,12 +2,14 @@
  * Control panel component
  */
 
+import { useState } from 'react'
 import { Environment } from '../types'
-import { DrivingServiceMode, Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
+import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
 
 interface ControlPanelProps {
   environment: Environment
   characterId: string
+  characterIdList: string[]
   sessionToken: string
   isInitialized: boolean
   avatarView: any
@@ -26,7 +28,6 @@ interface ControlPanelProps {
   onInterrupt: () => void
   onDisconnect: () => void
   onUnloadCharacter: () => void
-  conversationState: 'idle' | 'playing' | null
   volume: number
   onVolumeChange: (volume: number) => void
 }
@@ -34,6 +35,7 @@ interface ControlPanelProps {
 export function ControlPanel({
   environment,
   characterId,
+  characterIdList,
   sessionToken,
   isInitialized,
   avatarView,
@@ -52,13 +54,24 @@ export function ControlPanel({
   onInterrupt,
   onDisconnect,
   onUnloadCharacter,
-  conversationState,
   volume,
   onVolumeChange,
 }: ControlPanelProps) {
+  const [showAddIdModal, setShowAddIdModal] = useState(false)
+  const [newCharacterId, setNewCharacterId] = useState('')
+  
   const envName = environment === SDKEnvironment.cn ? 'CN' : 
                  environment === SDKEnvironment.intl ? 'International' : 
                  'Test'
+  
+  const handleAddCharacterId = () => {
+    const trimmedId = newCharacterId.trim()
+    if (trimmedId) {
+      onCharacterIdChange(trimmedId)
+      setNewCharacterId('')
+      setShowAddIdModal(false)
+    }
+  }
   
   return (
     <div className="control-panel">
@@ -82,14 +95,40 @@ export function ControlPanel({
       </div>
 
       <div className="form-group">
-        <label>Character ID</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <label style={{ marginBottom: 0, display: 'inline-block', lineHeight: '22px' }}>Character ID</label>
+          <button
+            onClick={() => setShowAddIdModal(true)}
+            style={{
+              padding: 0,
+              margin: 0,
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              lineHeight: '22px',
+              width: '22px',
+              height: '22px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+            title="Add new Character ID"
+          >
+            ➕
+          </button>
+        </div>
         <select
           value={characterId}
           onChange={(e) => onCharacterIdChange(e.target.value)}
         >
           <option value="">Select Character ID</option>
-          <option value="b7ba14f6-f9aa-4f89-9934-3753d75aee39">b7ba14f6-f9aa-4f89-9934-3753d75aee39</option>
-          <option value="35692117-ece1-4f77-b014-02cfa22bfb7b">35692117-ece1-4f77-b014-02cfa22bfb7b</option>
+          {characterIdList.map((id) => (
+            <option key={id} value={id}>{id}</option>
+          ))}
         </select>
       </div>
 
@@ -136,6 +175,90 @@ export function ControlPanel({
           style={{ width: '100%', cursor: avatarView ? 'pointer' : 'not-allowed' }}
         />
       </div>
+      
+      {/* Add Character ID Modal */}
+      {showAddIdModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowAddIdModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '24px',
+              borderRadius: '12px',
+              minWidth: '400px',
+              maxWidth: '90%'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Add New Character ID</h3>
+            <input
+              type="text"
+              value={newCharacterId}
+              onChange={(e) => setNewCharacterId(e.target.value)}
+              placeholder="Enter Character ID"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '14px',
+                marginBottom: '16px',
+                boxSizing: 'border-box'
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddCharacterId()
+                } else if (e.key === 'Escape') {
+                  setShowAddIdModal(false)
+                }
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowAddIdModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f0f0f0',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddCharacterId}
+                disabled={!newCharacterId.trim()}
+                style={{
+                  padding: '8px 16px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: newCharacterId.trim() ? 'pointer' : 'not-allowed',
+                  opacity: newCharacterId.trim() ? 1 : 0.5
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -74,7 +74,10 @@ export class AvatarPanel {
                 <div id="environment-${this.panelId}" style="padding: 8px 12px; background: #f0f0f0; border-radius: 6px; color: #666; font-size: 14px;">-</div>
               </div>
               <div class="form-group">
-                <label>Character ID</label>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+                  <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Character ID</label>
+                  <button id="btnAddCharacterId-${this.panelId}" style="padding: 0; margin: 0; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0" title="Add new Character ID">➕</button>
+                </div>
                 <select id="characterId-${this.panelId}">
                   <option value="b7ba14f6-f9aa-4f89-9934-3753d75aee39">b7ba14f6-f9aa-4f89-9934-3753d75aee39</option>
                   <option value="35692117-ece1-4f77-b014-02cfa22bfb7b">35692117-ece1-4f77-b014-02cfa22bfb7b</option>
@@ -120,6 +123,18 @@ export class AvatarPanel {
             </div>
           </div>
         </div>
+        
+        <!-- Add Character ID Modal -->
+        <div id="addCharacterIdModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div class="modal-content" style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%;">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Add New Character ID</h3>
+            <input type="text" id="newCharacterIdInput-${this.panelId}" placeholder="Enter Character ID" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button id="btnCancelAddId-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+              <button id="btnConfirmAddId-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Add</button>
+            </div>
+          </div>
+        </div>
       </div>
     `
 
@@ -148,6 +163,11 @@ export class AvatarPanel {
       environmentDisplay: document.getElementById(`environment-${this.panelId}`),
       characterId: document.getElementById(`characterId-${this.panelId}`),
       sessionToken: document.getElementById(`sessionToken-${this.panelId}`),
+      btnAddCharacterId: document.getElementById(`btnAddCharacterId-${this.panelId}`),
+      addCharacterIdModal: document.getElementById(`addCharacterIdModal-${this.panelId}`),
+      newCharacterIdInput: document.getElementById(`newCharacterIdInput-${this.panelId}`),
+      btnCancelAddId: document.getElementById(`btnCancelAddId-${this.panelId}`),
+      btnConfirmAddId: document.getElementById(`btnConfirmAddId-${this.panelId}`),
     }
     
     // Debug: Log missing elements
@@ -294,6 +314,33 @@ export class AvatarPanel {
     if (this.elements.btnClearLog) {
       this.elements.btnClearLog.addEventListener('click', () => this.logger.clear())
     }
+    
+    // Add Character ID modal events
+    if (this.elements.btnAddCharacterId) {
+      this.elements.btnAddCharacterId.addEventListener('click', () => this.showAddCharacterIdModal())
+    }
+    if (this.elements.btnCancelAddId) {
+      this.elements.btnCancelAddId.addEventListener('click', () => this.hideAddCharacterIdModal())
+    }
+    if (this.elements.btnConfirmAddId) {
+      this.elements.btnConfirmAddId.addEventListener('click', () => this.handleAddCharacterId())
+    }
+    if (this.elements.addCharacterIdModal) {
+      this.elements.addCharacterIdModal.addEventListener('click', (e) => {
+        if (e.target === this.elements.addCharacterIdModal) {
+          this.hideAddCharacterIdModal()
+        }
+      })
+    }
+    if (this.elements.newCharacterIdInput) {
+      this.elements.newCharacterIdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          this.hideAddCharacterIdModal()
+        } else if (e.key === 'Enter') {
+          this.handleAddCharacterId()
+        }
+      })
+    }
   }
 
   toggleLogDrawer() {
@@ -309,6 +356,60 @@ export class AvatarPanel {
       this.elements.logDrawer.classList.remove('open')
       this.elements.btnToggleLogs.textContent = '📋 显示日志'
     }
+  }
+  
+  showAddCharacterIdModal() {
+    if (this.elements.addCharacterIdModal && this.elements.newCharacterIdInput) {
+      this.elements.addCharacterIdModal.style.display = 'flex'
+      this.elements.newCharacterIdInput.value = ''
+      setTimeout(() => {
+        this.elements.newCharacterIdInput.focus()
+      }, 100)
+    }
+  }
+  
+  hideAddCharacterIdModal() {
+    if (this.elements.addCharacterIdModal && this.elements.newCharacterIdInput) {
+      this.elements.addCharacterIdModal.style.display = 'none'
+      this.elements.newCharacterIdInput.value = ''
+    }
+  }
+  
+  handleAddCharacterId() {
+    if (!this.elements.newCharacterIdInput || !this.elements.characterId) {
+      return
+    }
+    
+    const newId = this.elements.newCharacterIdInput.value.trim()
+    if (!newId) {
+      return
+    }
+    
+    // Check if ID already exists
+    const select = this.elements.characterId
+    const existingOptions = Array.from(select.options).map(opt => opt.value)
+    
+    if (existingOptions.includes(newId)) {
+      this.logger.warn(`Character ID ${newId} already exists`)
+      this.updateStatus(`Character ID already exists`, 'warning')
+      return
+    }
+    
+    // Add new option to select
+    const option = document.createElement('option')
+    option.value = newId
+    option.textContent = newId
+    select.appendChild(option)
+    
+    // Select the new ID
+    select.value = newId
+    select.dispatchEvent(new Event('change'))
+    
+    this.logger.info(`Added new Character ID: ${newId}`)
+    this.updateStatus(`Added new Character ID: ${newId}`, 'success')
+    
+    // Close modal
+    this.hideAddCharacterIdModal()
   }
 
   async handleLoadCharacter() {

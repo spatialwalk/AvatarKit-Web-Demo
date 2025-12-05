@@ -26,10 +26,13 @@ interface AvatarPanelProps {
 
 export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarPanelProps) {
   // Configuration state
+  const [characterIdList, setCharacterIdList] = useState([
+    'b7ba14f6-f9aa-4f89-9934-3753d75aee39',
+    '35692117-ece1-4f77-b014-02cfa22bfb7b'
+  ])
   const [characterId, setCharacterId] = useState('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
   const [sessionToken, setSessionToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [conversationState, setConversationState] = useState<ConversationState | null>(null)
   const [volume, setVolume] = useState(100)
   
   // Operation state flags
@@ -597,7 +600,14 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             isLoading={isLoading}
             isConnected={sdk.isConnected}
             currentPlaybackMode={(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
-            onCharacterIdChange={setCharacterId}
+            characterIdList={characterIdList}
+            onCharacterIdChange={(id) => {
+              setCharacterId(id)
+              // Add to list if not exists
+              if (id && !characterIdList.includes(id)) {
+                setCharacterIdList([...characterIdList, id])
+              }
+            }}
             onSessionTokenChange={setSessionToken}
             onLoadCharacter={() => handleLoadCharacter()}
             onConnect={handleConnect}
@@ -606,7 +616,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             onInterrupt={handleInterrupt}
             onDisconnect={handleDisconnect}
             onUnloadCharacter={handleUnloadCharacter}
-            conversationState={conversationState}
             volume={volume}
             onVolumeChange={(v) => {
               setVolume(v)

@@ -19,11 +19,19 @@
     </div>
 
     <div class="form-group">
-      <label>Character ID</label>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Character ID</label>
+        <button
+          @click="showAddIdModal = true"
+          style="padding: 0; margin: 0; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0"
+          title="Add new Character ID"
+        >
+          ➕
+        </button>
+      </div>
       <select :value="characterId" @change="handleCharacterIdChange">
         <option value="">Select Character ID</option>
-        <option value="b7ba14f6-f9aa-4f89-9934-3753d75aee39">b7ba14f6-f9aa-4f89-9934-3753d75aee39</option>
-        <option value="35692117-ece1-4f77-b014-02cfa22bfb7b">35692117-ece1-4f77-b014-02cfa22bfb7b</option>
+        <option v-for="id in characterIdList" :key="id" :value="id">{{ id }}</option>
       </select>
     </div>
 
@@ -68,16 +76,44 @@
         style="width: 100%; cursor: pointer;"
       />
     </div>
+    
+    <!-- Add Character ID Modal -->
+    <div
+      v-if="showAddIdModal"
+      class="modal-overlay"
+      @click="showAddIdModal = false"
+    >
+      <div class="modal-content" @click.stop>
+        <h3>Add New Character ID</h3>
+        <input
+          v-model="newCharacterId"
+          type="text"
+          placeholder="Enter Character ID"
+          @keydown.enter="handleAddCharacterId"
+          @keydown.esc="showAddIdModal = false"
+          autofocus
+        />
+        <div class="modal-actions">
+          <button @click="showAddIdModal = false">Cancel</button>
+          <button @click="handleAddCharacterId" :disabled="!newCharacterId.trim()">Add</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Environment } from '../types'
 import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
+
+const showAddIdModal = ref(false)
+const newCharacterId = ref('')
 
 const props = defineProps<{
   environment: Environment
   characterId: string
+  characterIdList: string[]
   sessionToken: string
   isInitialized: boolean
   avatarView: any
@@ -107,6 +143,15 @@ const emit = defineEmits<{
 
 const handleCharacterIdChange = (e: Event) => {
   emit('characterIdChange', (e.target as HTMLSelectElement).value)
+}
+
+const handleAddCharacterId = () => {
+  const trimmedId = newCharacterId.value.trim()
+  if (trimmedId) {
+    emit('characterIdChange', trimmedId)
+    newCharacterId.value = ''
+    showAddIdModal.value = false
+  }
 }
 
 const handleSessionTokenChange = (e: Event) => {
@@ -240,6 +285,69 @@ button:disabled {
   color: #6b7280 !important;
   transform: none !important;
   box-shadow: none !important;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  min-width: 400px;
+  max-width: 90%;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  width: auto;
+  margin-bottom: 0;
+  padding: 8px 16px;
+}
+
+.modal-actions button:first-child {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modal-actions button:last-child {
+  background: #667eea;
+  color: white;
+}
+
+.modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
 

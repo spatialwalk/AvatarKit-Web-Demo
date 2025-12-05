@@ -100,6 +100,7 @@ npm run dev
 - Pure JavaScript, no framework dependencies
 - Simple and intuitive code structure
 - Suitable for quick learning and testing
+- Add custom character IDs dynamically via ➕ button
 
 ### 2. Vue 3 Example (`vue/`)
 
@@ -127,6 +128,7 @@ npm run dev
 - Multi-character panel support (up to 4 simultaneous instances)
 - Global SDK initialization pattern
 - Independent panel state management
+- Add custom character IDs dynamically via ➕ button
 
 ### 3. React Example (`react/`)
 
@@ -154,6 +156,7 @@ npm run dev
 - Multi-character panel support (up to 4 simultaneous instances)
 - Global SDK initialization pattern
 - Independent panel state management
+- Add custom character IDs dynamically via ➕ button
 
 ### 4. Next.js iframe Example (`nextjs/`)
 
@@ -183,6 +186,7 @@ npm run dev          # Starts both services automatically
 - postMessage communication between Next.js and iframe
 - TypeScript support
 - Production-ready configuration
+- Add custom character IDs dynamically via ➕ button
 
 **Key Considerations:**
 - ✅ SDK runs in separate iframe (Vite app) to avoid packaging conflicts
@@ -226,6 +230,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)
 
 2. **Enter Character ID** - Specify the character to load
    - Get character ID from SDK management platform
+   - Or click the ➕ button next to "Character ID" to add a custom character ID
 
 3. **Load Character** - Download and initialize character resources
    - SDK will automatically download character models and textures
@@ -259,6 +264,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
 
 2. **Enter Character ID** - Specify the character to load
    - Get character ID from SDK management platform
+   - Or click the ➕ button next to "Character ID" to add a custom character ID
 
 3. **Load Character** - Download and initialize character resources
    - SDK will automatically download character models and textures
@@ -292,6 +298,12 @@ If the server requires authentication, provide a valid Session Token:
 ### Character ID
 
 Character ID can be obtained from the SDK management platform and is used to identify the virtual character to load.
+
+**Adding Custom Character IDs:**
+- Click the ➕ button next to the "Character ID" label to add a new character ID
+- Enter the character ID in the popup modal
+- The new ID will be added to the dropdown list and automatically selected
+- Added IDs are temporary and only persist for the current session (not saved after page refresh)
 
 ## 🔧 Technical Details
 

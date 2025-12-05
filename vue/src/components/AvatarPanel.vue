@@ -14,7 +14,6 @@
           :environment="AvatarKit.configuration?.environment || Environment.test"
           :character-id="characterId"
           :character-id-list="characterIdList"
-          :session-token="sessionToken"
           :is-initialized="globalSDKInitialized"
           :avatar-view="sdk.avatarView.value"
           :avatar-controller="sdk.avatarController.value"
@@ -23,7 +22,6 @@
           :is-connected="sdk.isConnected.value"
           :current-playback-mode="(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'"
           @character-id-change="handleCharacterIdChange"
-          @session-token-change="handleSessionTokenChange"
           @load-character="handleLoadCharacter"
           @connect="handleConnect"
           @start-record="handleStartRecord"
@@ -97,7 +95,6 @@ const characterIdList = ref([
   '35692117-ece1-4f77-b014-02cfa22bfb7b'
 ])
 const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
-const sessionToken = ref('')
 const isLoading = ref(false)
 const conversationState = ref<ConversationState | null>(null)
 const volume = ref(100)
@@ -635,11 +632,6 @@ const handleCharacterIdChange = (id: string) => {
     characterIdList.value.push(id)
   }
 }
-
-const handleSessionTokenChange = (token: string) => {
-  sessionToken.value = token
-}
-
 
 // Cleanup on component unmount
 onUnmounted(() => {

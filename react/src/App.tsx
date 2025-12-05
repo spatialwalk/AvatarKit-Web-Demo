@@ -18,6 +18,7 @@ function App() {
   const [sdkInitializing, setSdkInitializing] = useState(false)
   const [currentDrivingServiceMode, setCurrentDrivingServiceMode] = useState<DrivingServiceMode | null>(null)
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>(Environment.test)
+  const [sessionToken, setSessionToken] = useState('')
 
   // 检查是否已经初始化
   useEffect(() => {
@@ -39,6 +40,12 @@ function App() {
         environment: selectedEnvironment,
         drivingServiceMode: mode
       })
+      
+      // Set Session Token if provided
+      if (sessionToken.trim()) {
+        AvatarKit.setSessionToken(sessionToken.trim())
+      }
+      
       setCurrentDrivingServiceMode(mode)
       setGlobalSDKInitialized(true)
     } catch (error) {
@@ -65,11 +72,12 @@ function App() {
       <div className="header">
         <h1>🚀 SPAvatar SDK - React Example (Multi-Character)</h1>
         <p>支持同时显示多个角色视图</p>
-        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
+        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', position: 'relative' }}>
           {!globalSDKInitialized && !sdkInitializing && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '100%' }}>
-              <span className="arrow-pointing-right" style={{ color: '#ff0000', fontSize: '48px', fontWeight: 'bold', lineHeight: '1', flexShrink: 0 }}>→</span>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+            <>
+              {/* First row: Environment and Session Token */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '100%' }}>
+                <span className="arrow-pointing-right" style={{ color: '#ff0000', fontSize: '48px', fontWeight: 'bold', lineHeight: '1', flexShrink: 0 }}>→</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <label style={{ color: 'white', fontSize: '14px', whiteSpace: 'nowrap' }}>Environment:</label>
                   <select
@@ -82,6 +90,20 @@ function App() {
                     <option value={Environment.intl}>International</option>
                   </select>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <label style={{ color: 'white', fontSize: '14px', whiteSpace: 'nowrap' }}>Session Token:</label>
+                  <input
+                    type="text"
+                    value={sessionToken}
+                    onChange={(e) => setSessionToken(e.target.value)}
+                    placeholder="Session Token (optional)"
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: 'white', color: '#333', minWidth: '200px', flexShrink: 0 }}
+                    disabled={globalSDKInitialized}
+                  />
+                </div>
+              </div>
+              {/* Second row: Init buttons */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
                 <button 
                   onClick={() => handleInitSDK(DrivingServiceMode.sdk)}
                   className="btn-init-sdk"
@@ -95,7 +117,7 @@ function App() {
                   🔧 初始化 SDK (Host Mode)
                 </button>
               </div>
-            </div>
+            </>
           )}
           {sdkInitializing && (
             <p style={{ color: '#ffeb3b', margin: 0 }}>⏳ 正在初始化 SDK...</p>

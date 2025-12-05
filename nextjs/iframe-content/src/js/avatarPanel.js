@@ -83,10 +83,10 @@ export class AvatarPanel {
                   <option value="35692117-ece1-4f77-b014-02cfa22bfb7b">35692117-ece1-4f77-b014-02cfa22bfb7b</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>Session Token</label>
-                <input type="text" id="sessionToken-${this.panelId}" placeholder="Enter Session Token (optional)">
-              </div>
+               <div class="form-group">
+                 <label>Session Token</label>
+                 <div id="sessionToken-${this.panelId}" style="padding: 8px 12px; background: #f0f0f0; border-radius: 6px; color: #666; font-size: 14px;">-</div>
+               </div>
               <button id="btnLoadCharacter-${this.panelId}" class="btn btn-primary" disabled>1. Load Character</button>
               <button id="btnConnect-${this.panelId}" class="btn btn-primary" disabled>2. Connect Service</button>
               <button id="btnStartRecord-${this.panelId}" class="btn btn-primary" disabled>3. Start Recording</button>
@@ -192,11 +192,11 @@ export class AvatarPanel {
       this.updateStatus = (message, type) => updateStatus(this.elements.status, message, type)
     }
 
-    // 初始化时检查全局 SDK 状态并更新按钮
-    this.checkSDKStatus()
-    
-    // 更新环境显示
-    this.updateEnvironmentDisplay()
+     // 初始化时检查全局 SDK 状态并更新按钮
+     this.checkSDKStatus()
+     
+     // 更新环境显示和 Session Token 显示
+     this.updateEnvironmentDisplay()
     
     // Bind events after all elements are initialized
     this.bindEvents()
@@ -245,12 +245,12 @@ export class AvatarPanel {
         clearInterval(this.checkInterval)
         this.checkInterval = null
       }
-      // 启用加载按钮
-      this.elements.btnLoadCharacter.disabled = false
-      // 更新环境显示
-      this.updateEnvironmentDisplay()
-    }
-  }
+       // 启用加载按钮
+       this.elements.btnLoadCharacter.disabled = false
+       // 更新环境显示和 Session Token 显示
+       this.updateEnvironmentDisplay()
+     }
+   }
   
   // 更新环境显示
   async updateEnvironmentDisplay() {
@@ -269,6 +269,26 @@ export class AvatarPanel {
       }
     } catch (error) {
       this.elements.environmentDisplay.textContent = '-'
+    }
+    
+    // 同时更新 Session Token 显示
+    this.updateSessionTokenDisplay()
+  }
+  
+  // 更新 Session Token 显示
+  async updateSessionTokenDisplay() {
+    if (!this.elements.sessionToken) return
+    
+    try {
+      const { AvatarKit } = await import('@spatialwalk/avatarkit')
+      if (AvatarKit.isInitialized && AvatarKit.configuration) {
+        const token = AvatarKit.configuration.sessionToken || ''
+        this.elements.sessionToken.textContent = token || '-'
+      } else {
+        this.elements.sessionToken.textContent = '-'
+      }
+    } catch (error) {
+      this.elements.sessionToken.textContent = '-'
     }
   }
 

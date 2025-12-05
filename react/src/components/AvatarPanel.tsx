@@ -31,7 +31,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     '35692117-ece1-4f77-b014-02cfa22bfb7b'
   ])
   const [characterId, setCharacterId] = useState('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
-  const [sessionToken, setSessionToken] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [volume, setVolume] = useState(100)
   
@@ -592,7 +591,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
           <ControlPanel
             environment={AvatarKit.configuration?.environment || Environment.test}
             characterId={characterId}
-            sessionToken={sessionToken}
             isInitialized={globalSDKInitialized}
             avatarView={sdk.avatarView}
             avatarController={sdk.avatarController}
@@ -608,7 +606,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
                 setCharacterIdList([...characterIdList, id])
               }
             }}
-            onSessionTokenChange={setSessionToken}
             onLoadCharacter={() => handleLoadCharacter()}
             onConnect={handleConnect}
             onStartRecord={handleStartRecord}

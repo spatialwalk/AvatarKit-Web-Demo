@@ -3,33 +3,43 @@
     <div class="header">
       <h1>🚀 SPAvatar SDK - Vue Example (Multi-Character)</h1>
       <p>支持同时显示多个角色视图</p>
-      <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative">
+      <div style="margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative">
         <template v-if="!globalSDKInitialized && !sdkInitializing">
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap">
+          <!-- First row: Environment and Session Token -->
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center">
             <span class="arrow-pointing-right" style="color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; flex-shrink: 0">→</span>
-            <div style="display: flex; gap: 12px; flex-wrap: nowrap; align-items: center">
-              <label style="color: white; font-size: 14px; margin-right: 4px">Environment:</label>
-              <select
-                v-model="selectedEnvironment"
-                style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer"
-              >
-                <option :value="Environment.test">Test</option>
-                <option :value="Environment.cn">CN</option>
-                <option :value="Environment.intl">International</option>
-              </select>
-              <button 
-                @click="() => handleInitSDK(DrivingServiceMode.sdk)"
-                class="btn-init-sdk"
-              >
-                🔧 初始化 SDK (SDK Mode)
-              </button>
-              <button 
-                @click="() => handleInitSDK(DrivingServiceMode.host)"
-                class="btn-init-sdk"
-              >
-                🔧 初始化 SDK (Host Mode)
-              </button>
-            </div>
+            <label style="color: white; font-size: 14px; margin-right: 4px">Environment:</label>
+            <select
+              v-model="selectedEnvironment"
+              style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer"
+            >
+              <option :value="Environment.test">Test</option>
+              <option :value="Environment.cn">CN</option>
+              <option :value="Environment.intl">International</option>
+            </select>
+            <label style="color: white; font-size: 14px; margin-right: 4px">Session Token:</label>
+            <input
+              v-model="sessionToken"
+              type="text"
+              placeholder="Session Token (optional)"
+              style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 200px; flex-shrink: 0"
+              :disabled="globalSDKInitialized"
+            >
+          </div>
+          <!-- Second row: Init buttons -->
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: center">
+            <button 
+              @click="() => handleInitSDK(DrivingServiceMode.sdk)"
+              class="btn-init-sdk"
+            >
+              🔧 初始化 SDK (SDK Mode)
+            </button>
+            <button 
+              @click="() => handleInitSDK(DrivingServiceMode.host)"
+              class="btn-init-sdk"
+            >
+              🔧 初始化 SDK (Host Mode)
+            </button>
           </div>
         </template>
         <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ 正在初始化 SDK...</p>
@@ -74,6 +84,7 @@ const globalSDKInitialized = ref(false)
 const sdkInitializing = ref(false)
 const currentDrivingServiceMode = ref<DrivingServiceMode | null>(null)
 const selectedEnvironment = ref<Environment>(Environment.test)
+const sessionToken = ref('')
 
 // 检查是否已经初始化
 onMounted(() => {
@@ -95,6 +106,12 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
       environment: selectedEnvironment.value,
       drivingServiceMode: mode
     })
+    
+    // Set Session Token if provided
+    if (sessionToken.value.trim()) {
+      AvatarKit.setSessionToken(sessionToken.value.trim())
+    }
+    
     currentDrivingServiceMode.value = mode
     globalSDKInitialized.value = true
   } catch (error) {

@@ -10,12 +10,9 @@
 
     <div class="form-group">
       <label>Session Token</label>
-      <input
-        :value="sessionToken"
-        type="text"
-        placeholder="Enter Session Token (optional)"
-        @input="handleSessionTokenChange"
-      >
+      <span style="color: #666; font-size: 14px; padding: 8px 12px; background: #f0f0f0; border-radius: 6px; display: inline-block; min-width: 200px">
+        {{ (AvatarKit.configuration as any)?.sessionToken || '-' }}
+      </span>
     </div>
 
     <div class="form-group">
@@ -105,7 +102,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Environment } from '../types'
-import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
+import { Environment as SDKEnvironment, AvatarKit } from '@spatialwalk/avatarkit'
 
 const showAddIdModal = ref(false)
 const newCharacterId = ref('')
@@ -114,7 +111,6 @@ const props = defineProps<{
   environment: Environment
   characterId: string
   characterIdList: string[]
-  sessionToken: string
   isInitialized: boolean
   avatarView: any
   avatarController: any
@@ -129,7 +125,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   characterIdChange: [id: string]
-  sessionTokenChange: [token: string]
   init: []
   loadCharacter: []
   connect: []
@@ -152,10 +147,6 @@ const handleAddCharacterId = () => {
     newCharacterId.value = ''
     showAddIdModal.value = false
   }
-}
-
-const handleSessionTokenChange = (e: Event) => {
-  emit('sessionTokenChange', (e.target as HTMLInputElement).value)
 }
 
 const onInit = props.init ? () => emit('init') : undefined

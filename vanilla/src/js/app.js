@@ -68,6 +68,15 @@ export class App {
         environment: selectedEnvironment,
         drivingServiceMode
       })
+      
+      // Set Session Token if provided
+      const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
+      const sessionToken = sessionTokenInput ? sessionTokenInput.value.trim() : ''
+      if (sessionToken) {
+        AvatarKit.setSessionToken(sessionToken)
+        console.log('Session Token set')
+      }
+      
       this.globalSDKInitialized = true
       this.currentDrivingServiceMode = mode
       this.updateSDKStatusUI()
@@ -111,6 +120,14 @@ export class App {
       if (envLabel && envLabel.tagName === 'LABEL') {
         envLabel.style.display = 'none'
       }
+      const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
+      const sessionTokenLabel = sessionTokenInput ? sessionTokenInput.previousElementSibling : null
+      if (sessionTokenInput) {
+        sessionTokenInput.style.display = 'none'
+      }
+      if (sessionTokenLabel && sessionTokenLabel.tagName === 'LABEL') {
+        sessionTokenLabel.style.display = 'none'
+      }
       // 通知所有面板更新 SDK 状态
       this.updateAllPanelsSDKStatus()
       this.updateHeaderAddButton()
@@ -131,13 +148,17 @@ export class App {
     if (!header) return
 
     const buttonContainer = document.createElement('div')
-    buttonContainer.style.cssText = 'margin-top: 12px; display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;'
+    buttonContainer.style.cssText = 'margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px;'
     
     // Create arrow pointing to init button
     const arrow = document.createElement('span')
     arrow.className = 'arrow-pointing-right'
     arrow.style.cssText = 'color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; display: ' + (this.globalSDKInitialized ? 'none' : 'inline-block') + ';'
     arrow.textContent = '→'
+    
+    // First row: Environment and Session Token
+    const firstRow = document.createElement('div')
+    firstRow.style.cssText = 'display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;'
     
     // Create environment selector
     const envLabel = document.createElement('label')
@@ -153,6 +174,22 @@ export class App {
       <option value="cn">CN</option>
       <option value="intl">International</option>
     `
+    
+    // Create Session Token input
+    const sessionTokenLabel = document.createElement('label')
+    sessionTokenLabel.textContent = 'Session Token:'
+    sessionTokenLabel.style.cssText = 'color: white; font-size: 14px; margin-right: 4px;'
+    
+    const sessionTokenInput = document.createElement('input')
+    sessionTokenInput.id = 'sdkSessionTokenInput'
+    sessionTokenInput.type = 'text'
+    sessionTokenInput.placeholder = 'Session Token (optional)'
+    sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 200px;'
+    sessionTokenInput.disabled = this.globalSDKInitialized
+    
+    // Second row: Init buttons
+    const secondRow = document.createElement('div')
+    secondRow.style.cssText = 'display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;'
     
     const initButtonSDK = document.createElement('button')
     initButtonSDK.className = 'btn-init-sdk'
@@ -182,13 +219,18 @@ export class App {
       this.updateHeaderAddButton()
     })
     
-    buttonContainer.appendChild(arrow)
+    // Build structure
     if (!this.globalSDKInitialized) {
-      buttonContainer.appendChild(envLabel)
-      buttonContainer.appendChild(envSelect)
+      firstRow.appendChild(arrow)
+      firstRow.appendChild(envLabel)
+      firstRow.appendChild(envSelect)
+      firstRow.appendChild(sessionTokenLabel)
+      firstRow.appendChild(sessionTokenInput)
+      secondRow.appendChild(initButtonSDK)
+      secondRow.appendChild(initButtonHost)
     }
-    buttonContainer.appendChild(initButtonSDK)
-    buttonContainer.appendChild(initButtonHost)
+    buttonContainer.appendChild(firstRow)
+    buttonContainer.appendChild(secondRow)
     buttonContainer.appendChild(statusText)
     buttonContainer.appendChild(addPanelButton)
     header.appendChild(buttonContainer)

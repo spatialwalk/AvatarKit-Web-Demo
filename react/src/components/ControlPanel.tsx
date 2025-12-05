@@ -4,13 +4,12 @@
 
 import { useState } from 'react'
 import { Environment } from '../types'
-import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
+import { Environment as SDKEnvironment, AvatarKit } from '@spatialwalk/avatarkit'
 
 interface ControlPanelProps {
   environment: Environment
   characterId: string
   characterIdList: string[]
-  sessionToken: string
   isInitialized: boolean
   avatarView: any
   avatarController: any
@@ -19,7 +18,6 @@ interface ControlPanelProps {
   isConnected: boolean
   currentPlaybackMode: 'network' | 'external'
   onCharacterIdChange: (id: string) => void
-  onSessionTokenChange: (token: string) => void
   onInit?: () => void
   onLoadCharacter: () => void
   onConnect: () => void
@@ -36,7 +34,6 @@ export function ControlPanel({
   environment,
   characterId,
   characterIdList,
-  sessionToken,
   isInitialized,
   avatarView,
   avatarController,
@@ -45,7 +42,6 @@ export function ControlPanel({
   isConnected,
   currentPlaybackMode,
   onCharacterIdChange,
-  onSessionTokenChange,
   onInit,
   onLoadCharacter,
   onConnect,
@@ -86,12 +82,9 @@ export function ControlPanel({
 
       <div className="form-group">
         <label>Session Token</label>
-        <input
-          type="text"
-          value={sessionToken}
-          onChange={(e) => onSessionTokenChange(e.target.value)}
-          placeholder="Enter Session Token (optional)"
-        />
+        <span style={{ color: '#666', fontSize: '14px', padding: '8px 12px', background: '#f0f0f0', borderRadius: '6px', display: 'inline-block', minWidth: '200px' }}>
+          {(AvatarKit.configuration as any)?.sessionToken || '-'}
+        </span>
       </div>
 
       <div className="form-group">

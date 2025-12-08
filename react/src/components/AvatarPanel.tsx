@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAvatarSDK } from '../hooks/useAvatarSDK'
 import { Environment } from '../types'
-import { AvatarKit, DrivingServiceMode, AvatarManager, ConversationState } from '@spatialwalk/avatarkit'
+import { AvatarSDK, DrivingServiceMode, AvatarManager, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../hooks/useLogger'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
 import { StatusBar } from './StatusBar'
@@ -33,6 +33,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
   const [characterId, setCharacterId] = useState('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
   const [isLoading, setIsLoading] = useState(false)
   const [volume, setVolume] = useState(100)
+  const [conversationState, setConversationState] = useState<ConversationState | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
   
   // Operation state flags
   const [isProcessing, setIsProcessing] = useState({
@@ -96,7 +98,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       setIsLoading(true)
       
       // Get current driving service mode from SDK configuration
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       const modeName = currentMode === DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
       logger.updateStatus(`Loading character (${modeName})...`, 'info')
       logger.log('info', `Starting to load character: ${characterId} (mode: ${modeName})`)
@@ -156,7 +158,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     if (currentMode !== DrivingServiceMode.sdk) {
       logger.updateStatus('Connect is only available in SDK mode (network mode)', 'warning')
       return
@@ -200,7 +202,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     if (currentMode === DrivingServiceMode.sdk && !sdk.isConnected) {
       logger.updateStatus('Please connect to service first', 'warning')
       return
@@ -237,7 +239,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     const currentPlaybackMode = (currentMode === DrivingServiceMode.sdk) ? 'network' : 'external'
 
     if (currentPlaybackMode === 'network') {
@@ -449,7 +451,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
     try {
       setIsProcessing(prev => ({ ...prev, interrupt: true }))
       
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       if (currentMode === DrivingServiceMode.host) {
         shouldContinueSendingDataRef.current = false
       }
@@ -474,7 +476,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       return
     }
 
-    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     if (currentMode !== DrivingServiceMode.sdk) {
       logger.updateStatus('Disconnect is only available in SDK mode (network mode)', 'warning')
       return
@@ -519,7 +521,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
       setIsProcessing(prev => ({ ...prev, unload: true }))
 
       // Stop external data playback if active
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       if (currentMode === DrivingServiceMode.host) {
         shouldContinueSendingDataRef.current = false
       }
@@ -589,7 +591,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
         <div className="avatar-panel-controls">
           <StatusBar message={logger.statusMessage} type={logger.statusClass} />
           <ControlPanel
-            environment={AvatarKit.configuration?.environment || Environment.test}
+            environment={AvatarSDK.configuration?.environment || Environment.test}
             characterId={characterId}
             isInitialized={globalSDKInitialized}
             avatarView={sdk.avatarView}
@@ -597,7 +599,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove }: AvatarP
             isRecording={audioRecorder.isRecording}
             isLoading={isLoading}
             isConnected={sdk.isConnected}
-            currentPlaybackMode={(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
+            currentPlaybackMode={(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
             characterIdList={characterIdList}
             onCharacterIdChange={(id) => {
               setCharacterId(id)

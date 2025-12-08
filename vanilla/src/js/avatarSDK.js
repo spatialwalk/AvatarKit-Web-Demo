@@ -9,10 +9,9 @@
 export class AvatarSDKManager {
   constructor(logger) {
     this.logger = logger
-    this.AvatarKit = null
+    this.AvatarSDK = null
     this.AvatarManager = null
     this.AvatarView = null
-    this.AvatarPlaybackMode = null
     this.avatarManager = null
     this.avatarView = null
     this.isInitialized = false
@@ -29,10 +28,9 @@ export class AvatarSDKManager {
       this.logger.info('Loading SDK...')
       // Use npm-installed SDK
       const sdk = await import('@spatialwalk/avatarkit')
-      this.AvatarKit = sdk.AvatarKit
+      this.AvatarSDK = sdk.AvatarSDK
       this.AvatarManager = sdk.AvatarManager
       this.AvatarView = sdk.AvatarView
-      this.AvatarPlaybackMode = sdk.AvatarPlaybackMode
       
       this.logger.success('SDK loaded successfully')
       return true
@@ -50,7 +48,7 @@ export class AvatarSDKManager {
    * @returns {Promise<void>}
    */
   async initialize(environment, sessionToken = null) {
-    if (!this.AvatarKit || !this.AvatarManager) {
+    if (!this.AvatarSDK || !this.AvatarManager) {
       const loaded = await this.loadSDK()
       if (!loaded) {
         throw new Error('SDK not loaded')
@@ -60,13 +58,13 @@ export class AvatarSDKManager {
     this.logger.info('Starting SDK initialization')
     this.logger.info(`Using environment: ${environment}`)
 
-    await this.AvatarKit.initialize('demo', {
+    await this.AvatarSDK.initialize('demo', {
       environment,
       logLevel: 'basic',
     })
 
     if (sessionToken) {
-      this.AvatarKit.setSessionToken(sessionToken)
+      this.AvatarSDK.setSessionToken(sessionToken)
       this.logger.info('Session Token set')
     }
 
@@ -127,7 +125,7 @@ export class AvatarSDKManager {
       throw new Error(`Invalid container: expected HTMLElement, got ${typeof canvasContainer}`)
     }
 
-    // Create view (playback mode is determined by drivingServiceMode in AvatarKit.initialize())
+    // Create view (playback mode is determined by drivingServiceMode in AvatarSDK.initialize())
     try {
       this.avatarView = new this.AvatarView(avatar, canvasContainer)
     } catch (error) {
@@ -308,5 +306,30 @@ export class AvatarSDKManager {
       return this.avatarView.controller.getCurrentConversationId()
     }
     return null
+  }
+
+  /**
+   * Set audio volume
+   * @param {number} volume - Volume (0.0 to 1.0)
+   */
+  setVolume(volume) {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    if (typeof volume !== 'number' || volume < 0 || volume > 1) {
+      throw new Error('Volume must be a number between 0.0 and 1.0')
+    }
+    this.avatarView.controller.setVolume(volume)
+  }
+
+  /**
+   * Get current audio volume
+   * @returns {number}
+   */
+  getVolume() {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    return this.avatarView.controller.getVolume()
   }
 }

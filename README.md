@@ -213,7 +213,7 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.27` or later (automatically installed with `npm install`)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.28` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
@@ -308,13 +308,13 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
-- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.27`
+- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.28`
 - **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI.
 - **Initialization Modes**: 
   - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
   - **Host Mode**: Pre-recorded audio and animation files, client-side playback
     - ⚠️ **Requires SPAvatar Server-side SDK**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
-  - **Mode Selection**: The mode is selected during SDK initialization via `AvatarKit.initialize()`, not when loading characters
+  - **Mode Selection**: The mode is selected during SDK initialization via `AvatarSDK.initialize()`, not when loading characters
 - **Key API Changes (v22)**: 
   - `onAvatarState` → `onConversationState` (callback renamed)
   - `AvatarState` → `ConversationState` (enum renamed, values: `idle`, `playing`)
@@ -375,9 +375,9 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm (SDK version 1.0.0-beta.27 or later):
+A: Install via npm (SDK version 1.0.0-beta.28 or later):
 ```bash
-npm install @spatialwalk/avatarkit@^1.0.0-beta.27
+npm install @spatialwalk/avatarkit@^1.0.0-beta.28
 ```
 
 The examples automatically install the correct version when you run `npm install`.
@@ -405,7 +405,7 @@ A: Modify the `server.port` configuration in each example's `vite.config.ts`.
 
 A: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files for demonstration purposes. In production:
 
-1. Initialize SDK in Host Mode: `AvatarKit.initialize('demo', { drivingServiceMode: DrivingServiceMode.host })`
+1. Initialize SDK in Host Mode: `AvatarSDK.initialize('demo', { drivingServiceMode: DrivingServiceMode.host })`
 2. Integrate the SPAvatar server-side SDK into your backend service
 3. Use the server-side SDK to generate animation keyframes from your audio files
 4. Store the generated keyframes (FLAME parameter sequences) along with the audio files

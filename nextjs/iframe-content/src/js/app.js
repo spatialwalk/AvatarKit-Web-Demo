@@ -4,7 +4,7 @@
  */
 
 import { AvatarPanel } from './avatarPanel.js'
-import { AvatarKit, Environment } from '@spatialwalk/avatarkit'
+import { AvatarSDK, Environment } from '@spatialwalk/avatarkit'
 
 /**
  * Main application class
@@ -84,7 +84,7 @@ export class App {
 
   checkSDKStatus() {
     // Check if SDK is already initialized (might be initialized elsewhere)
-    if (AvatarKit.isInitialized) {
+    if (AvatarSDK.isInitialized) {
       this.globalSDKInitialized = true
       this.updateSDKStatusUI()
       // 通知所有面板更新状态
@@ -94,7 +94,7 @@ export class App {
 
   async initializeGlobalSDK(mode) {
     const statusText = document.getElementById('sdkStatusText')
-    if (AvatarKit.isInitialized || this.sdkInitializing) {
+    if (AvatarSDK.isInitialized || this.sdkInitializing) {
       return
     }
     
@@ -117,7 +117,7 @@ export class App {
                                   envValue === 'intl' ? Environment.intl : 
                                   Environment.test
       
-      await AvatarKit.initialize('demo', { 
+      await AvatarSDK.initialize('demo', { 
         environment: selectedEnvironment,
         drivingServiceMode
       })
@@ -126,7 +126,7 @@ export class App {
       const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
       const sessionToken = sessionTokenInput ? sessionTokenInput.value.trim() : ''
       if (sessionToken) {
-        AvatarKit.setSessionToken(sessionToken)
+        AvatarSDK.setSessionToken(sessionToken)
         console.log('Session Token set')
       }
       
@@ -153,7 +153,7 @@ export class App {
     if (this.globalSDKInitialized) {
       if (statusText) {
         const modeName = this.currentDrivingServiceMode === 'host' ? 'Host Mode' : 'SDK Mode'
-        const sdk = AvatarKit.configuration
+        const sdk = AvatarSDK.configuration
         const envName = sdk?.environment === Environment.cn ? 'CN' : 
                        sdk?.environment === Environment.intl ? 'International' : 
                        'Test'

@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import AvatarPanel from './components/AvatarPanel.vue'
-import { AvatarKit, Environment, DrivingServiceMode } from '@spatialwalk/avatarkit'
+import { AvatarSDK, Environment, DrivingServiceMode } from '@spatialwalk/avatarkit'
 
 interface Panel {
   id: string
@@ -88,28 +88,28 @@ const sessionToken = ref('')
 
 // 检查是否已经初始化
 onMounted(() => {
-  if (AvatarKit.isInitialized) {
+  if (AvatarSDK.isInitialized) {
     globalSDKInitialized.value = true
-    currentDrivingServiceMode.value = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    currentDrivingServiceMode.value = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
   }
 })
 
 // 手动初始化 SDK
 const handleInitSDK = async (mode: DrivingServiceMode) => {
-  if (AvatarKit.isInitialized || sdkInitializing.value) {
+  if (AvatarSDK.isInitialized || sdkInitializing.value) {
     return
   }
 
   try {
     sdkInitializing.value = true
-    await AvatarKit.initialize('demo', { 
+    await AvatarSDK.initialize('demo', { 
       environment: selectedEnvironment.value,
       drivingServiceMode: mode
     })
     
     // Set Session Token if provided
     if (sessionToken.value.trim()) {
-      AvatarKit.setSessionToken(sessionToken.value.trim())
+      AvatarSDK.setSessionToken(sessionToken.value.trim())
     }
     
     currentDrivingServiceMode.value = mode

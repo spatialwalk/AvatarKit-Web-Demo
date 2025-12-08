@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { AvatarPanel } from './components/AvatarPanel'
-import { AvatarKit, Environment, DrivingServiceMode } from '@spatialwalk/avatarkit'
+import { AvatarSDK, Environment, DrivingServiceMode } from '@spatialwalk/avatarkit'
 import './App.css'
 
 interface Panel {
@@ -22,28 +22,28 @@ function App() {
 
   // 检查是否已经初始化
   useEffect(() => {
-    if (AvatarKit.isInitialized) {
+    if (AvatarSDK.isInitialized) {
       setGlobalSDKInitialized(true)
-      setCurrentDrivingServiceMode(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk)
+      setCurrentDrivingServiceMode(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk)
     }
   }, [])
 
   // 手动初始化 SDK (SDK Mode)
   const handleInitSDK = async (mode: DrivingServiceMode) => {
-    if (AvatarKit.isInitialized || sdkInitializing) {
+    if (AvatarSDK.isInitialized || sdkInitializing) {
       return
     }
     
     try {
       setSdkInitializing(true)
-      await AvatarKit.initialize('demo', { 
+      await AvatarSDK.initialize('demo', { 
         environment: selectedEnvironment,
         drivingServiceMode: mode
       })
       
       // Set Session Token if provided
       if (sessionToken.trim()) {
-        AvatarKit.setSessionToken(sessionToken.trim())
+        AvatarSDK.setSessionToken(sessionToken.trim())
       }
       
       setCurrentDrivingServiceMode(mode)

@@ -200,8 +200,8 @@ export class AvatarPanel {
     // 定期检查全局 SDK 状态（因为初始化是异步的）
     this.checkInterval = setInterval(async () => {
       try {
-        const { AvatarKit } = await import('@spatialwalk/avatarkit')
-        if (AvatarKit.isInitialized) {
+        const { AvatarSDK } = await import('@spatialwalk/avatarkit')
+        if (AvatarSDK.isInitialized) {
           this.globalSDKInitialized = true
           this.elements.btnLoadCharacter.disabled = false
           if (this.checkInterval) {
@@ -244,9 +244,9 @@ export class AvatarPanel {
     if (!this.elements.environmentDisplay) return
     
     try {
-      const { AvatarKit, Environment } = await import('@spatialwalk/avatarkit')
-      if (AvatarKit.isInitialized && AvatarKit.configuration) {
-        const env = AvatarKit.configuration.environment
+      const { AvatarSDK, Environment } = await import('@spatialwalk/avatarkit')
+      if (AvatarSDK.isInitialized && AvatarSDK.configuration) {
+        const env = AvatarSDK.configuration.environment
         const envName = env === Environment.cn ? 'CN' : 
                        env === Environment.intl ? 'International' : 
                        'Test'
@@ -267,9 +267,9 @@ export class AvatarPanel {
     if (!this.elements.sessionToken) return
     
     try {
-      const { AvatarKit } = await import('@spatialwalk/avatarkit')
-      if (AvatarKit.isInitialized && AvatarKit.configuration) {
-        const token = AvatarKit.configuration.sessionToken || ''
+      const { AvatarSDK } = await import('@spatialwalk/avatarkit')
+      if (AvatarSDK.isInitialized && AvatarSDK.configuration) {
+        const token = AvatarSDK.configuration.sessionToken || ''
         this.elements.sessionToken.textContent = token || '-'
       } else {
         this.elements.sessionToken.textContent = '-'
@@ -436,7 +436,7 @@ export class AvatarPanel {
       
       // Get current driving service mode from SDK configuration
       const sdk = await import('@spatialwalk/avatarkit')
-      const currentMode = sdk.AvatarKit.configuration?.drivingServiceMode || sdk.DrivingServiceMode.sdk
+      const currentMode = sdk.AvatarSDK.configuration?.drivingServiceMode || sdk.DrivingServiceMode.sdk
       const modeName = currentMode === sdk.DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
       
       this.updateStatus(`Loading character (${modeName})...`, 'info')
@@ -481,6 +481,22 @@ export class AvatarPanel {
         this.elements.btnDisconnect.disabled = true
       }
       this.elements.btnUnload.disabled = false
+      
+      // Enable volume slider after character is loaded
+      if (this.elements.volumeSlider) {
+        this.elements.volumeSlider.disabled = false
+        // Set initial volume from SDK
+        try {
+          const currentVolume = this.sdkManager.getVolume()
+          const volumePercent = Math.round(currentVolume * 100)
+          this.elements.volumeSlider.value = volumePercent
+          this.elements.volumeValue.textContent = `${volumePercent}%`
+        } catch (error) {
+          // If getVolume fails, keep default 100%
+          this.elements.volumeSlider.value = 100
+          this.elements.volumeValue.textContent = '100%'
+        }
+      }
     } catch (error) {
       this.logger.error('Character load failed', error)
       this.updateStatus(`Load failed: ${error.message}`, 'error')

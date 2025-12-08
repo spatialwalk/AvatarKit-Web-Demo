@@ -11,7 +11,7 @@
     <div class="form-group">
       <label>Session Token</label>
       <span style="color: #666; font-size: 14px; padding: 8px 12px; background: #f0f0f0; border-radius: 6px; display: inline-block; min-width: 200px">
-        {{ (AvatarKit.configuration as any)?.sessionToken || '-' }}
+        {{ (AvatarSDK.configuration as any)?.sessionToken || '-' }}
       </span>
     </div>
 
@@ -102,7 +102,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Environment } from '../types'
-import { Environment as SDKEnvironment, AvatarKit } from '@spatialwalk/avatarkit'
+import { Environment as SDKEnvironment, AvatarSDK } from '@spatialwalk/avatarkit'
 
 const showAddIdModal = ref(false)
 const newCharacterId = ref('')

@@ -9,7 +9,7 @@
 export class AvatarSDKManager {
   constructor(logger) {
     this.logger = logger
-    this.AvatarKit = null
+    this.AvatarSDK = null
     this.AvatarManager = null
     this.AvatarView = null
     this.avatarManager = null
@@ -28,7 +28,7 @@ export class AvatarSDKManager {
       this.logger.info('Loading SDK...')
       // Use npm-installed SDK
       const sdk = await import('@spatialwalk/avatarkit')
-      this.AvatarKit = sdk.AvatarKit
+      this.AvatarSDK = sdk.AvatarSDK
       this.AvatarManager = sdk.AvatarManager
       this.AvatarView = sdk.AvatarView
       
@@ -48,7 +48,7 @@ export class AvatarSDKManager {
    * @returns {Promise<void>}
    */
   async initialize(environment, sessionToken = null) {
-    if (!this.AvatarKit || !this.AvatarManager) {
+    if (!this.AvatarSDK || !this.AvatarManager) {
       const loaded = await this.loadSDK()
       if (!loaded) {
         throw new Error('SDK not loaded')
@@ -58,13 +58,13 @@ export class AvatarSDKManager {
     this.logger.info('Starting SDK initialization')
     this.logger.info(`Using environment: ${environment}`)
 
-    await this.AvatarKit.initialize('demo', {
+    await this.AvatarSDK.initialize('demo', {
       environment,
       logLevel: 'basic',
     })
 
     if (sessionToken) {
-      this.AvatarKit.setSessionToken(sessionToken)
+      this.AvatarSDK.setSessionToken(sessionToken)
       this.logger.info('Session Token set')
     }
 
@@ -125,7 +125,7 @@ export class AvatarSDKManager {
       throw new Error(`Invalid container: expected HTMLElement, got ${typeof canvasContainer}`)
     }
 
-    // Create view (playback mode is determined by drivingServiceMode in AvatarKit.initialize())
+    // Create view (playback mode is determined by drivingServiceMode in AvatarSDK.initialize())
     try {
       this.avatarView = new this.AvatarView(avatar, canvasContainer)
     } catch (error) {

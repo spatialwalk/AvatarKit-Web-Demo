@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { AvatarKit, AvatarManager, AvatarView, Environment, DrivingServiceMode, type AvatarController, type ConnectionState, type ConversationState } from '@spatialwalk/avatarkit'
+import { AvatarSDK, AvatarManager, AvatarView, Environment, DrivingServiceMode, type AvatarController, type ConnectionState, type ConversationState } from '@spatialwalk/avatarkit'
 
 export function useAvatarSDK() {
   const [isConnected, setIsConnected] = useState(false)
@@ -15,7 +15,7 @@ export function useAvatarSDK() {
 
   // 获取 AvatarManager（延迟初始化）
   const getAvatarManager = () => {
-    if (!avatarManagerRef.current && AvatarKit.isInitialized) {
+    if (!avatarManagerRef.current && AvatarSDK.isInitialized) {
       avatarManagerRef.current = AvatarManager.shared
     }
     return avatarManagerRef.current
@@ -24,13 +24,13 @@ export function useAvatarSDK() {
   // Initialize SDK (保留用于向后兼容，但建议使用全局初始化)
   const initialize = async (environment: Environment, drivingServiceMode: DrivingServiceMode = DrivingServiceMode.sdk, sessionToken?: string) => {
     try {
-      await AvatarKit.initialize('demo', { 
+      await AvatarSDK.initialize('demo', { 
         environment,
         drivingServiceMode 
       })
       
       if (sessionToken) {
-        AvatarKit.setSessionToken(sessionToken)
+        AvatarSDK.setSessionToken(sessionToken)
       }
 
       avatarManagerRef.current = AvatarManager.shared
@@ -63,7 +63,7 @@ export function useAvatarSDK() {
         throw new Error(`Invalid container: expected HTMLElement, got ${typeof container}`)
       }
       
-      // 3. Create AvatarView (playback mode is determined by drivingServiceMode in AvatarKit.initialize())
+      // 3. Create AvatarView (playback mode is determined by drivingServiceMode in AvatarSDK.initialize())
       const avatarView = new AvatarView(avatar, container)
       
       // 4. Set callbacks (use controller instead of avatarController)

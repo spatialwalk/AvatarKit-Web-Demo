@@ -11,7 +11,7 @@
       <div class="avatar-panel-controls">
         <StatusBar :message="logger.statusMessage.value" :type="logger.statusClass.value" />
         <ControlPanel
-          :environment="AvatarKit.configuration?.environment || Environment.test"
+          :environment="AvatarSDK.configuration?.environment || Environment.test"
           :character-id="characterId"
           :character-id-list="characterIdList"
           :is-initialized="globalSDKInitialized"
@@ -20,7 +20,7 @@
           :is-recording="audioRecorder.isRecording.value"
           :is-loading="isLoading"
           :is-connected="sdk.isConnected.value"
-          :current-playback-mode="(AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'"
+          :current-playback-mode="(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'"
           @character-id-change="handleCharacterIdChange"
           @load-character="handleLoadCharacter"
           @connect="handleConnect"
@@ -70,7 +70,7 @@
 import { ref, onUnmounted, nextTick, watch } from 'vue'
 import { useAvatarSDK } from '../composables/useAvatarSDK'
 import { Environment } from '../types'
-import { AvatarKit, DrivingServiceMode, ConversationState } from '@spatialwalk/avatarkit'
+import { AvatarSDK, DrivingServiceMode, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../composables/useLogger'
 import { useAudioRecorder } from '../composables/useAudioRecorder'
 import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
@@ -161,7 +161,7 @@ const handleLoadCharacter = async () => {
     isLoading.value = true
     
     // Get current driving service mode from SDK configuration
-    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     const modeName = currentMode === DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
     logger.updateStatus(`Loading character (${modeName})...`, 'info')
     logger.log('info', `Starting to load character: ${characterId.value} (mode: ${modeName})`)
@@ -220,7 +220,7 @@ const handleConnect = async () => {
     return
   }
 
-  const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+  const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
   if (currentMode !== DrivingServiceMode.sdk) {
     logger.updateStatus('Connect is only available in SDK mode (network mode)', 'warning')
     return
@@ -264,7 +264,7 @@ const handleStartRecord = async () => {
     return
   }
 
-  const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+  const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
   if (currentMode === DrivingServiceMode.sdk && !sdk.isConnected.value) {
     logger.updateStatus('Please connect to service first', 'warning')
     return
@@ -301,7 +301,7 @@ const handleStopRecord = async () => {
     return
   }
 
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       if (currentMode === DrivingServiceMode.sdk) {
     if (!audioRecorder.isRecording.value) {
       logger.updateStatus('Not recording', 'warning')
@@ -317,7 +317,7 @@ const handleStopRecord = async () => {
   try {
     isProcessing.value.stopRecord = true
     
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       if (currentMode === DrivingServiceMode.sdk) {
       const audioBuffer = await audioRecorder.stop()
 
@@ -513,7 +513,7 @@ const handleInterrupt = () => {
   try {
     isProcessing.value.interrupt = true
     
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       if (currentMode === DrivingServiceMode.host) {
       shouldContinueSendingData.value = false
     }
@@ -538,7 +538,7 @@ const handleDisconnect = async () => {
     return
   }
 
-    const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     if (currentMode !== DrivingServiceMode.sdk) {
       logger.updateStatus('Disconnect is only available in SDK mode (network mode)', 'warning')
     return
@@ -583,7 +583,7 @@ const handleUnloadCharacter = () => {
     isProcessing.value.unload = true
 
     // Stop external data playback if active
-      const currentMode = AvatarKit.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+      const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       if (currentMode === DrivingServiceMode.host) {
       shouldContinueSendingData.value = false
     }

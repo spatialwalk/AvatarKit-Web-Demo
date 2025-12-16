@@ -213,7 +213,7 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.28` or later (automatically installed with `npm install`)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.34` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
@@ -225,7 +225,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)
 
 1. **Initialize SDK** - Initialize SDK in SDK mode
    - Click "初始化 SDK (SDK Mode)" button
-   - Select environment (US/CN/Test)
+   - Select environment (International/CN)
    - (Optional) Enter Session Token
 
 2. **Enter Character ID** - Specify the character to load
@@ -260,7 +260,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
 
 1. **Initialize SDK** - Initialize SDK in Host mode
    - Click "初始化 SDK (Host Mode)" button
-   - Select environment (US/CN/Test)
+   - Select environment (International/CN)
 
 2. **Enter Character ID** - Specify the character to load
    - Get character ID from SDK management platform
@@ -282,10 +282,9 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
 
 ### Environment Configuration
 
-Examples support three environments:
+Examples support two environments:
 
-- **`test`** - Test environment (default)
-- **`us`** - US production environment
+- **`intl`** - International production environment (default)
 - **`cn`** - China production environment
 
 ### Session Token (Optional)
@@ -299,8 +298,13 @@ If the server requires authentication, provide a valid Session Token:
 
 Character ID can be obtained from the SDK management platform and is used to identify the virtual character to load.
 
+**Getting Test Character IDs:**
+- Visit [Test Avatars](https://docs.spatialreal.ai/overview/test-avatars) to get test character IDs for testing
+- Test avatars include: Rohan, Dr.Kellan, Priya, and Josh
+
 **Adding Custom Character IDs:**
 - Click the ➕ button next to the "Character ID" label to add a new character ID
+- Or click the 🔗 link icon button to open the test avatars page in a new tab
 - Enter the character ID in the popup modal
 - The new ID will be added to the dropdown list and automatically selected
 - Added IDs are temporary and only persist for the current session (not saved after page refresh)
@@ -308,7 +312,7 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
-- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.28`
+- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.34`
 - **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI.
 - **Initialization Modes**: 
   - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
@@ -375,9 +379,9 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm (SDK version 1.0.0-beta.28 or later):
+A: Install via npm (SDK version 1.0.0-beta.34 or later):
 ```bash
-npm install @spatialwalk/avatarkit@^1.0.0-beta.28
+npm install @spatialwalk/avatarkit@^1.0.0-beta.34
 ```
 
 The examples automatically install the correct version when you run `npm install`.

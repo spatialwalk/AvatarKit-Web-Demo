@@ -17,7 +17,7 @@ function App() {
   const [globalSDKInitialized, setGlobalSDKInitialized] = useState(false)
   const [sdkInitializing, setSdkInitializing] = useState(false)
   const [currentDrivingServiceMode, setCurrentDrivingServiceMode] = useState<DrivingServiceMode | null>(null)
-  const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>(Environment.test)
+  const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>(Environment.intl)
   const [sessionToken, setSessionToken] = useState('')
 
   // 检查是否已经初始化
@@ -85,9 +85,8 @@ function App() {
                     onChange={(e) => setSelectedEnvironment(e.target.value as Environment)}
                     style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: 'white', color: '#333', cursor: 'pointer', flexShrink: 0 }}
                   >
-                    <option value={Environment.test}>Test</option>
-                    <option value={Environment.cn}>CN</option>
                     <option value={Environment.intl}>International</option>
+                    <option value={Environment.cn}>CN</option>
                   </select>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -124,7 +123,7 @@ function App() {
           )}
           {globalSDKInitialized && currentDrivingServiceMode && (
             <p style={{ color: '#10b981', margin: 0 }}>
-              ✅ SDK 已初始化 ({currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode'}, {selectedEnvironment === Environment.cn ? 'CN' : selectedEnvironment === Environment.intl ? 'International' : 'Test'})
+              ✅ SDK 已初始化 ({currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode'}, {selectedEnvironment === Environment.cn ? 'CN' : 'International'})
             </p>
           )}
           {panels.length < 4 && (

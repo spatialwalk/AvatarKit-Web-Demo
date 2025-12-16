@@ -26,8 +26,6 @@ interface ControlPanelProps {
   onInterrupt: () => void
   onDisconnect: () => void
   onUnloadCharacter: () => void
-  volume: number
-  onVolumeChange: (volume: number) => void
 }
 
 export function ControlPanel({
@@ -50,8 +48,6 @@ export function ControlPanel({
   onInterrupt,
   onDisconnect,
   onUnloadCharacter,
-  volume,
-  onVolumeChange,
 }: ControlPanelProps) {
   const [showAddIdModal, setShowAddIdModal] = useState(false)
   const [newCharacterId, setNewCharacterId] = useState('')
@@ -113,6 +109,32 @@ export function ControlPanel({
           >
             ➕
           </button>
+          <a
+            href="https://docs.spatialreal.ai/overview/test-avatars"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: 0,
+              margin: 0,
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              lineHeight: '22px',
+              width: '22px',
+              height: '22px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              textDecoration: 'none'
+            }}
+            title="Get test character IDs"
+          >
+            🔗
+          </a>
         </div>
         <select
           value={characterId}
@@ -154,20 +176,7 @@ export function ControlPanel({
         </button>
       </div>
 
-      <div className="form-group" style={{ marginTop: '16px' }}>
-        <label>
-          🔊 Volume: {volume}%
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={volume}
-          onChange={(e) => onVolumeChange(parseInt(e.target.value))}
-          disabled={!avatarView}
-          style={{ width: '100%', cursor: avatarView ? 'pointer' : 'not-allowed' }}
-        />
-      </div>
+
       
       {/* Add Character ID Modal */}
       {showAddIdModal && (

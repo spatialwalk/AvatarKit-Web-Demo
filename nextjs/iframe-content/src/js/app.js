@@ -112,10 +112,8 @@ export class App {
       
       // Get selected environment
       const envSelect = document.getElementById('sdkEnvironmentSelect')
-      const envValue = envSelect ? envSelect.value : 'test'
-      const selectedEnvironment = envValue === 'cn' ? Environment.cn : 
-                                  envValue === 'intl' ? Environment.intl : 
-                                  Environment.test
+      const envValue = envSelect ? envSelect.value : 'intl'
+      const selectedEnvironment = envValue === 'cn' ? Environment.cn : Environment.intl
       
       await AvatarSDK.initialize('demo', { 
         environment: selectedEnvironment,
@@ -154,9 +152,7 @@ export class App {
       if (statusText) {
         const modeName = this.currentDrivingServiceMode === 'host' ? 'Host Mode' : 'SDK Mode'
         const sdk = AvatarSDK.configuration
-        const envName = sdk?.environment === Environment.cn ? 'CN' : 
-                       sdk?.environment === Environment.intl ? 'International' : 
-                       'Test'
+        const envName = sdk?.environment === Environment.cn ? 'CN' : 'International'
         statusText.textContent = `✅ SDK 已初始化 (${modeName}, ${envName})`
         statusText.style.color = '#10b981'
         statusText.style.display = 'block'
@@ -223,9 +219,8 @@ export class App {
     envSelect.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer;'
     envSelect.disabled = this.globalSDKInitialized
     envSelect.innerHTML = `
-      <option value="test" selected>Test</option>
+      <option value="intl" selected>International</option>
       <option value="cn">CN</option>
-      <option value="intl">International</option>
     `
     
     // Create Session Token input

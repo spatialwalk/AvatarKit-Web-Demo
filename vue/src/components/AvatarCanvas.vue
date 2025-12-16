@@ -3,6 +3,48 @@
     <div class="performance-display">
       <div class="fps-display">FPS: {{ fps !== null ? fps : '--' }}</div>
     </div>
+    <div v-if="showBackgroundButtons" style="position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 1000;">
+      <button
+        @click="onSetBackground"
+        title="Set Background"
+        style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;"
+      >
+        🖼️
+      </button>
+      <button
+        @click="onRemoveBackground"
+        title="Remove Background"
+        style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;"
+      >
+        🗑️
+      </button>
+    </div>
+    <div v-if="showVolumeSlider" style="position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000;">
+      <span style="font-size: 18px; color: white; background: rgba(0, 0, 0, 0.7); padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
+        🔊
+      </span>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        :value="volume"
+        @input="(e) => onVolumeChange?.(parseInt((e.target as HTMLInputElement).value))"
+        orient="vertical"
+        style="width: 80px; height: 120px; cursor: pointer; writing-mode: bt-lr; -webkit-appearance: slider-vertical;"
+      />
+      <span style="font-size: 12px; color: white; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 4px; min-width: 36px; text-align: center;">
+        {{ volume }}%
+      </span>
+    </div>
+    <button
+      v-if="showTransformButton"
+      class="transform-button"
+      @click="onTransformClick"
+      title="Transform Settings"
+      style="position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 1000; transition: all 0.2s;"
+    >
+      ⚙️
+    </button>
   </div>
 </template>
 
@@ -12,9 +54,22 @@ import type { AvatarView } from '@spatialwalk/avatarkit'
 
 interface Props {
   avatarView?: AvatarView | null
+  showTransformButton?: boolean
+  onTransformClick?: () => void
+  showBackgroundButtons?: boolean
+  onSetBackground?: () => void
+  onRemoveBackground?: () => void
+  volume?: number
+  onVolumeChange?: (volume: number) => void
+  showVolumeSlider?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  showTransformButton: false,
+  showBackgroundButtons: false,
+  showVolumeSlider: false,
+  volume: 100,
+})
 
 const canvasContainerRef = ref<HTMLDivElement | null>(null)
 const fps = ref<number | null>(null)

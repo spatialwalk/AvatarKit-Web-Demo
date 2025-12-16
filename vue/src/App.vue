@@ -13,9 +13,8 @@
               v-model="selectedEnvironment"
               style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer"
             >
-              <option :value="Environment.test">Test</option>
-              <option :value="Environment.cn">CN</option>
               <option :value="Environment.intl">International</option>
+              <option :value="Environment.cn">CN</option>
             </select>
             <label style="color: white; font-size: 14px; margin-right: 4px">Session Token:</label>
             <input
@@ -44,7 +43,7 @@
         </template>
         <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ 正在初始化 SDK...</p>
         <p v-if="globalSDKInitialized && currentDrivingServiceMode" style="color: #10b981; margin: 0">
-          ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }}, {{ selectedEnvironment === Environment.cn ? 'CN' : selectedEnvironment === Environment.intl ? 'International' : 'Test' }})
+          ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }}, {{ selectedEnvironment === Environment.cn ? 'CN' : 'International' }})
         </p>
         <button 
           v-if="panels.length < 4"
@@ -83,7 +82,7 @@ const panels = ref<Panel[]>([{ id: '1' }])
 const globalSDKInitialized = ref(false)
 const sdkInitializing = ref(false)
 const currentDrivingServiceMode = ref<DrivingServiceMode | null>(null)
-const selectedEnvironment = ref<Environment>(Environment.test)
+const selectedEnvironment = ref<Environment>(Environment.intl)
 const sessionToken = ref('')
 
 // 检查是否已经初始化

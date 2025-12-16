@@ -11,7 +11,7 @@
       <div class="avatar-panel-controls">
         <StatusBar :message="logger.statusMessage.value" :type="logger.statusClass.value" />
         <ControlPanel
-          :environment="AvatarSDK.configuration?.environment || Environment.test"
+          :environment="AvatarSDK.configuration?.environment || Environment.intl"
           :character-id="characterId"
           :character-id-list="characterIdList"
           :is-initialized="globalSDKInitialized"
@@ -30,15 +30,6 @@
           @disconnect="handleDisconnect"
           @unload-character="handleUnloadCharacter"
           :conversation-state="conversationState"
-          :volume="volume"
-          @volume-change="(v) => {
-            volume = v
-            try {
-              sdk.setVolume(v / 100)
-            } catch (error) {
-              logger.updateStatus(`Volume change failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
-            }
-          }"
         />
         <button 
           class="btn btn-primary" 
@@ -49,7 +40,49 @@
         </button>
       </div>
       <div class="avatar-panel-canvas">
-        <AvatarCanvas ref="avatarCanvasRef" :avatarView="(sdk.avatarView.value as any) ?? null" />
+        <AvatarCanvas 
+          ref="avatarCanvasRef" 
+          :avatarView="(sdk.avatarView.value as any) ?? null"
+          :showTransformButton="!!sdk.avatarView.value"
+          :showBackgroundButtons="!!sdk.avatarView.value"
+          :volume="volume"
+          :onVolumeChange="(v) => {
+            volume = v
+            try {
+              sdk.setVolume(v / 100)
+            } catch (error) {
+              logger.updateStatus(`Volume change failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
+            }
+          }"
+          :showVolumeSlider="!!sdk.avatarView.value"
+          @transform-click="handleOpenTransformModal"
+          @set-background="() => {
+            if (sdk.avatarView.value) {
+              try {
+                sdk.avatarView.value.setBackgroundImage('/src/demo-background.png')
+                sdk.avatarView.value.isOpaque = true
+                logger.log('success', 'Background image set')
+                logger.updateStatus('Background image set', 'success')
+              } catch (error) {
+                logger.log('error', `Failed to set background: ${error instanceof Error ? error.message : String(error)}`)
+                logger.updateStatus(`Failed to set background: ${error instanceof Error ? error.message : String(error)}`, 'error')
+              }
+            }
+          }"
+          @remove-background="() => {
+            if (sdk.avatarView.value) {
+              try {
+                sdk.avatarView.value.setBackgroundImage(null)
+                sdk.avatarView.value.isOpaque = false
+                logger.log('success', 'Background image removed')
+                logger.updateStatus('Background image removed', 'success')
+              } catch (error) {
+                logger.log('error', `Failed to remove background: ${error instanceof Error ? error.message : String(error)}`)
+                logger.updateStatus(`Failed to remove background: ${error instanceof Error ? error.message : String(error)}`, 'error')
+              }
+            }
+          }"
+        />
       </div>
     </div>
     
@@ -63,6 +96,89 @@
       </div>
       <LogPanel :logs="logger.logs.value" @clear="logger.clear" />
     </div>
+    
+    <!-- Transform Settings Modal -->
+    <div
+      v-if="isTransformModalOpen"
+      class="modal-overlay"
+      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;"
+      @click.self="isTransformModalOpen = false"
+    >
+      <div
+        class="modal-content"
+        style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%; max-height: 90vh; overflow-y: auto;"
+      >
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Transform Settings</h3>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">
+            X Position (-1 to 1)
+          </label>
+          <input
+            type="number"
+            step="0.1"
+            min="-1"
+            max="1"
+            v-model="transformX"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;"
+            @keydown.enter="handleApplyTransform"
+            @keydown.esc="isTransformModalOpen = false"
+          />
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+            -1 = left edge, 0 = center, 1 = right edge
+          </p>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">
+            Y Position (-1 to 1)
+          </label>
+          <input
+            type="number"
+            step="0.1"
+            min="-1"
+            max="1"
+            v-model="transformY"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;"
+            @keydown.enter="handleApplyTransform"
+            @keydown.esc="isTransformModalOpen = false"
+          />
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+            -1 = bottom edge, 0 = center, 1 = top edge
+          </p>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">
+            Scale Factor
+          </label>
+          <input
+            type="number"
+            step="0.1"
+            min="0.1"
+            max="5"
+            v-model="transformScale"
+            style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;"
+            @keydown.enter="handleApplyTransform"
+            @keydown.esc="isTransformModalOpen = false"
+          />
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+            1.0 = original size, 2.0 = double size, 0.5 = half size
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button
+            @click="isTransformModalOpen = false"
+            style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleApplyTransform"
+            style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -73,7 +189,6 @@ import { Environment } from '../types'
 import { AvatarSDK, DrivingServiceMode, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../composables/useLogger'
 import { useAudioRecorder } from '../composables/useAudioRecorder'
-import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
 import StatusBar from './StatusBar.vue'
 import ControlPanel from './ControlPanel.vue'
 import AvatarCanvas from './AvatarCanvas.vue'
@@ -90,11 +205,8 @@ interface Props {
 const props = defineProps<Props>()
 
 // Configuration state
-const characterIdList = ref([
-  'b7ba14f6-f9aa-4f89-9934-3753d75aee39',
-  '35692117-ece1-4f77-b014-02cfa22bfb7b'
-])
-const characterId = ref('b7ba14f6-f9aa-4f89-9934-3753d75aee39')
+const characterIdList = ref<string[]>([])
+const characterId = ref('')
 const isLoading = ref(false)
 const conversationState = ref<ConversationState | null>(null)
 const volume = ref(100)
@@ -128,6 +240,75 @@ const toggleLogDrawer = () => {
 
 const closeLogDrawer = () => {
   isLogDrawerOpen.value = false
+}
+
+// Transform modal state
+const isTransformModalOpen = ref(false)
+const transformX = ref('0')
+const transformY = ref('0')
+const transformScale = ref('1')
+
+const handleOpenTransformModal = () => {
+  // Try to get current transform values, fallback to defaults
+  const avatarView = sdk.avatarView.value as any
+  if (avatarView?.transform) {
+    try {
+      const currentTransform = avatarView.transform
+      transformX.value = String(currentTransform.x || 0)
+      transformY.value = String(currentTransform.y || 0)
+      transformScale.value = String(currentTransform.scale || 1)
+    } catch (error) {
+      // Fallback to defaults if transform is not available
+      transformX.value = '0'
+      transformY.value = '0'
+      transformScale.value = '1'
+    }
+  } else {
+    transformX.value = '0'
+    transformY.value = '0'
+    transformScale.value = '1'
+  }
+  isTransformModalOpen.value = true
+}
+
+const handleApplyTransform = () => {
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('Please load character first', 'warning')
+    return
+  }
+  
+  try {
+    const x = parseFloat(transformX.value)
+    const y = parseFloat(transformY.value)
+    const scale = parseFloat(transformScale.value)
+    
+    // Validate values
+    if (isNaN(x) || x < -1 || x > 1) {
+      throw new Error('X position must be between -1 and 1')
+    }
+    if (isNaN(y) || y < -1 || y > 1) {
+      throw new Error('Y position must be between -1 and 1')
+    }
+    if (isNaN(scale) || scale < 0.1 || scale > 5) {
+      throw new Error('Scale must be between 0.1 and 5')
+    }
+    
+    // Use transform property (getter/setter) instead of setTransform method
+    const avatarView = sdk.avatarView.value as any
+    if (!avatarView?.transform) {
+      throw new Error('transform property is not available in this SDK version')
+    }
+    avatarView.transform = { x, y, scale }
+    logger.log('success', `Transform applied: x=${x}, y=${y}, scale=${scale}`)
+    logger.updateStatus(`Transform applied: x=${x}, y=${y}, scale=${scale}`, 'success')
+    isTransformModalOpen.value = false
+    transformX.value = '0'
+    transformY.value = '0'
+    transformScale.value = '1'
+  } catch (error) {
+    logger.log('error', `Transform failed: ${error instanceof Error ? error.message : String(error)}`)
+    logger.updateStatus(`Transform failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
+  }
 }
 
 // Load character (mode is determined by SDK initialization)
@@ -345,156 +526,63 @@ const handleStopRecord = async () => {
 
 // Handle external data mode
 const handleExternalDataMode = async () => {
-  // Stop any ongoing data sending first
-  if (shouldContinueSendingData.value) {
-    shouldContinueSendingData.value = false
-    // Wait a bit to ensure the previous sending loop has stopped
-    await new Promise(resolve => setTimeout(resolve, 200))
-  }
-  
-  if (sdk.avatarView.value?.controller) {
-    try {
-      sdk.interrupt()
-      await new Promise(resolve => setTimeout(resolve, 100))
-    } catch (e) {
-      // Ignore errors
-    }
-  }
-
-  shouldContinueSendingData.value = true
-
+  // Host mode: fetch audio and animation data from API
   try {
-    isLoading.value = true
-    logger.updateStatus('Loading external data...', 'info')
+    logger.log('info', 'Fetching data from API...')
+    logger.updateStatus('Fetching data from API...', 'info')
     
-    const dataDir = `/src/data/${characterId.value}`
+    const response = await fetch('https://server-sdk-mock-demo.spatialwalk.cn/media')
     
-    const fileMap: Record<string, { audio: string; flame: string }> = {
-      '35692117-ece1-4f77-b014-02cfa22bfb7b': {
-        audio: 'audio_20251114042834_pHhATY2emf0w_1763065720879.pcm',
-        flame: 'flame_20251114042841_veGlAmGfiEZ2_1763065740224.json',
-      },
-      'b7ba14f6-f9aa-4f89-9934-3753d75aee39': {
-        audio: 'audio_20251113162847_qyozNRfGKI5C_1763022543772.pcm',
-        flame: 'flame_20251113162847_qyozNRfGKI5C_1763022545208.json',
-      },
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    const files = fileMap[characterId.value]
-    if (!files) {
-      throw new Error(`No data files configured for character ${characterId.value}`)
+    const data = await response.json()
+    
+    // API 返回的数据结构: { audio: string, animations: string[] }
+    // audio 和 animations 都是 base64 编码的字符串
+    if (!data.audio || !data.animations) {
+      throw new Error('Invalid data format: missing audio or animations')
     }
     
-    // Load audio file
-    const audioFile = `${dataDir}/${files.audio}`
-    const audioResponse = await fetch(audioFile)
-    if (!audioResponse.ok) {
-      throw new Error(`Failed to load audio file: ${audioResponse.status}`)
-    }
-    const audioArrayBuffer = await audioResponse.arrayBuffer()
-    const rawAudioData = new Uint8Array(audioArrayBuffer)
+    // 将 base64 字符串解码为 Uint8Array
+    const audioData = base64ToUint8Array(data.audio)
+    const animationsData = data.animations.map((anim: string) => base64ToUint8Array(anim))
     
-    // Convert PCM16 (24kHz) to Float32Array
-    const int16Data = new Int16Array(rawAudioData.buffer, rawAudioData.byteOffset, rawAudioData.length / 2)
-    const float32Data = new Float32Array(int16Data.length)
-    for (let i = 0; i < int16Data.length; i++) {
-      float32Data[i] = int16Data[i] / 32768.0
-    }
+    logger.log('success', 'Data fetched and decoded successfully')
+    logger.updateStatus('Playing data...', 'info')
     
-    // Resample from 24kHz to 16kHz
-    const resampledFloat32 = await resampleAudioWithWebAudioAPI(float32Data, 24000, AUDIO_SAMPLE_RATE)
-    const resampledInt16 = convertToInt16PCM(resampledFloat32)
-    const audioData = convertToUint8Array(resampledInt16)
+    // 使用 SDK 播放数据
+    // 1. 发送音频数据（最后一个 chunk 标记为结束）
+    const conversationId = sdk.yieldAudioData(audioData, true)
     
-    // Load animation file
-    const flameFile = `${dataDir}/${files.flame}`
-    const flameResponse = await fetch(flameFile)
-    if (!flameResponse.ok) {
-      throw new Error(`Failed to load animation file: ${flameResponse.status}`)
-    }
-    const json = await flameResponse.json()
-    const keyframes = json.keyframes || []
-    
-    if (!keyframes || keyframes.length === 0) {
-      throw new Error(`No keyframes found in animation file for character ${characterId.value}`)
-    }
-    
-    isLoading.value = false
-    logger.updateStatus('Playing external data...', 'info')
-    
-    const playbackRateBytesPerSecond = AUDIO_SAMPLE_RATE * 2 * 2
-      const sendInterval = 30
-    const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
-    
-      // Normal streaming flow: send audio first to get conversationId, then send animation data
-    let audioOffset = 0
-      let conversationId: string | null = null
-      
-      // Step 1: Send initial audio chunk to get conversationId
-      const initialChunkSize = Math.min(bytesPerInterval, audioData.length)
-      const initialChunk = audioData.slice(0, initialChunkSize)
-      audioOffset = initialChunkSize
-      
-      conversationId = sdk.yieldAudioData(initialChunk, false)
       if (!conversationId) {
-        throw new Error('Failed to get conversationId from initial audio data')
-      }
-      logger.log('info', `Got conversationId: ${conversationId}`)
-      
-      // Step 2: Stream audio and corresponding keyframes together in sync
-      Promise.resolve().then(async () => {
-        let keyframeIndex = 0
-        // 假设每秒30帧，计算每个音频块（30ms）对应的帧数
-        const keyframesPerSecond = 30
-        const framesPerChunk = Math.ceil(keyframesPerSecond * sendInterval / 1000) // 每个音频块约1帧
-        
-      while (audioOffset < audioData.length && shouldContinueSendingData.value) {
-        const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
-        const chunk = audioData.slice(audioOffset, chunkEnd)
-        const isLast = chunkEnd >= audioData.length
-        
-        if (!shouldContinueSendingData.value) {
-          break
-        }
-        
-          // Send audio chunk
-          const currentConversationId = sdk.yieldAudioData(chunk, isLast)
-          if (currentConversationId) {
-            conversationId = currentConversationId
-          }
-          
-          // Immediately send corresponding keyframes for this audio chunk
-          if (conversationId && keyframeIndex < keyframes.length) {
-            const endIndex = Math.min(keyframeIndex + framesPerChunk, keyframes.length)
-            const framesToSend = keyframes.slice(keyframeIndex, endIndex)
-            if (framesToSend.length > 0) {
-              sdk.yieldFramesData(framesToSend, conversationId)
-              keyframeIndex = endIndex
-            }
-          }
-          
-        audioOffset = chunkEnd
-        await new Promise(resolve => setTimeout(resolve, sendInterval))
-      }
-      
-        // Send any remaining keyframes if audio finished but keyframes remain
-        if (shouldContinueSendingData.value && keyframeIndex < keyframes.length && conversationId) {
-          const remainingKeyframes = keyframes.slice(keyframeIndex)
-          if (remainingKeyframes.length > 0) {
-            sdk.yieldFramesData(remainingKeyframes, conversationId)
-          }
-      }
-      
-      if (shouldContinueSendingData.value) {
-          logger.log('success', `Host mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
-      }
-    })
+      throw new Error('Failed to get conversation ID from audio data')
+    }
     
-      logger.updateStatus('Host mode playback started', 'success')
+    // 2. 发送动画数据
+    sdk.yieldFramesData(animationsData, conversationId)
+    
+    logger.log('success', 'Data playback started')
+    logger.updateStatus('Data playback started', 'success')
+    
   } catch (error) {
-    isLoading.value = false
-    throw new Error(`External data mode failed: ${error instanceof Error ? error.message : String(error)}`)
+    logger.log('error', `Failed to fetch or play data from API: ${error instanceof Error ? error.message : String(error)}`)
+    logger.updateStatus(`Failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
+    throw error
   }
+}
+
+/**
+ * 将 base64 字符串转换为 Uint8Array
+ */
+const base64ToUint8Array = (base64: string): Uint8Array => {
+  const binaryString = atob(base64)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+  return bytes
 }
 
 

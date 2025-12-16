@@ -25,6 +25,15 @@
         >
           ➕
         </button>
+        <a
+          href="https://docs.spatialreal.ai/overview/test-avatars"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="padding: 0; margin: 0; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; text-decoration: none;"
+          title="Get test character IDs"
+        >
+          🔗
+        </a>
       </div>
       <select :value="characterId" @change="handleCharacterIdChange">
         <option value="">Select Character ID</option>
@@ -59,20 +68,7 @@
       </button>
     </div>
 
-    <div class="form-group" style="margin-top: 16px;">
-      <label>
-        🔊 Volume: {{ volume }}%
-      </label>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        :value="volume"
-        @input="(e) => $emit('volumeChange', parseInt((e.target as HTMLInputElement).value))"
-        :disabled="!avatarView"
-        style="width: 100%; cursor: pointer;"
-      />
-    </div>
+
     
     <!-- Add Character ID Modal -->
     <div
@@ -119,7 +115,6 @@ const props = defineProps<{
   isConnected: boolean
   currentPlaybackMode: 'network' | 'external'
   conversationState: 'idle' | 'playing' | null
-  volume: number
   init?: () => void
 }>()
 
@@ -133,7 +128,6 @@ const emit = defineEmits<{
   interrupt: []
   disconnect: []
   unloadCharacter: []
-  volumeChange: [volume: number]
 }>()
 
 const handleCharacterIdChange = (e: Event) => {

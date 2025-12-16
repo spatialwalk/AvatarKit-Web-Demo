@@ -3,7 +3,7 @@
  * Encapsulates SDK initialization and usage logic
  */
 
-import { ref, onUnmounted, watch } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { AvatarSDK, AvatarManager, AvatarView, Environment, DrivingServiceMode, type AvatarController, type ConnectionState, type ConversationState } from '@spatialwalk/avatarkit'
 
 export function useAvatarSDK() {

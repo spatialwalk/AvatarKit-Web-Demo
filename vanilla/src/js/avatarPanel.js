@@ -80,10 +80,9 @@ export class AvatarPanel {
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
                   <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Character ID</label>
                   <button id="btnAddCharacterId-${this.panelId}" style="padding: 0; margin: 0; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0" title="Add new Character ID">➕</button>
+                  <a href="https://docs.spatialreal.ai/overview/test-avatars" target="_blank" rel="noopener noreferrer" style="padding: 0; margin: 0; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; text-decoration: none;" title="Get test character IDs">🔗</a>
                 </div>
                 <select id="characterId-${this.panelId}">
-                  <option value="b7ba14f6-f9aa-4f89-9934-3753d75aee39">b7ba14f6-f9aa-4f89-9934-3753d75aee39</option>
-                  <option value="35692117-ece1-4f77-b014-02cfa22bfb7b">35692117-ece1-4f77-b014-02cfa22bfb7b</option>
                 </select>
               </div>
                <div class="form-group">
@@ -97,11 +96,6 @@ export class AvatarPanel {
               <button id="btnInterrupt-${this.panelId}" class="btn btn-warning" disabled>Interrupt</button>
               <button id="btnDisconnect-${this.panelId}" class="btn btn-danger" disabled>Disconnect</button>
               <button id="btnUnload-${this.panelId}" class="btn btn-danger" disabled>Unload Character</button>
-              <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-                <label for="volumeSlider-${this.panelId}" style="font-size: 14px; min-width: 60px;">🔊 Volume:</label>
-                <input type="range" id="volumeSlider-${this.panelId}" min="0" max="100" value="100" style="flex: 1; cursor: pointer;" disabled>
-                <span id="volumeValue-${this.panelId}" style="font-size: 14px; min-width: 40px; text-align: right;">100%</span>
-              </div>
               <button id="btnToggleLogs-${this.panelId}" class="btn btn-primary" style="margin-top: 12px;">📋 显示日志</button>
             </div>
             
@@ -123,6 +117,16 @@ export class AvatarPanel {
               <div class="performance-display" id="performanceDisplay-${this.panelId}">
                 <div class="fps-display" id="fpsDisplay-${this.panelId}">FPS: --</div>
               </div>
+              <div style="position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 1000;">
+                <button id="btnSetBackground-${this.panelId}" title="Set Background" style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 16px; transition: all 0.2s;" disabled>🖼️</button>
+                <button id="btnRemoveBackground-${this.panelId}" title="Remove Background" style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 16px; transition: all 0.2s;" disabled>🗑️</button>
+            </div>
+              <div style="position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000;">
+                <span style="font-size: 18px; color: white; background: rgba(0, 0, 0, 0.7); padding: 4px; border-radius: 4px; display: none; width: 28px; height: 28px; text-align: center; line-height: 20px;" id="volumeIcon-${this.panelId}">🔊</span>
+                <input type="range" id="volumeSlider-${this.panelId}" min="0" max="100" value="100" orient="vertical" style="width: 80px; height: 120px; cursor: pointer; writing-mode: bt-lr; -webkit-appearance: slider-vertical; display: none;" disabled>
+                <span id="volumeValue-${this.panelId}" style="font-size: 12px; color: white; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 4px; min-width: 36px; text-align: center;">100%</span>
+              </div>
+              <button id="btnTransform-${this.panelId}" class="transform-button" title="Transform Settings" style="position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 18px; z-index: 1000; transition: all 0.2s; text-align: center; line-height: 36px;">⚙️</button>
             </div>
           </div>
         </div>
@@ -135,6 +139,32 @@ export class AvatarPanel {
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
               <button id="btnCancelAddId-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
               <button id="btnConfirmAddId-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Add</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Transform Settings Modal -->
+        <div id="transformModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div class="modal-content" style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Transform Settings</h3>
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">X Position (-1 to 1)</label>
+              <input type="number" id="transformX-${this.panelId}" step="0.1" min="-1" max="1" value="0" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">-1 = left edge, 0 = center, 1 = right edge</p>
+            </div>
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Y Position (-1 to 1)</label>
+              <input type="number" id="transformY-${this.panelId}" step="0.1" min="-1" max="1" value="0" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">-1 = bottom edge, 0 = center, 1 = top edge</p>
+            </div>
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Scale Factor</label>
+              <input type="number" id="transformScale-${this.panelId}" step="0.1" min="0.1" max="5" value="1" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">1.0 = original size, 2.0 = double size, 0.5 = half size</p>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button id="btnCancelTransform-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+              <button id="btnConfirmTransform-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Apply</button>
             </div>
           </div>
         </div>
@@ -156,6 +186,7 @@ export class AvatarPanel {
       btnUnload: document.getElementById(`btnUnload-${this.panelId}`),
       volumeSlider: document.getElementById(`volumeSlider-${this.panelId}`),
       volumeValue: document.getElementById(`volumeValue-${this.panelId}`),
+      volumeIcon: document.getElementById(`volumeIcon-${this.panelId}`),
       btnToggleLogs: document.getElementById(`btnToggleLogs-${this.panelId}`),
       btnClearLog: document.getElementById(`btnClearLog-${this.panelId}`),
       btnCloseLogDrawer: document.getElementById(`btnCloseLogDrawer-${this.panelId}`),
@@ -171,6 +202,15 @@ export class AvatarPanel {
       newCharacterIdInput: document.getElementById(`newCharacterIdInput-${this.panelId}`),
       btnCancelAddId: document.getElementById(`btnCancelAddId-${this.panelId}`),
       btnConfirmAddId: document.getElementById(`btnConfirmAddId-${this.panelId}`),
+      btnSetBackground: document.getElementById(`btnSetBackground-${this.panelId}`),
+      btnRemoveBackground: document.getElementById(`btnRemoveBackground-${this.panelId}`),
+      btnTransform: document.getElementById(`btnTransform-${this.panelId}`),
+      transformModal: document.getElementById(`transformModal-${this.panelId}`),
+      transformX: document.getElementById(`transformX-${this.panelId}`),
+      transformY: document.getElementById(`transformY-${this.panelId}`),
+      transformScale: document.getElementById(`transformScale-${this.panelId}`),
+      btnCancelTransform: document.getElementById(`btnCancelTransform-${this.panelId}`),
+      btnConfirmTransform: document.getElementById(`btnConfirmTransform-${this.panelId}`),
     }
 
     // Set logger logPanel
@@ -299,6 +339,39 @@ export class AvatarPanel {
     this.elements.btnToggleLogs.addEventListener('click', () => this.toggleLogDrawer())
     this.elements.btnCloseLogDrawer.addEventListener('click', () => this.closeLogDrawer())
     this.elements.btnClearLog.addEventListener('click', () => this.logger.clear())
+    this.elements.btnSetBackground.addEventListener('click', () => this.handleSetBackground())
+    this.elements.btnRemoveBackground.addEventListener('click', () => this.handleRemoveBackground())
+    
+    // Transform button events
+    if (this.elements.btnTransform) {
+      this.elements.btnTransform.addEventListener('click', () => this.showTransformModal())
+    }
+    if (this.elements.btnCancelTransform) {
+      this.elements.btnCancelTransform.addEventListener('click', () => this.hideTransformModal())
+    }
+    if (this.elements.btnConfirmTransform) {
+      this.elements.btnConfirmTransform.addEventListener('click', () => this.handleApplyTransform())
+    }
+    if (this.elements.transformModal) {
+      this.elements.transformModal.addEventListener('click', (e) => {
+        if (e.target === this.elements.transformModal) {
+          this.hideTransformModal()
+        }
+      })
+    }
+    if (this.elements.transformX && this.elements.transformY && this.elements.transformScale) {
+      // Allow Enter key to apply transform
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          this.hideTransformModal()
+        } else if (e.key === 'Enter') {
+          this.handleApplyTransform()
+        }
+      }
+      this.elements.transformX.addEventListener('keydown', handleKeyDown)
+      this.elements.transformY.addEventListener('keydown', handleKeyDown)
+      this.elements.transformScale.addEventListener('keydown', handleKeyDown)
+    }
     
     // Add Character ID modal events
     if (this.elements.btnAddCharacterId) {
@@ -482,8 +555,9 @@ export class AvatarPanel {
       }
       this.elements.btnUnload.disabled = false
       
-      // Enable volume slider after character is loaded
+      // Show and enable volume slider after character is loaded
       if (this.elements.volumeSlider) {
+        this.elements.volumeSlider.style.display = 'block'
         this.elements.volumeSlider.disabled = false
         // Set initial volume from SDK
         try {
@@ -496,6 +570,33 @@ export class AvatarPanel {
           this.elements.volumeSlider.value = 100
           this.elements.volumeValue.textContent = '100%'
         }
+      }
+      if (this.elements.volumeIcon) {
+        this.elements.volumeIcon.style.display = 'inline-block'
+      }
+      
+      // Show background control buttons after character is loaded
+      if (this.elements.btnSetBackground) {
+        this.elements.btnSetBackground.style.display = 'inline-flex'
+        this.elements.btnSetBackground.style.alignItems = 'center'
+        this.elements.btnSetBackground.style.justifyContent = 'center'
+        this.elements.btnSetBackground.disabled = false
+      }
+      if (this.elements.btnRemoveBackground) {
+        this.elements.btnRemoveBackground.style.display = 'inline-flex'
+        this.elements.btnRemoveBackground.style.alignItems = 'center'
+        this.elements.btnRemoveBackground.style.justifyContent = 'center'
+        this.elements.btnRemoveBackground.disabled = false
+      }
+      
+      // Show transform button after character is loaded
+      if (this.elements.btnTransform) {
+        this.elements.btnTransform.style.display = 'flex'
+      }
+      
+      // Show transform button after character is loaded
+      if (this.elements.btnTransform) {
+        this.elements.btnTransform.style.display = 'flex'
       }
     } catch (error) {
       this.logger.error('Character load failed', error)
@@ -641,151 +742,140 @@ export class AvatarPanel {
   }
 
   async handleExternalDataMode() {
-    // Stop any ongoing data sending first
-    if (this.shouldContinueSendingData) {
-      this.shouldContinueSendingData = false
-      // Wait a bit to ensure the previous sending loop has stopped
-      await new Promise(resolve => setTimeout(resolve, 200))
-    }
-    
-    if (this.sdkManager.avatarView?.controller) {
-      try {
-        this.sdkManager.interrupt()
-        await new Promise(resolve => setTimeout(resolve, 100))
-      } catch (e) {
-        // Ignore errors
-      }
-    }
-    
-    this.shouldContinueSendingData = true
-    
+    // Host mode: fetch audio and animation data from API
     try {
-      const characterId = this.elements.characterId.value.trim()
-      const dataDir = `/src/data/${characterId}`
+      this.logger.info('Fetching data from API...')
+      this.updateStatus('Fetching data from API...', 'info')
       
-      const fileMap = {
-        '35692117-ece1-4f77-b014-02cfa22bfb7b': {
-          audio: 'audio_20251114042834_pHhATY2emf0w_1763065720879.pcm',
-          flame: 'flame_20251114042841_veGlAmGfiEZ2_1763065740224.json',
-        },
-        'b7ba14f6-f9aa-4f89-9934-3753d75aee39': {
-          audio: 'audio_20251113162847_qyozNRfGKI5C_1763022543772.pcm',
-          flame: 'flame_20251113162847_qyozNRfGKI5C_1763022545208.json',
-        },
+      const response = await fetch('https://server-sdk-mock-demo.spatialwalk.cn/media')
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const files = fileMap[characterId]
-      if (!files) {
-        throw new Error(`No data files configured for character ${characterId}`)
+      const data = await response.json()
+      
+      // API 返回的数据结构: { audio: string, animations: string[] }
+      // audio 和 animations 都是 base64 编码的字符串
+      if (!data.audio || !data.animations) {
+        throw new Error('Invalid data format: missing audio or animations')
       }
       
-      // Load audio file
-      const audioFile = `${dataDir}/${files.audio}`
-      const audioResponse = await fetch(audioFile)
-      if (!audioResponse.ok) {
-        throw new Error(`Failed to load audio file: ${audioResponse.status}`)
-      }
-      const audioArrayBuffer = await audioResponse.arrayBuffer()
-      const rawAudioData = new Uint8Array(audioArrayBuffer)
+      // 将 base64 字符串解码为 Uint8Array
+      const audioData = this.base64ToUint8Array(data.audio)
+      const animationsData = data.animations.map(anim => this.base64ToUint8Array(anim))
       
-      const int16Data = new Int16Array(rawAudioData.buffer, rawAudioData.byteOffset, rawAudioData.length / 2)
-      const float32Data = new Float32Array(int16Data.length)
-      for (let i = 0; i < int16Data.length; i++) {
-        float32Data[i] = int16Data[i] / 32768.0
-      }
+      this.logger.success('Data fetched and decoded successfully')
+      this.updateStatus('Playing data...', 'info')
       
-      // Resample from 24kHz to 16kHz using high-quality Web Audio API
-      const resampledFloat32 = await resampleAudioWithWebAudioAPI(float32Data, 24000, AUDIO_SAMPLE_RATE)
-      const resampledInt16 = convertToInt16PCM(resampledFloat32)
-      const audioData = convertToUint8Array(resampledInt16)
+      // 使用 SDK 播放数据
+      // 1. 发送音频数据（最后一个 chunk 标记为结束）
+      const conversationId = this.sdkManager.yieldAudioData(audioData, true)
       
-      // Load animation file
-      const flameFile = `${dataDir}/${files.flame}`
-      const flameResponse = await fetch(flameFile)
-      if (!flameResponse.ok) {
-        throw new Error(`Failed to load animation file: ${flameResponse.status}`)
-      }
-      const json = await flameResponse.json()
-      const keyframes = json.keyframes || []
-      
-      if (!keyframes || keyframes.length === 0) {
-        throw new Error(`No keyframes found in animation file for character ${characterId}`)
-      }
-      
-      const playbackRateBytesPerSecond = AUDIO_SAMPLE_RATE * 2 * 2
-      const sendInterval = 30
-      const bytesPerInterval = Math.floor(playbackRateBytesPerSecond * sendInterval / 1000)
-      
-      // Normal streaming flow: send audio and keyframes together in sync
-      // 根据文档 Option B：先用 yieldAudioData() 获取 conversationId，然后用 yieldFramesData() 发送动画数据
-      let audioOffset = 0
-      let conversationId = null
-      
-      // Step 1: Send first audio chunk to get conversationId
-      const initialChunkSize = Math.min(bytesPerInterval, audioData.length)
-      const initialChunk = audioData.slice(0, initialChunkSize)
-      audioOffset = initialChunkSize
-      
-      conversationId = this.sdkManager.yieldAudioData(initialChunk, false)
       if (!conversationId) {
-        throw new Error('Failed to get conversationId from initial audio data')
+        throw new Error('Failed to get conversation ID from audio data')
       }
-      this.logger.info(`Got conversationId: ${conversationId}`)
       
-      // Step 2: Stream audio and corresponding keyframes together in sync
-      Promise.resolve().then(async () => {
-        let keyframeIndex = 0
-        // 假设每秒30帧，计算每个音频块（30ms）对应的帧数
-        const keyframesPerSecond = 30
-        const framesPerChunk = Math.ceil(keyframesPerSecond * sendInterval / 1000) // 每个音频块约1帧
+      // 2. 发送动画数据
+      this.sdkManager.yieldFramesData(animationsData, conversationId)
       
-      while (audioOffset < audioData.length && this.shouldContinueSendingData) {
-        const chunkEnd = Math.min(audioOffset + bytesPerInterval, audioData.length)
-        const chunk = audioData.slice(audioOffset, chunkEnd)
-        const isLast = chunkEnd >= audioData.length
-        
-        if (!this.shouldContinueSendingData) {
-          break
-        }
-        
-          // Send audio chunk
-          const currentConversationId = this.sdkManager.yieldAudioData(chunk, isLast)
-          if (currentConversationId) {
-            conversationId = currentConversationId
-          }
-          
-          // Immediately send corresponding keyframes for this audio chunk
-          if (conversationId && keyframeIndex < keyframes.length) {
-            const endIndex = Math.min(keyframeIndex + framesPerChunk, keyframes.length)
-            const framesToSend = keyframes.slice(keyframeIndex, endIndex)
-            if (framesToSend.length > 0) {
-              this.sdkManager.yieldFramesData(framesToSend, conversationId)
-              keyframeIndex = endIndex
-            }
-          }
-          
-          audioOffset = chunkEnd
-          await new Promise(resolve => setTimeout(resolve, sendInterval))
-        }
-        
-        // Send any remaining keyframes if audio finished but keyframes remain
-        if (this.shouldContinueSendingData && keyframeIndex < keyframes.length && conversationId) {
-          const remainingKeyframes = keyframes.slice(keyframeIndex)
-          if (remainingKeyframes.length > 0) {
-            this.sdkManager.yieldFramesData(remainingKeyframes, conversationId)
-          }
-        }
-        
-        if (this.shouldContinueSendingData) {
-          this.logger.success(`Host mode: all data sent (${audioData.length} bytes audio, ${keyframes.length} keyframes)`)
-        }
-      })
+      this.logger.success('Data playback started')
+      this.updateStatus('Data playback started', 'success')
+      this.shouldContinueSendingData = true
+      
     } catch (error) {
-      this.logger.error('External data mode failed', error)
+      this.logger.error('Failed to fetch or play data from API', error)
+      this.updateStatus(`Failed: ${error.message}`, 'error')
       throw error
     }
   }
-
+  
+  /**
+   * 将 base64 字符串转换为 Uint8Array
+   * @param {string} base64 - Base64 编码的字符串
+   * @returns {Uint8Array}
+   */
+  base64ToUint8Array(base64) {
+    const binaryString = atob(base64)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    return bytes
+  }
+  
+  showTransformModal() {
+    if (this.elements.transformModal && this.elements.transformX && this.elements.transformY && this.elements.transformScale) {
+      this.elements.transformModal.style.display = 'flex'
+      
+      // Try to get current transform values, fallback to defaults
+      if (this.sdkManager.avatarView && this.sdkManager.avatarView.transform) {
+        try {
+          const currentTransform = this.sdkManager.avatarView.transform
+          this.elements.transformX.value = String(currentTransform.x || 0)
+          this.elements.transformY.value = String(currentTransform.y || 0)
+          this.elements.transformScale.value = String(currentTransform.scale || 1)
+        } catch (error) {
+          // Fallback to defaults if transform is not available
+          this.elements.transformX.value = '0'
+          this.elements.transformY.value = '0'
+          this.elements.transformScale.value = '1'
+        }
+      } else {
+        // Default values
+        this.elements.transformX.value = '0'
+        this.elements.transformY.value = '0'
+        this.elements.transformScale.value = '1'
+      }
+      
+      setTimeout(() => {
+        this.elements.transformX.focus()
+      }, 100)
+    }
+  }
+  
+  hideTransformModal() {
+    if (this.elements.transformModal) {
+      this.elements.transformModal.style.display = 'none'
+    }
+  }
+  
+  handleApplyTransform() {
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('No character loaded')
+      this.updateStatus('Please load character first', 'warning')
+      return
+    }
+    
+    try {
+      const x = parseFloat(this.elements.transformX.value)
+      const y = parseFloat(this.elements.transformY.value)
+      const scale = parseFloat(this.elements.transformScale.value)
+      
+      // Validate values
+      if (isNaN(x) || x < -1 || x > 1) {
+        throw new Error('X position must be between -1 and 1')
+      }
+      if (isNaN(y) || y < -1 || y > 1) {
+        throw new Error('Y position must be between -1 and 1')
+      }
+      if (isNaN(scale) || scale < 0.1 || scale > 5) {
+        throw new Error('Scale must be between 0.1 and 5')
+      }
+      
+      // Use transform property (getter/setter) instead of setTransform method
+      if (!this.sdkManager.avatarView.transform) {
+        throw new Error('transform property is not available in this SDK version')
+      }
+      this.sdkManager.avatarView.transform = { x, y, scale }
+      this.logger.success(`Transform applied: x=${x}, y=${y}, scale=${scale}`)
+      this.updateStatus(`Transform applied: x=${x}, y=${y}, scale=${scale}`, 'success')
+      this.hideTransformModal()
+    } catch (error) {
+      this.logger.error('Failed to apply transform', error)
+      this.updateStatus(`Transform failed: ${error.message}`, 'error')
+    }
+  }
 
   handleVolumeChange(event) {
     const volume = parseInt(event.target.value) / 100 // Convert 0-100 to 0.0-1.0
@@ -929,8 +1019,25 @@ export class AvatarPanel {
       this.elements.btnDisconnect.disabled = true
       this.elements.btnUnload.disabled = true
       if (this.elements.volumeSlider) {
+        this.elements.volumeSlider.style.display = 'none'
         this.elements.volumeSlider.disabled = true
         this.elements.volumeValue.textContent = '100%'
+      }
+      if (this.elements.volumeIcon) {
+        this.elements.volumeIcon.style.display = 'none'
+      }
+      if (this.elements.btnSetBackground) {
+        this.elements.btnSetBackground.style.display = 'none'
+        this.elements.btnSetBackground.disabled = true
+      }
+      if (this.elements.btnRemoveBackground) {
+        this.elements.btnRemoveBackground.style.display = 'none'
+        this.elements.btnRemoveBackground.disabled = true
+      }
+      
+      // Hide transform button after character is unloaded
+      if (this.elements.btnTransform) {
+        this.elements.btnTransform.style.display = 'none'
       }
     } catch (error) {
       this.logger.error(`Unload character failed: ${error.message}`, error)
@@ -1032,6 +1139,45 @@ export class AvatarPanel {
   }
 
   // CPU和GPU监控已移到App级别，这里不再需要
+
+  handleSetBackground() {
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('No character loaded')
+      return
+    }
+    
+    try {
+      // Set background image using the demo background image
+      // Background methods are directly on AvatarView
+      const backgroundImagePath = '/src/demo-background.png'
+      this.sdkManager.avatarView.setBackgroundImage(backgroundImagePath)
+      this.sdkManager.avatarView.isOpaque = true
+      this.logger.success('Background image set')
+      this.updateStatus('Background image set', 'success')
+    } catch (error) {
+      this.logger.error('Failed to set background', error)
+      this.updateStatus(`Failed to set background: ${error.message}`, 'error')
+    }
+  }
+
+  handleRemoveBackground() {
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('No character loaded')
+      return
+    }
+    
+    try {
+      // Remove background image
+      // Background methods are directly on AvatarView
+      this.sdkManager.avatarView.setBackgroundImage(null)
+      this.sdkManager.avatarView.isOpaque = false
+      this.logger.success('Background image removed')
+      this.updateStatus('Background image removed', 'success')
+    } catch (error) {
+      this.logger.error('Failed to remove background', error)
+      this.updateStatus(`Failed to remove background: ${error.message}`, 'error')
+    }
+  }
 
   destroy() {
     // Stop FPS monitoring

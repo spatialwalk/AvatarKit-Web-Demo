@@ -58,7 +58,7 @@ export class AvatarSDKManager {
     this.logger.info('Starting SDK initialization')
     this.logger.info(`Using environment: ${environment}`)
 
-    await this.AvatarSDK.initialize('demo', {
+    await this.AvatarSDK.initialize('app_mj8526em_9fpt9s', {
       environment,
       logLevel: 'basic',
     })

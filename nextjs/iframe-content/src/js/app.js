@@ -115,7 +115,7 @@ export class App {
       const envValue = envSelect ? envSelect.value : 'intl'
       const selectedEnvironment = envValue === 'cn' ? Environment.cn : Environment.intl
       
-      await AvatarSDK.initialize('demo', { 
+      await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
         environment: selectedEnvironment,
         drivingServiceMode
       })
@@ -171,11 +171,15 @@ export class App {
       }
       const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
       const sessionTokenLabel = sessionTokenInput ? sessionTokenInput.previousElementSibling : null
+      const autoTokenButton = sessionTokenInput ? sessionTokenInput.nextElementSibling : null
       if (sessionTokenInput) {
         sessionTokenInput.style.display = 'none'
       }
       if (sessionTokenLabel && sessionTokenLabel.tagName === 'LABEL') {
         sessionTokenLabel.style.display = 'none'
+      }
+      if (autoTokenButton && autoTokenButton.tagName === 'BUTTON') {
+        autoTokenButton.style.display = 'none'
       }
       // 通知所有面板更新 SDK 状态
       this.updateAllPanelsSDKStatus()
@@ -235,6 +239,26 @@ export class App {
     sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 200px;'
     sessionTokenInput.disabled = this.globalSDKInitialized
     
+    // Create Auto button for generating temporary token
+    const autoTokenButton = document.createElement('button')
+    autoTokenButton.textContent = 'Auto'
+    autoTokenButton.title = '生成临时token，有效期1小时'
+    autoTokenButton.style.cssText = 'padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; background: #10b981; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s;'
+    autoTokenButton.disabled = this.globalSDKInitialized
+    if (this.globalSDKInitialized) {
+      autoTokenButton.style.opacity = '0.5'
+      autoTokenButton.style.cursor = 'not-allowed'
+    }
+    autoTokenButton.addEventListener('click', async () => {
+      await this.generateTemporaryToken(sessionTokenInput, envSelect)
+    })
+    autoTokenButton.addEventListener('mouseenter', () => {
+      autoTokenButton.style.background = '#059669'
+    })
+    autoTokenButton.addEventListener('mouseleave', () => {
+      autoTokenButton.style.background = '#10b981'
+    })
+    
     // Second row: Init buttons
     const secondRow = document.createElement('div')
     secondRow.style.cssText = 'display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;'
@@ -274,6 +298,7 @@ export class App {
       firstRow.appendChild(envSelect)
       firstRow.appendChild(sessionTokenLabel)
       firstRow.appendChild(sessionTokenInput)
+      firstRow.appendChild(autoTokenButton)
       secondRow.appendChild(initButtonSDK)
       secondRow.appendChild(initButtonHost)
     }
@@ -330,6 +355,62 @@ export class App {
         p.panel.elements.btnRemove.style.display = index > 0 ? 'block' : 'none'
       }
     })
+  }
+
+  async generateTemporaryToken(sessionTokenInput, envSelect) {
+    if (!sessionTokenInput || !envSelect) return
+    
+    try {
+      // Get environment
+      const envValue = envSelect.value
+      const isCN = envValue === 'cn'
+      const consoleApiHost = isCN ? 'console.open.spatialwalk.top' : 'console.ap-northeast.spatialwalk.cloud'
+      
+      // Calculate expireAt (current timestamp + 1 hour)
+      const expireAt = Math.floor(Date.now() / 1000) + 3600
+      
+      // API Key
+      const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
+      
+      // Make API request
+      const response = await fetch(`https://${consoleApiHost}/v1/console/session-tokens`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          expireAt: expireAt,
+          modelVersion: ''
+        })
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to generate token: ${response.status} ${errorText}`)
+      }
+      
+      const data = await response.json()
+      const token = data.token || data.sessionToken || data.data?.token || data.data?.sessionToken
+      
+      if (token) {
+        sessionTokenInput.value = token
+        sessionTokenInput.dispatchEvent(new Event('input', { bubbles: true }))
+        
+        // 如果 SDK 已初始化，立即设置 token
+        if (AvatarSDK.isInitialized) {
+          AvatarSDK.setSessionToken(token)
+          console.log('Temporary token generated and set to SDK')
+        } else {
+          console.log('Temporary token generated (will be set when SDK initializes)')
+        }
+      } else {
+        throw new Error('Token not found in response')
+      }
+    } catch (error) {
+      console.error('Failed to generate temporary token:', error)
+      alert(`生成临时 token 失败: ${error.message}`)
+    }
   }
 
 }

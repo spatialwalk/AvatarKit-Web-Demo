@@ -56,9 +56,14 @@ npm run dev
 ### 6. Start Using
 
 **SDK Mode (Real-time Audio Streaming):**
-1. Click "初始化 SDK (SDK Mode)" to initialize the SDK
-2. Enter the character ID in the interface
-3. (Optional) Enter Session Token (if server requires authentication)
+1. **Generate Session Token** (Required) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
+   - The token will be automatically filled into the input field
+   - If SDK is already initialized, the token will be set immediately
+   - If SDK is not initialized yet, the token will be set when you initialize the SDK
+2. Click "初始化 SDK (SDK Mode)" to initialize the SDK
+   - Select environment (International/CN)
+   - The Session Token will be automatically set if you generated it in step 1
+3. Enter the character ID in the interface
 4. Click "Load Character" to load the character
 5. Click "Connect Service" to establish WebSocket connection
 6. Click "Start Recording" and start speaking
@@ -69,12 +74,18 @@ npm run dev
 **Host Mode (Pre-recorded Audio/Animation):**
 > ⚠️ **Note**: Host Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
 
-1. Click "初始化 SDK (Host Mode)" to initialize the SDK in Host mode
-2. Enter the character ID in the interface
-3. Click "Load Character" to load the character
-4. Click "Play Data" to load and play pre-recorded audio and animation files
-5. Observe the character's animation synchronized with audio
-6. Adjust volume using the volume slider (0-100%)
+1. **Generate Session Token** (Required) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
+   - The token will be automatically filled into the input field
+   - If SDK is already initialized, the token will be set immediately
+   - If SDK is not initialized yet, the token will be set when you initialize the SDK
+2. Click "初始化 SDK (Host Mode)" to initialize the SDK in Host mode
+   - Select environment (International/CN)
+   - The Session Token will be automatically set if you generated it in step 1
+3. Enter the character ID in the interface
+4. Click "Load Character" to load the character
+5. Click "Play Data" to load and play pre-recorded audio and animation files
+6. Observe the character's animation synchronized with audio
+7. Adjust volume using the volume slider (0-100%)
 
 ## 📦 Example List
 
@@ -223,32 +234,38 @@ All examples support two initialization modes:
 
 The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)" button.
 
-1. **Initialize SDK** - Initialize SDK in SDK mode
+1. **Generate Session Token** (Required) - Generate a temporary token before initializing SDK
+   - Click the "Auto" button next to "Session Token" input field
+   - The button tooltip shows "生成临时token，有效期1小时" (Generate temporary token, valid for 1 hour)
+   - The token will be automatically filled into the input field
+   - **Important**: Generate the token before initializing the SDK, so it will be automatically set during initialization
+
+2. **Initialize SDK** - Initialize SDK in SDK mode
    - Click "初始化 SDK (SDK Mode)" button
    - Select environment (International/CN)
-   - (Optional) Enter Session Token
+   - The Session Token generated in step 1 will be automatically set
 
-2. **Enter Character ID** - Specify the character to load
+3. **Enter Character ID** - Specify the character to load
    - Get character ID from SDK management platform
    - Or click the ➕ button next to "Character ID" to add a custom character ID
 
-3. **Load Character** - Download and initialize character resources
+4. **Load Character** - Download and initialize character resources
    - SDK will automatically download character models and textures
    - Display loading progress
    - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
 
-4. **Connect Service** - Establish WebSocket connection
+5. **Connect Service** - Establish WebSocket connection
    - Connect to animation service
    - Wait for successful connection
 
-5. **Start Recording** - Capture audio and send to server
+6. **Start Recording** - Capture audio and send to server
    - Browser will request microphone permission
    - Start speaking, audio data will be collected
    - When stopping recording, all audio data will be processed and sent to server
    - Server will start playing animation and audio after receiving complete audio data
    - **Note**: Recording is just a demonstration method. In actual applications, you can obtain audio data from any source (such as audio files, streaming media, etc.)
 
-6. **Real-time Rendering** - Receive animation data and render to Canvas
+7. **Real-time Rendering** - Receive animation data and render to Canvas
    - Character will generate animations based on audio in real-time
    - You can see character's mouth, expressions, and other animations
 
@@ -258,20 +275,27 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
 
 > ⚠️ **Important**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the SPAvatar server-side SDK to generate animation keyframes from audio.
 
-1. **Initialize SDK** - Initialize SDK in Host mode
+1. **Generate Session Token** (Required) - Generate a temporary token before initializing SDK
+   - Click the "Auto" button next to "Session Token" input field
+   - The button tooltip shows "生成临时token，有效期1小时" (Generate temporary token, valid for 1 hour)
+   - The token will be automatically filled into the input field
+   - **Important**: Generate the token before initializing the SDK, so it will be automatically set during initialization
+
+2. **Initialize SDK** - Initialize SDK in Host mode
    - Click "初始化 SDK (Host Mode)" button
    - Select environment (International/CN)
+   - The Session Token generated in step 1 will be automatically set
 
-2. **Enter Character ID** - Specify the character to load
+3. **Enter Character ID** - Specify the character to load
    - Get character ID from SDK management platform
    - Or click the ➕ button next to "Character ID" to add a custom character ID
 
-3. **Load Character** - Download and initialize character resources
+4. **Load Character** - Download and initialize character resources
    - SDK will automatically download character models and textures
    - Display loading progress
    - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
 
-4. **Play Data** - Load and play pre-recorded audio and animation files
+5. **Play Data** - Load and play pre-recorded audio and animation files
    - Audio files are automatically resampled from 24kHz to 16kHz
    - First, audio data is sent via `yieldAudioData()` to get a `conversationId`
    - Then, animation keyframes are sent via `yieldFramesData()` with the `conversationId`
@@ -287,12 +311,25 @@ Examples support two environments:
 - **`intl`** - International production environment (default)
 - **`cn`** - China production environment
 
-### Session Token (Optional)
+### Session Token (Required)
 
-If the server requires authentication, provide a valid Session Token:
+**All environments now require a Session Token for authentication.**
 
-- Enter Session Token in the interface
-- Or configure via code (check source code of each example)
+**Quick Setup:**
+1. Click the **"Auto"** button next to the "Session Token" input field
+2. The button will generate a temporary token valid for 1 hour
+3. The token will be automatically filled into the input field
+4. If SDK is already initialized, the token will be set immediately
+5. If SDK is not initialized yet, generate the token first, then initialize the SDK - the token will be automatically set during initialization
+
+**Manual Entry:**
+- You can also manually enter a Session Token if you have one
+- The token must be valid and not expired
+
+**Token Generation:**
+- The "Auto" button calls the console API to generate a temporary token
+- Token expires after 1 hour
+- You can generate a new token anytime by clicking "Auto" again
 
 ### Character ID
 

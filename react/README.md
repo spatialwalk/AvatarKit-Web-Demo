@@ -138,13 +138,23 @@ logger.clearLogs()
 
 ### Environment Configuration
 
-- **`test`** - Test environment (default)
-- **`us`** - US production environment
+- **`intl`** - International production environment (default)
 - **`cn`** - China production environment
 
-### Session Token (Optional)
+### Session Token (Required)
 
-Enter Session Token in the interface, or configure via code.
+**All environments now require a Session Token for authentication.**
+
+**Quick Setup:**
+1. Click the **"Auto"** button next to the "Session Token" input field
+2. The button will generate a temporary token valid for 1 hour
+3. The token will be automatically filled into the input field
+4. **Important**: Generate the token **before** initializing the SDK, so it will be automatically set during initialization
+5. If SDK is already initialized, the token will be set immediately when generated
+
+**Manual Entry:**
+- You can also manually enter a Session Token if you have one
+- The token must be valid and not expired
 
 ### Character ID
 

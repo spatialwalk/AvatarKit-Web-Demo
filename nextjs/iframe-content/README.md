@@ -120,9 +120,20 @@ logger.error('Error')
 - **`us`** - US production environment
 - **`cn`** - China production environment
 
-### Session Token (Optional)
+### Session Token (Required)
 
-If the server requires authentication, enter a valid Session Token in the interface.
+**All environments now require a Session Token for authentication.**
+
+**Quick Setup:**
+1. Click the **"Auto"** button next to the "Session Token" input field
+2. The button will generate a temporary token valid for 1 hour
+3. The token will be automatically filled into the input field
+4. **Important**: Generate the token **before** initializing the SDK, so it will be automatically set during initialization
+5. If SDK is already initialized, the token will be set immediately when generated
+
+**Manual Entry:**
+- You can also manually enter a Session Token if you have one
+- The token must be valid and not expired
 
 ### Character ID
 

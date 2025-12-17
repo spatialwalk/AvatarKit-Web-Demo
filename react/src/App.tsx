@@ -36,7 +36,7 @@ function App() {
     
     try {
       setSdkInitializing(true)
-      await AvatarSDK.initialize('demo', { 
+      await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
         environment: selectedEnvironment,
         drivingServiceMode: mode
       })
@@ -65,6 +65,58 @@ function App() {
       return // 至少保留一个面板
     }
     setPanels(panels.filter(p => p.id !== panelId))
+  }
+
+  const generateTemporaryToken = async () => {
+    try {
+      // Get environment
+      const isCN = selectedEnvironment === Environment.cn
+      const consoleApiHost = isCN ? 'console.open.spatialwalk.top' : 'console.ap-northeast.spatialwalk.cloud'
+      
+      // Calculate expireAt (current timestamp + 1 hour)
+      const expireAt = Math.floor(Date.now() / 1000) + 3600
+      
+      // API Key
+      const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
+      
+      // Make API request
+      const response = await fetch(`https://${consoleApiHost}/v1/console/session-tokens`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          expireAt: expireAt,
+          modelVersion: ''
+        })
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to generate token: ${response.status} ${errorText}`)
+      }
+      
+      const data = await response.json()
+      const token = data.token || data.sessionToken || data.data?.token || data.data?.sessionToken
+      
+      if (token) {
+        setSessionToken(token)
+        
+        // 如果 SDK 已初始化，立即设置 token
+        if (AvatarSDK.isInitialized) {
+          AvatarSDK.setSessionToken(token)
+          console.log('Temporary token generated and set to SDK')
+        } else {
+          console.log('Temporary token generated (will be set when SDK initializes)')
+        }
+      } else {
+        throw new Error('Token not found in response')
+      }
+    } catch (error: any) {
+      console.error('Failed to generate temporary token:', error)
+      alert(`生成临时 token 失败: ${error.message}`)
+    }
   }
 
   return (
@@ -99,6 +151,35 @@ function App() {
                     style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: 'white', color: '#333', minWidth: '200px', flexShrink: 0 }}
                     disabled={globalSDKInitialized}
                   />
+                  <button
+                    onClick={generateTemporaryToken}
+                    title="生成临时token，有效期1小时"
+                    disabled={globalSDKInitialized}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '14px',
+                      background: '#10b981',
+                      color: 'white',
+                      cursor: globalSDKInitialized ? 'not-allowed' : 'pointer',
+                      fontWeight: 500,
+                      transition: 'all 0.2s',
+                      opacity: globalSDKInitialized ? 0.5 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!globalSDKInitialized) {
+                        e.currentTarget.style.background = '#059669'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!globalSDKInitialized) {
+                        e.currentTarget.style.background = '#10b981'
+                      }
+                    }}
+                  >
+                    Auto
+                  </button>
                 </div>
               </div>
               {/* Second row: Init buttons */}

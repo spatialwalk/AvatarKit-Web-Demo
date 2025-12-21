@@ -13,9 +13,11 @@ export function useAudioRecorder() {
   const mediaStreamRef = ref<MediaStream | null>(null)
   const audioChunksRef = ref<Array<{ data: Float32Array }>>([])
   const actualSampleRateRef = ref(16000)
+  const targetSampleRateRef = ref(16000)
   const isRecordingFlagRef = ref(false)
 
-  const start = async () => {
+  const start = async (sampleRate: number = 16000) => {
+    targetSampleRateRef.value = sampleRate
     try {
       // If already recording, stop first
       if (isRecordingFlagRef.value) {
@@ -29,7 +31,7 @@ export function useAudioRecorder() {
 
       // Create AudioContext
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 16000,
+        sampleRate: targetSampleRateRef.value,
       })
       audioContextRef.value = audioContext
       actualSampleRateRef.value = audioContext.sampleRate
@@ -38,7 +40,7 @@ export function useAudioRecorder() {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          sampleRate: 16000,
+          sampleRate: targetSampleRateRef.value,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: false,
@@ -125,10 +127,10 @@ export function useAudioRecorder() {
       // 1. Merge all Float32Array data
       const mergedFloat32 = mergeAudioChunks(audioChunksRef.value)
 
-      // 2. Resample to 16kHz (if needed)
+      // 2. Resample to target sample rate (if needed)
       let finalAudio = mergedFloat32
-      if (currentSampleRate !== 16000) {
-        finalAudio = resampleAudio(mergedFloat32, currentSampleRate, 16000)
+      if (currentSampleRate !== targetSampleRateRef.value) {
+        finalAudio = resampleAudio(mergedFloat32, currentSampleRate, targetSampleRateRef.value)
       }
 
       // 3. Convert to Int16 PCM

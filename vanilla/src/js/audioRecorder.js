@@ -6,9 +6,9 @@
 import { resampleAudio, convertToInt16PCM, convertToUint8Array, mergeAudioChunks } from '../utils/audioUtils.js'
 
 /**
- * Audio sample rate constant (backend requires 16kHz)
+ * Audio sample rate constant (default, can be overridden)
  */
-const AUDIO_SAMPLE_RATE = 16000
+const DEFAULT_AUDIO_SAMPLE_RATE = 16000
 
 /**
  * Audio recorder class
@@ -20,14 +20,17 @@ export class AudioRecorder {
     this.mediaStream = null
     this.isRecording = false
     this.recordedAudioChunks = []
-    this.actualSampleRate = AUDIO_SAMPLE_RATE
+    this.actualSampleRate = DEFAULT_AUDIO_SAMPLE_RATE
+    this.targetSampleRate = DEFAULT_AUDIO_SAMPLE_RATE
   }
 
   /**
    * Start recording
+   * @param {number} sampleRate - Target sample rate (default: 16000)
    * @returns {Promise<void>}
    */
-  async start() {
+  async start(sampleRate = DEFAULT_AUDIO_SAMPLE_RATE) {
+    this.targetSampleRate = sampleRate
     try {
       // If already recording, stop previous recording first
       if (this.isRecording) {
@@ -64,7 +67,7 @@ export class AudioRecorder {
       this.recordedAudioChunks = []
 
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-        sampleRate: AUDIO_SAMPLE_RATE,
+        sampleRate: this.targetSampleRate,
       })
 
       this.actualSampleRate = this.audioContext.sampleRate
@@ -72,7 +75,7 @@ export class AudioRecorder {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          sampleRate: AUDIO_SAMPLE_RATE,
+          sampleRate: this.targetSampleRate,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: false, // Disable automatic gain control
@@ -159,8 +162,8 @@ export class AudioRecorder {
 
       // 2. Resample to target sample rate (if needed)
       let finalAudio = mergedFloat32
-      if (currentSampleRate !== AUDIO_SAMPLE_RATE) {
-        finalAudio = resampleAudio(mergedFloat32, currentSampleRate, AUDIO_SAMPLE_RATE)
+      if (currentSampleRate !== this.targetSampleRate) {
+        finalAudio = resampleAudio(mergedFloat32, currentSampleRate, this.targetSampleRate)
       }
 
       // 3. Convert to Int16 PCM

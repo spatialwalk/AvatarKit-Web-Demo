@@ -56,8 +56,10 @@ npm run dev
 ### 6. Start Using
 
 **SDK Mode (Real-time Audio Streaming):**
-1. **Generate Session Token** (Required) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
-   - The token will be automatically filled into the input field
+1. **Generate Session Token** (Required for Demo) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
+   - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider.
+   - The token will be automatically filled into the read-only input field
+   - **Note**: The Session Token input field is read-only and can only be set via the "Auto" button in demos
    - If SDK is already initialized, the token will be set immediately
    - If SDK is not initialized yet, the token will be set when you initialize the SDK
 2. Click "初始化 SDK (SDK Mode)" to initialize the SDK
@@ -69,13 +71,16 @@ npm run dev
 6. Click "Start Recording" and start speaking
 7. Click "Stop Recording" to send audio and receive animation
 8. Observe the character's real-time animation effects
-9. Adjust volume using the volume slider (0-100%)
+9. Adjust volume using the volume slider (0-100%) - located on the right side above the transform button
+10. Use the play/pause button (bottom left) to control playback when the character is playing or paused
 
 **Host Mode (Pre-recorded Audio/Animation):**
 > ⚠️ **Note**: Host Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
 
-1. **Generate Session Token** (Required) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
-   - The token will be automatically filled into the input field
+1. **Generate Session Token** (Required for Demo) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
+   - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider.
+   - The token will be automatically filled into the read-only input field
+   - **Note**: The Session Token input field is read-only and can only be set via the "Auto" button in demos
    - If SDK is already initialized, the token will be set immediately
    - If SDK is not initialized yet, the token will be set when you initialize the SDK
 2. Click "初始化 SDK (Host Mode)" to initialize the SDK in Host mode
@@ -85,7 +90,8 @@ npm run dev
 4. Click "Load Character" to load the character
 5. Click "Play Data" to load and play pre-recorded audio and animation files
 6. Observe the character's animation synchronized with audio
-7. Adjust volume using the volume slider (0-100%)
+7. Adjust volume using the volume slider (0-100%) - located on the right side above the transform button
+8. Use the play/pause button (bottom left) to control playback when the character is playing or paused
 
 ## 📦 Example List
 
@@ -224,7 +230,7 @@ Before running the examples, ensure the following requirements are met:
   - Safari >= 14.1
   - Edge >= 90
 - **Microphone permission** (for recording functionality)
-- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.34` or later (automatically installed with `npm install`)
+- **SDK package** `@spatialwalk/avatarkit@^1.0.0-beta.36` or later (automatically installed with `npm install`)
 
 ## 📝 Usage Steps
 
@@ -234,11 +240,14 @@ All examples support two initialization modes:
 
 The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)" button.
 
-1. **Generate Session Token** (Required) - Generate a temporary token before initializing SDK
+1. **Generate Session Token** (Required for Demo) - Generate a temporary token (can be done before or after SDK initialization)
+   - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider using `AvatarSDK.setSessionToken(token)`.
    - Click the "Auto" button next to "Session Token" input field
    - The button tooltip shows "生成临时token，有效期1小时" (Generate temporary token, valid for 1 hour)
-   - The token will be automatically filled into the input field
-   - **Important**: Generate the token before initializing the SDK, so it will be automatically set during initialization
+   - The token will be automatically filled into the read-only input field
+   - **Note**: The Session Token input field is read-only and can only be set via the "Auto" button in demos
+   - If SDK is already initialized, the token will be set immediately
+   - If SDK is not initialized yet, the token will be automatically set when you initialize the SDK
 
 2. **Initialize SDK** - Initialize SDK in SDK mode
    - Click "初始化 SDK (SDK Mode)" button
@@ -275,11 +284,14 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
 
 > ⚠️ **Important**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the SPAvatar server-side SDK to generate animation keyframes from audio.
 
-1. **Generate Session Token** (Required) - Generate a temporary token before initializing SDK
+1. **Generate Session Token** (Required for Demo) - Generate a temporary token (can be done before or after SDK initialization)
+   - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider using `AvatarSDK.setSessionToken(token)`.
    - Click the "Auto" button next to "Session Token" input field
    - The button tooltip shows "生成临时token，有效期1小时" (Generate temporary token, valid for 1 hour)
-   - The token will be automatically filled into the input field
-   - **Important**: Generate the token before initializing the SDK, so it will be automatically set during initialization
+   - The token will be automatically filled into the read-only input field
+   - **Note**: The Session Token input field is read-only and can only be set via the "Auto" button in demos
+   - If SDK is already initialized, the token will be set immediately
+   - If SDK is not initialized yet, the token will be automatically set when you initialize the SDK
 
 2. **Initialize SDK** - Initialize SDK in Host mode
    - Click "初始化 SDK (Host Mode)" button
@@ -315,19 +327,24 @@ Examples support two environments:
 
 **All environments now require a Session Token for authentication.**
 
-**Quick Setup:**
+> ⚠️ **Important Note**: The "Auto" button in these demos is **only for demonstration purposes**. In actual production applications, you must **manually inject a valid Session Token** obtained from your SDK provider. The auto-generation feature is not available in production and should not be relied upon.
+
+**Demo Quick Setup:**
 1. Click the **"Auto"** button next to the "Session Token" input field
-2. The button will generate a temporary token valid for 1 hour
-3. The token will be automatically filled into the input field
-4. If SDK is already initialized, the token will be set immediately
-5. If SDK is not initialized yet, generate the token first, then initialize the SDK - the token will be automatically set during initialization
+2. The button will generate a temporary token valid for 1 hour (demo only)
+3. The token will be automatically filled into the read-only input field
+4. **Note**: The Session Token input field is read-only and can only be set via the "Auto" button (manual input is disabled in demos)
+5. If SDK is already initialized, the token will be set immediately
+6. If SDK is not initialized yet, you can generate the token before or after initialization - it will be automatically set when you initialize the SDK
 
-**Manual Entry:**
-- You can also manually enter a Session Token if you have one
+**For Production Integration:**
+- You must obtain a valid Session Token from your SDK provider
+- Use `AvatarSDK.setSessionToken(token)` to inject the token programmatically
 - The token must be valid and not expired
+- Handle token refresh logic in your application as needed
 
-**Token Generation:**
-- The "Auto" button calls the console API to generate a temporary token
+**Demo Token Generation:**
+- The "Auto" button calls the console API to generate a temporary token (demo only)
 - Token expires after 1 hour
 - You can generate a new token anytime by clicking "Auto" again
 
@@ -349,8 +366,9 @@ Character ID can be obtained from the SDK management platform and is used to ide
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
-- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.34`
-- **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI.
+- **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.36`
+- **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI, positioned on the right side above the transform button.
+- **Play/Pause Control**: A play/pause button is available in the bottom left corner of the character view. It appears when the character is in `playing` or `pausing` state, allowing you to pause or resume playback.
 - **Initialization Modes**: 
   - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
   - **Host Mode**: Pre-recorded audio and animation files, client-side playback
@@ -358,7 +376,7 @@ Character ID can be obtained from the SDK management platform and is used to ide
   - **Mode Selection**: The mode is selected during SDK initialization via `AvatarSDK.initialize()`, not when loading characters
 - **Key API Changes (v22)**: 
   - `onAvatarState` → `onConversationState` (callback renamed)
-  - `AvatarState` → `ConversationState` (enum renamed, values: `idle`, `playing`)
+  - `AvatarState` → `ConversationState` (enum renamed, values: `idle`, `playing`, `pausing`)
   - `Environment.us` → `Environment.intl` (renamed for internationalization)
   - `AvatarPlaybackMode` enum removed, use `DrivingServiceMode` or string literals (`'network'`, `'external'`)
   - Added `setVolume(volume: number)` and `getVolume(): number` for audio volume control
@@ -389,7 +407,9 @@ Character ID can be obtained from the SDK management platform and is used to ide
 
 ### Q: How to get Session Token?
 
-A: Session Token needs to be obtained from the SDK provider. Please contact the SDK provider or check the main SDK documentation for more information.
+A: 
+- **For Production**: Session Token needs to be obtained from the SDK provider. Please contact the SDK provider or check the main SDK documentation for more information. You must manually inject the token using `AvatarSDK.setSessionToken(token)` in your application.
+- **For Demo**: The demos include an "Auto" button that generates a temporary token for demonstration purposes only. This feature is not available in production applications.
 
 ### Q: Can't see the character after running the example?
 
@@ -416,9 +436,9 @@ A: Possible reasons:
 
 ### Q: How to install SDK?
 
-A: Install via npm (SDK version 1.0.0-beta.34 or later):
+A: Install via npm (SDK version 1.0.0-beta.36 or later):
 ```bash
-npm install @spatialwalk/avatarkit@^1.0.0-beta.34
+npm install @spatialwalk/avatarkit@^1.0.0-beta.36
 ```
 
 The examples automatically install the correct version when you run `npm install`.

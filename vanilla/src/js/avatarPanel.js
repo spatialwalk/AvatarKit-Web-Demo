@@ -8,14 +8,13 @@ import { AudioRecorder } from './audioRecorder.js'
 import { AvatarSDKManager } from './avatarSDK.js'
 import { resampleAudio, resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils.js'
 
-const AUDIO_SAMPLE_RATE = 16000
-
 export class AvatarPanel {
-  constructor(panelId, container, globalSDKInitialized, onRemove) {
+  constructor(panelId, container, globalSDKInitialized, onRemove, getSampleRateFn = null) {
     this.panelId = panelId
     this.container = container
     this.globalSDKInitialized = globalSDKInitialized
     this.onRemove = onRemove
+    this.getSampleRateFn = getSampleRateFn // Function to get current sample rate from App
     this.currentPlaybackMode = 'sdk'
     this.shouldContinueSendingData = false
     this.conversationState = null
@@ -85,10 +84,6 @@ export class AvatarPanel {
                 <select id="characterId-${this.panelId}">
                 </select>
               </div>
-               <div class="form-group">
-                 <label>Session Token</label>
-                 <div id="sessionToken-${this.panelId}" style="padding: 8px 12px; background: #f0f0f0; border-radius: 6px; color: #666; font-size: 14px;">-</div>
-               </div>
               <button id="btnLoadCharacter-${this.panelId}" class="btn btn-primary" disabled>1. Load Character</button>
               <button id="btnConnect-${this.panelId}" class="btn btn-primary" disabled>2. Connect Service</button>
               <button id="btnStartRecord-${this.panelId}" class="btn btn-primary" disabled>3. Start Recording</button>
@@ -121,12 +116,18 @@ export class AvatarPanel {
                 <button id="btnSetBackground-${this.panelId}" title="Set Background" style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 16px; transition: all 0.2s;" disabled>🖼️</button>
                 <button id="btnRemoveBackground-${this.panelId}" title="Remove Background" style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 16px; transition: all 0.2s;" disabled>🗑️</button>
             </div>
-              <div style="position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000;">
+              <!-- Play/Pause button (bottom left) -->
+              <button id="btnPlayPause-${this.panelId}" title="Play/Pause" style="position: absolute; bottom: 12px; left: 12px; width: 72px; height: 72px; background: transparent; color: white; border: none; cursor: pointer; display: none; font-size: 36px; z-index: 1000; transition: all 0.2s;" disabled>▶️</button>
+              
+              <!-- Volume control (above transform button, right side) -->
+              <div style="position: absolute; right: 12px; bottom: 60px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000;">
                 <span style="font-size: 18px; color: white; background: rgba(0, 0, 0, 0.7); padding: 4px; border-radius: 4px; display: none; width: 28px; height: 28px; text-align: center; line-height: 20px;" id="volumeIcon-${this.panelId}">🔊</span>
-                <input type="range" id="volumeSlider-${this.panelId}" min="0" max="100" value="100" orient="vertical" style="width: 80px; height: 120px; cursor: pointer; writing-mode: bt-lr; -webkit-appearance: slider-vertical; display: none;" disabled>
-                <span id="volumeValue-${this.panelId}" style="font-size: 12px; color: white; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 4px; min-width: 36px; text-align: center;">100%</span>
+                <input type="range" id="volumeSlider-${this.panelId}" min="0" max="100" value="100" orient="vertical" style="width: 36px; height: 120px; cursor: pointer; writing-mode: bt-lr; -webkit-appearance: slider-vertical; display: none;" disabled>
+                <span id="volumeValue-${this.panelId}" style="font-size: 12px; color: white; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 4px; min-width: 36px; text-align: center; display: none;">100%</span>
               </div>
-              <button id="btnTransform-${this.panelId}" class="transform-button" title="Transform Settings" style="position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 18px; z-index: 1000; transition: all 0.2s; text-align: center; line-height: 36px;">⚙️</button>
+              
+              <!-- Transform button (bottom right) -->
+              <button id="btnTransform-${this.panelId}" class="transform-button" title="Transform Settings" style="position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 18px; z-index: 1000; transition: all 0.2s;">⚙️</button>
             </div>
           </div>
         </div>
@@ -196,7 +197,6 @@ export class AvatarPanel {
       fpsDisplay: document.getElementById(`fpsDisplay-${this.panelId}`),
       environmentDisplay: document.getElementById(`environment-${this.panelId}`),
       characterId: document.getElementById(`characterId-${this.panelId}`),
-      sessionToken: document.getElementById(`sessionToken-${this.panelId}`),
       btnAddCharacterId: document.getElementById(`btnAddCharacterId-${this.panelId}`),
       addCharacterIdModal: document.getElementById(`addCharacterIdModal-${this.panelId}`),
       newCharacterIdInput: document.getElementById(`newCharacterIdInput-${this.panelId}`),
@@ -204,6 +204,7 @@ export class AvatarPanel {
       btnConfirmAddId: document.getElementById(`btnConfirmAddId-${this.panelId}`),
       btnSetBackground: document.getElementById(`btnSetBackground-${this.panelId}`),
       btnRemoveBackground: document.getElementById(`btnRemoveBackground-${this.panelId}`),
+      btnPlayPause: document.getElementById(`btnPlayPause-${this.panelId}`),
       btnTransform: document.getElementById(`btnTransform-${this.panelId}`),
       transformModal: document.getElementById(`transformModal-${this.panelId}`),
       transformX: document.getElementById(`transformX-${this.panelId}`),
@@ -225,7 +226,7 @@ export class AvatarPanel {
      // 初始化时检查全局 SDK 状态并更新按钮
      this.checkSDKStatus()
      
-     // 更新环境显示和 Session Token 显示
+     // 更新环境显示
      this.updateEnvironmentDisplay()
   }
 
@@ -274,7 +275,7 @@ export class AvatarPanel {
       }
        // 启用加载按钮
        this.elements.btnLoadCharacter.disabled = false
-       // 更新环境显示和 Session Token 显示
+       // 更新环境显示
        this.updateEnvironmentDisplay()
      }
    }
@@ -298,26 +299,8 @@ export class AvatarPanel {
       this.elements.environmentDisplay.textContent = '-'
     }
     
-    // 同时更新 Session Token 显示
-    this.updateSessionTokenDisplay()
   }
   
-  // 更新 Session Token 显示
-  async updateSessionTokenDisplay() {
-    if (!this.elements.sessionToken) return
-    
-    try {
-      const { AvatarSDK } = await import('@spatialwalk/avatarkit')
-      if (AvatarSDK.isInitialized && AvatarSDK.configuration) {
-        const token = AvatarSDK.configuration.sessionToken || ''
-        this.elements.sessionToken.textContent = token || '-'
-      } else {
-        this.elements.sessionToken.textContent = '-'
-      }
-    } catch (error) {
-      this.elements.sessionToken.textContent = '-'
-    }
-  }
 
   bindEvents() {
     if (this.elements.btnRemove) {
@@ -345,6 +328,9 @@ export class AvatarPanel {
     // Transform button events
     if (this.elements.btnTransform) {
       this.elements.btnTransform.addEventListener('click', () => this.showTransformModal())
+    }
+    if (this.elements.btnPlayPause) {
+      this.elements.btnPlayPause.addEventListener('click', () => this.handlePlayPause())
     }
     if (this.elements.btnCancelTransform) {
       this.elements.btnCancelTransform.addEventListener('click', () => this.hideTransformModal())
@@ -574,6 +560,9 @@ export class AvatarPanel {
       if (this.elements.volumeIcon) {
         this.elements.volumeIcon.style.display = 'inline-block'
       }
+      if (this.elements.volumeValue) {
+        this.elements.volumeValue.style.display = 'block'
+      }
       
       // Show background control buttons after character is loaded
       if (this.elements.btnSetBackground) {
@@ -589,14 +578,16 @@ export class AvatarPanel {
         this.elements.btnRemoveBackground.disabled = false
       }
       
-      // Show transform button after character is loaded
-      if (this.elements.btnTransform) {
-        this.elements.btnTransform.style.display = 'flex'
-      }
+      // Play/pause button will be shown/hidden based on conversation state in onConversationState
+      // Don't show it here, let onConversationState handle it
       
       // Show transform button after character is loaded
       if (this.elements.btnTransform) {
         this.elements.btnTransform.style.display = 'flex'
+        // Ensure flex layout for centering icon
+        this.elements.btnTransform.style.alignItems = 'center'
+        this.elements.btnTransform.style.justifyContent = 'center'
+        this.elements.btnTransform.style.lineHeight = '1'
       }
     } catch (error) {
       this.logger.error('Character load failed', error)
@@ -661,8 +652,11 @@ export class AvatarPanel {
       this.isProcessing.startRecord = true
       this.elements.btnStartRecord.disabled = true
       this.updateStatus('Recording...', 'success')
-      await this.audioRecorder.start()
-      this.logger.success('Recording started')
+      
+      // Get sample rate from App (default to 16000 if not available)
+      const sampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
+      await this.audioRecorder.start(sampleRate)
+      this.logger.success(`Recording started (${sampleRate} Hz)`)
 
       this.elements.btnStartRecord.disabled = true
       this.elements.btnStopRecord.disabled = false
@@ -702,7 +696,8 @@ export class AvatarPanel {
 
         if (audioBuffer) {
           const duration = this.audioRecorder.getDuration()
-          this.logger.info(`Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${AUDIO_SAMPLE_RATE / 1000}kHz PCM16)`)
+          const sampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
+          this.logger.info(`Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
           this.sdkManager.sendAudio(audioBuffer, true)
           this.logger.success('Complete audio data sent')
         } else {
@@ -762,8 +757,35 @@ export class AvatarPanel {
       }
       
       // 将 base64 字符串解码为 Uint8Array
-      const audioData = this.base64ToUint8Array(data.audio)
+      const rawAudioData = this.base64ToUint8Array(data.audio)
       const animationsData = data.animations.map(anim => this.base64ToUint8Array(anim))
+      
+      // 获取目标采样率（初始化时选择的采样率）
+      const targetSampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
+      const sourceSampleRate = 24000 // API 返回的音频数据是 24kHz
+      
+      // 如果目标采样率与源采样率不同，需要进行重采样
+      let audioData = rawAudioData
+      if (targetSampleRate !== sourceSampleRate) {
+        this.logger.info(`Resampling audio from ${sourceSampleRate}Hz to ${targetSampleRate}Hz...`)
+        this.updateStatus(`Resampling audio (${sourceSampleRate}Hz → ${targetSampleRate}Hz)...`, 'info')
+        
+        // 1. 将 PCM16 Uint8Array 转换为 Float32Array
+        const int16Array = new Int16Array(rawAudioData.buffer, rawAudioData.byteOffset, rawAudioData.length / 2)
+        const float32Array = new Float32Array(int16Array.length)
+        for (let i = 0; i < int16Array.length; i++) {
+          float32Array[i] = int16Array[i] / 32768.0
+        }
+        
+        // 2. 使用 Web Audio API 进行高质量重采样
+        const resampledFloat32 = await resampleAudioWithWebAudioAPI(float32Array, sourceSampleRate, targetSampleRate)
+        
+        // 3. 转换回 PCM16 格式
+        const resampledInt16 = convertToInt16PCM(resampledFloat32)
+        audioData = convertToUint8Array(resampledInt16)
+        
+        this.logger.success(`Audio resampled from ${sourceSampleRate}Hz to ${targetSampleRate}Hz`)
+      }
       
       this.logger.success('Data fetched and decoded successfully')
       this.updateStatus('Playing data...', 'info')
@@ -887,6 +909,30 @@ export class AvatarPanel {
     } catch (error) {
       this.logger.error('Volume change failed', error)
       this.updateStatus(`Volume change failed: ${error.message}`, 'error')
+    }
+  }
+
+  async handlePlayPause() {
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('No character loaded')
+      return
+    }
+
+    try {
+      if (this.conversationState === 'playing') {
+        // Pause if currently playing
+        this.sdkManager.pause()
+        this.logger.info('Playback paused')
+        this.updateStatus('Playback paused', 'info')
+      } else if (this.conversationState === 'pausing' || this.conversationState === 'idle') {
+        // Resume if paused or idle
+        await this.sdkManager.resume()
+        this.logger.info('Playback resumed')
+        this.updateStatus('Playback resumed', 'info')
+      }
+    } catch (error) {
+      this.logger.error('Play/Pause failed', error)
+      this.updateStatus(`Play/Pause failed: ${error.message}`, 'error')
     }
   }
 
@@ -1026,6 +1072,9 @@ export class AvatarPanel {
       if (this.elements.volumeIcon) {
         this.elements.volumeIcon.style.display = 'none'
       }
+      if (this.elements.volumeValue) {
+        this.elements.volumeValue.style.display = 'none'
+      }
       if (this.elements.btnSetBackground) {
         this.elements.btnSetBackground.style.display = 'none'
         this.elements.btnSetBackground.disabled = true
@@ -1036,6 +1085,10 @@ export class AvatarPanel {
       }
       
       // Hide transform button after character is unloaded
+      if (this.elements.btnPlayPause) {
+        this.elements.btnPlayPause.style.display = 'none'
+        this.elements.btnPlayPause.disabled = true
+      }
       if (this.elements.btnTransform) {
         this.elements.btnTransform.style.display = 'none'
       }
@@ -1080,6 +1133,26 @@ export class AvatarPanel {
     
     if (!this.sdkManager.avatarView) {
       return
+    }
+    
+    // Update play/pause button based on state
+    if (this.elements.btnPlayPause) {
+      if (state === 'playing') {
+        // Show pause button when playing
+        this.elements.btnPlayPause.style.display = 'flex'
+        this.elements.btnPlayPause.textContent = '⏸️'
+        this.elements.btnPlayPause.title = 'Pause'
+        this.elements.btnPlayPause.disabled = false
+      } else if (state === 'pausing') {
+        // Show play button when paused
+        this.elements.btnPlayPause.style.display = 'flex'
+        this.elements.btnPlayPause.textContent = '▶️'
+        this.elements.btnPlayPause.title = 'Resume'
+        this.elements.btnPlayPause.disabled = false
+      } else {
+        // Hide button when idle
+        this.elements.btnPlayPause.style.display = 'none'
+      }
     }
     
     if (state === 'playing') {

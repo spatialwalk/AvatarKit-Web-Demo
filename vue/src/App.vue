@@ -5,7 +5,7 @@
       <p>支持同时显示多个角色视图</p>
       <div style="margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative">
         <template v-if="!globalSDKInitialized && !sdkInitializing">
-          <!-- First row: Environment and Session Token -->
+          <!-- First row: Environment and Sample Rate -->
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center">
             <span class="arrow-pointing-right" style="color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; flex-shrink: 0">→</span>
             <label style="color: white; font-size: 14px; margin-right: 4px">Environment:</label>
@@ -16,35 +16,20 @@
               <option :value="Environment.intl">International</option>
               <option :value="Environment.cn">CN</option>
             </select>
-            <label style="color: white; font-size: 14px; margin-right: 4px">Session Token:</label>
-            <input
-              v-model="sessionToken"
-              type="text"
-              placeholder="Session Token (optional)"
-              style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 200px; flex-shrink: 0"
+            <label style="color: white; font-size: 14px; margin-right: 4px">Sample Rate:</label>
+            <select
+              v-model="selectedSampleRate"
+              style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer; flex-shrink: 0"
               :disabled="globalSDKInitialized"
             >
-            <button
-              @click="generateTemporaryToken"
-              title="生成临时token，有效期1小时"
-              :disabled="globalSDKInitialized"
-              :style="{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                fontSize: '14px',
-                background: autoButtonHover && !globalSDKInitialized ? '#059669' : (globalSDKInitialized ? '#6b7280' : '#10b981'),
-                color: 'white',
-                cursor: globalSDKInitialized ? 'not-allowed' : 'pointer',
-                fontWeight: 500,
-                transition: 'all 0.2s',
-                opacity: globalSDKInitialized ? 0.5 : 1
-              }"
-              @mouseenter="autoButtonHover = true"
-              @mouseleave="autoButtonHover = false"
-            >
-              Auto
-            </button>
+              <option :value="8000">8000 Hz</option>
+              <option :value="16000">16000 Hz</option>
+              <option :value="22050">22050 Hz</option>
+              <option :value="24000">24000 Hz</option>
+              <option :value="32000">32000 Hz</option>
+              <option :value="44100">44100 Hz</option>
+              <option :value="48000">48000 Hz</option>
+            </select>
           </div>
           <!-- Second row: Init buttons -->
           <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: center">
@@ -62,6 +47,36 @@
             </button>
           </div>
         </template>
+        <!-- Session Token input should always be visible (can be set at any time) -->
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px">
+          <label style="color: white; font-size: 14px; margin-right: 4px">Session Token:</label>
+          <input
+            v-model="sessionToken"
+            type="text"
+            placeholder="Session Token (auto-generated only)"
+            readonly
+            style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: #f0f0f0; color: #666; min-width: 200px; flex-shrink: 0; cursor: not-allowed"
+          >
+          <button
+            @click="generateTemporaryToken"
+            title="生成临时token，有效期1小时"
+            :style="{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: 'none',
+              fontSize: '14px',
+              background: autoButtonHover ? '#059669' : '#10b981',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 500,
+              transition: 'all 0.2s'
+            }"
+            @mouseenter="autoButtonHover = true"
+            @mouseleave="autoButtonHover = false"
+          >
+            Auto
+          </button>
+        </div>
         <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ 正在初始化 SDK...</p>
         <p v-if="globalSDKInitialized && currentDrivingServiceMode" style="color: #10b981; margin: 0">
           ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }}, {{ selectedEnvironment === Environment.cn ? 'CN' : 'International' }})
@@ -84,6 +99,7 @@
           :panel-id="panel.id"
           :globalSDKInitialized="globalSDKInitialized"
           :on-remove="panels.length > 1 ? () => handleRemovePanel(panel.id) : undefined"
+          :get-sample-rate="() => selectedSampleRate"
         />
       </div>
     </div>
@@ -104,6 +120,7 @@ const globalSDKInitialized = ref(false)
 const sdkInitializing = ref(false)
 const currentDrivingServiceMode = ref<DrivingServiceMode | null>(null)
 const selectedEnvironment = ref<Environment>(Environment.intl)
+const selectedSampleRate = ref(16000)
 const sessionToken = ref('')
 const autoButtonHover = ref(false)
 
@@ -125,8 +142,12 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
     sdkInitializing.value = true
     await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
       environment: selectedEnvironment.value,
-      drivingServiceMode: mode
-    })
+      drivingServiceMode: mode,
+      audioFormat: {
+        channelCount: 1,
+        sampleRate: selectedSampleRate.value
+      }
+    } as any)
     
     // Set Session Token if provided
     if (sessionToken.value.trim()) {
@@ -141,6 +162,7 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
     sdkInitializing.value = false
   }
 }
+
 
 // Generate temporary token
 const generateTemporaryToken = async () => {

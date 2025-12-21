@@ -15,10 +15,15 @@ interface AvatarCanvasProps {
   volume?: number
   onVolumeChange?: (volume: number) => void
   showVolumeSlider?: boolean
+  showPlayPauseButton?: boolean
+  onPlayPauseClick?: () => void
+  playPauseIcon?: string
+  playPauseTitle?: string
+  playPauseDisabled?: boolean
 }
 
 export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props, ref) => {
-  const { avatarView, onTransformClick, showTransformButton = false, onSetBackground, onRemoveBackground, showBackgroundButtons = false, volume = 100, onVolumeChange, showVolumeSlider = false } = props
+  const { avatarView, onTransformClick, showTransformButton = false, onSetBackground, onRemoveBackground, showBackgroundButtons = false, volume = 100, onVolumeChange, showVolumeSlider = false, showPlayPauseButton = false, onPlayPauseClick, playPauseIcon = '▶️', playPauseTitle = 'Play', playPauseDisabled = false } = props
   const [fps, setFps] = useState<number | null>(null)
   
   const frameCountRef = useRef(0)
@@ -101,8 +106,37 @@ export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props
           </button>
         </div>
       )}
+      {/* Play/Pause button (bottom left) */}
+      {showPlayPauseButton && !playPauseDisabled && (
+        <button
+          onClick={onPlayPauseClick}
+          title={playPauseTitle}
+          style={{
+            position: 'absolute',
+            bottom: '12px',
+            left: '12px',
+            width: '72px',
+            height: '72px',
+            background: 'transparent',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '36px',
+            zIndex: 1000,
+            transition: 'all 0.2s',
+            lineHeight: '1',
+          }}
+        >
+          {playPauseIcon}
+        </button>
+      )}
+      
+      {/* Volume control (above transform button, right side) */}
       {showVolumeSlider && (
-        <div style={{ position: 'absolute', left: '12px', bottom: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 1000 }}>
+        <div style={{ position: 'absolute', right: '12px', bottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 1000 }}>
           <span style={{ fontSize: '18px', color: 'white', background: 'rgba(0, 0, 0, 0.7)', padding: '4px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px' }}>
             🔊
           </span>
@@ -114,7 +148,7 @@ export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props
             onChange={(e) => onVolumeChange?.(parseInt(e.target.value))}
             orient="vertical"
             style={{
-              width: '80px',
+              width: '36px',
               height: '120px',
               cursor: 'pointer',
               writingMode: 'bt-lr',
@@ -126,6 +160,8 @@ export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props
           </span>
         </div>
       )}
+      
+      {/* Transform button (bottom right) */}
       {showTransformButton && (
         <button
           className="transform-button"
@@ -148,6 +184,7 @@ export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props
             fontSize: '18px',
             zIndex: 1000,
             transition: 'all 0.2s',
+            lineHeight: '1',
           }}
         >
           ⚙️

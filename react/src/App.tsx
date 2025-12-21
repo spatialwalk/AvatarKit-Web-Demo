@@ -18,6 +18,7 @@ function App() {
   const [sdkInitializing, setSdkInitializing] = useState(false)
   const [currentDrivingServiceMode, setCurrentDrivingServiceMode] = useState<DrivingServiceMode | null>(null)
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>(Environment.intl)
+  const [selectedSampleRate, setSelectedSampleRate] = useState(16000)
   const [sessionToken, setSessionToken] = useState('')
 
   // 检查是否已经初始化
@@ -38,8 +39,12 @@ function App() {
       setSdkInitializing(true)
       await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
         environment: selectedEnvironment,
-        drivingServiceMode: mode
-      })
+        drivingServiceMode: mode,
+        audioFormat: {
+          channelCount: 1,
+          sampleRate: selectedSampleRate
+        }
+      } as any)
       
       // Set Session Token if provided
       if (sessionToken.trim()) {
@@ -127,7 +132,7 @@ function App() {
         <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', position: 'relative' }}>
           {!globalSDKInitialized && !sdkInitializing && (
             <>
-              {/* First row: Environment and Session Token */}
+              {/* First row: Environment and Sample Rate */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '100%' }}>
                 <span className="arrow-pointing-right" style={{ color: '#ff0000', fontSize: '48px', fontWeight: 'bold', lineHeight: '1', flexShrink: 0 }}>→</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -142,44 +147,21 @@ function App() {
                   </select>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                  <label style={{ color: 'white', fontSize: '14px', whiteSpace: 'nowrap' }}>Session Token:</label>
-                  <input
-                    type="text"
-                    value={sessionToken}
-                    onChange={(e) => setSessionToken(e.target.value)}
-                    placeholder="Session Token (optional)"
-                    style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: 'white', color: '#333', minWidth: '200px', flexShrink: 0 }}
+                  <label style={{ color: 'white', fontSize: '14px', whiteSpace: 'nowrap' }}>Sample Rate:</label>
+                  <select
+                    value={selectedSampleRate}
+                    onChange={(e) => setSelectedSampleRate(parseInt(e.target.value, 10))}
+                    style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: 'white', color: '#333', cursor: 'pointer', flexShrink: 0 }}
                     disabled={globalSDKInitialized}
-                  />
-                  <button
-                    onClick={generateTemporaryToken}
-                    title="生成临时token，有效期1小时"
-                    disabled={globalSDKInitialized}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontSize: '14px',
-                      background: '#10b981',
-                      color: 'white',
-                      cursor: globalSDKInitialized ? 'not-allowed' : 'pointer',
-                      fontWeight: 500,
-                      transition: 'all 0.2s',
-                      opacity: globalSDKInitialized ? 0.5 : 1
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!globalSDKInitialized) {
-                        e.currentTarget.style.background = '#059669'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!globalSDKInitialized) {
-                        e.currentTarget.style.background = '#10b981'
-                      }
-                    }}
                   >
-                    Auto
-                  </button>
+                    <option value={8000}>8000 Hz</option>
+                    <option value={16000}>16000 Hz</option>
+                    <option value={22050}>22050 Hz</option>
+                    <option value={24000}>24000 Hz</option>
+                    <option value={32000}>32000 Hz</option>
+                    <option value={44100}>44100 Hz</option>
+                    <option value={48000}>48000 Hz</option>
+                  </select>
                 </div>
               </div>
               {/* Second row: Init buttons */}
@@ -199,6 +181,40 @@ function App() {
               </div>
             </>
           )}
+          {/* Session Token input should always be visible (can be set at any time) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '12px' }}>
+            <label style={{ color: 'white', fontSize: '14px', whiteSpace: 'nowrap' }}>Session Token:</label>
+            <input
+              type="text"
+              value={sessionToken}
+              readOnly
+              placeholder="Session Token (auto-generated only)"
+              style={{ padding: '8px 12px', borderRadius: '6px', border: 'none', fontSize: '14px', background: '#f0f0f0', color: '#666', minWidth: '200px', flexShrink: 0, cursor: 'not-allowed' }}
+            />
+            <button
+              onClick={generateTemporaryToken}
+              title="生成临时token，有效期1小时"
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                fontSize: '14px',
+                background: '#10b981',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: 500,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#059669'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#10b981'
+              }}
+            >
+              Auto
+            </button>
+          </div>
           {sdkInitializing && (
             <p style={{ color: '#ffeb3b', margin: 0 }}>⏳ 正在初始化 SDK...</p>
           )}
@@ -226,6 +242,7 @@ function App() {
               panelId={panel.id}
               globalSDKInitialized={globalSDKInitialized}
               onRemove={panels.length > 1 ? () => handleRemovePanel(panel.id) : undefined}
+              getSampleRate={() => selectedSampleRate}
             />
           ))}
         </div>

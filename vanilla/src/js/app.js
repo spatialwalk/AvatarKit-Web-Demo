@@ -16,6 +16,7 @@ export class App {
     this.globalSDKInitialized = false
     this.sdkInitializing = false
     this.currentDrivingServiceMode = null
+    this.selectedSampleRate = 16000 // Default sample rate
     
     // Check if already initialized
     this.checkSDKStatus()
@@ -62,9 +63,18 @@ export class App {
       const envValue = envSelect ? envSelect.value : 'intl'
       const selectedEnvironment = envValue === 'cn' ? Environment.cn : Environment.intl
       
+      // Get selected sample rate
+      const sampleRateSelect = document.getElementById('sdkSampleRateSelect')
+      const sampleRate = sampleRateSelect ? parseInt(sampleRateSelect.value, 10) : 16000
+      this.selectedSampleRate = sampleRate
+      
       await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
         environment: selectedEnvironment,
-        drivingServiceMode
+        drivingServiceMode,
+        audioFormat: {
+          channelCount: 1,
+          sampleRate: sampleRate
+        }
       })
       
       // Set Session Token if provided
@@ -116,17 +126,27 @@ export class App {
       if (envLabel && envLabel.tagName === 'LABEL') {
         envLabel.style.display = 'none'
       }
+      const sampleRateSelect = document.getElementById('sdkSampleRateSelect')
+      const sampleRateLabel = sampleRateSelect ? sampleRateSelect.previousElementSibling : null
+      if (sampleRateSelect) {
+        sampleRateSelect.style.display = 'none'
+      }
+      if (sampleRateLabel && sampleRateLabel.tagName === 'LABEL') {
+        sampleRateLabel.style.display = 'none'
+      }
+      // Session Token input should remain visible after SDK initialization
+      // so users can inject token at any time
       const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
-      const sessionTokenLabel = sessionTokenInput ? sessionTokenInput.previousElementSibling : null
       const autoTokenButton = sessionTokenInput ? sessionTokenInput.nextElementSibling : null
       if (sessionTokenInput) {
-        sessionTokenInput.style.display = 'none'
-      }
-      if (sessionTokenLabel && sessionTokenLabel.tagName === 'LABEL') {
-        sessionTokenLabel.style.display = 'none'
+        // Keep it visible but enable it
+        sessionTokenInput.disabled = false
       }
       if (autoTokenButton && autoTokenButton.tagName === 'BUTTON') {
-        autoTokenButton.style.display = 'none'
+        // Keep Auto button visible and enabled
+        autoTokenButton.disabled = false
+        autoTokenButton.style.opacity = '1'
+        autoTokenButton.style.cursor = 'pointer'
       }
       // 通知所有面板更新 SDK 状态
       this.updateAllPanelsSDKStatus()
@@ -181,7 +201,6 @@ export class App {
       
       if (token) {
         sessionTokenInput.value = token
-        sessionTokenInput.dispatchEvent(new Event('input', { bubbles: true }))
         
         // 如果 SDK 已初始化，立即设置 token
         if (AvatarSDK.isInitialized) {
@@ -230,6 +249,25 @@ export class App {
       <option value="cn">CN</option>
     `
     
+    // Create Sample Rate selector
+    const sampleRateLabel = document.createElement('label')
+    sampleRateLabel.textContent = 'Sample Rate:'
+    sampleRateLabel.style.cssText = 'color: white; font-size: 14px; margin-right: 4px;'
+    
+    const sampleRateSelect = document.createElement('select')
+    sampleRateSelect.id = 'sdkSampleRateSelect'
+    sampleRateSelect.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; cursor: pointer;'
+    sampleRateSelect.disabled = this.globalSDKInitialized
+    sampleRateSelect.innerHTML = `
+      <option value="8000">8000 Hz</option>
+      <option value="16000" selected>16000 Hz</option>
+      <option value="22050">22050 Hz</option>
+      <option value="24000">24000 Hz</option>
+      <option value="32000">32000 Hz</option>
+      <option value="44100">44100 Hz</option>
+      <option value="48000">48000 Hz</option>
+    `
+    
     // Create Session Token input
     const sessionTokenLabel = document.createElement('label')
     sessionTokenLabel.textContent = 'Session Token:'
@@ -238,20 +276,17 @@ export class App {
     const sessionTokenInput = document.createElement('input')
     sessionTokenInput.id = 'sdkSessionTokenInput'
     sessionTokenInput.type = 'text'
-    sessionTokenInput.placeholder = 'Session Token (optional)'
-    sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 200px;'
-    sessionTokenInput.disabled = this.globalSDKInitialized
+    sessionTokenInput.placeholder = 'Session Token (auto-generated only)'
+    sessionTokenInput.readOnly = true
+    sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: #f0f0f0; color: #666; min-width: 200px; cursor: not-allowed;'
     
     // Create Auto button for generating temporary token
     const autoTokenButton = document.createElement('button')
     autoTokenButton.textContent = 'Auto'
     autoTokenButton.title = '生成临时token，有效期1小时'
     autoTokenButton.style.cssText = 'padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; background: #10b981; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s;'
-    autoTokenButton.disabled = this.globalSDKInitialized
-    if (this.globalSDKInitialized) {
-      autoTokenButton.style.opacity = '0.5'
-      autoTokenButton.style.cursor = 'not-allowed'
-    }
+    // Auto button can be used at any time
+    autoTokenButton.disabled = false
     autoTokenButton.addEventListener('click', async () => {
       await this.generateTemporaryToken(sessionTokenInput, envSelect)
     })
@@ -299,12 +334,15 @@ export class App {
       firstRow.appendChild(arrow)
       firstRow.appendChild(envLabel)
       firstRow.appendChild(envSelect)
-      firstRow.appendChild(sessionTokenLabel)
-      firstRow.appendChild(sessionTokenInput)
-      firstRow.appendChild(autoTokenButton)
+      firstRow.appendChild(sampleRateLabel)
+      firstRow.appendChild(sampleRateSelect)
       secondRow.appendChild(initButtonSDK)
       secondRow.appendChild(initButtonHost)
     }
+    // Session Token input should always be visible
+    firstRow.appendChild(sessionTokenLabel)
+    firstRow.appendChild(sessionTokenInput)
+    firstRow.appendChild(autoTokenButton)
     buttonContainer.appendChild(firstRow)
     buttonContainer.appendChild(secondRow)
     buttonContainer.appendChild(statusText)
@@ -314,6 +352,12 @@ export class App {
     // Store references for later updates
     this.initArrow = arrow
     this.envSelect = envSelect
+    this.sampleRateSelect = sampleRateSelect
+  }
+  
+  // Get current sample rate (for use by panels)
+  getSampleRate() {
+    return this.selectedSampleRate
   }
 
   updateHeaderAddButton() {
@@ -329,7 +373,8 @@ export class App {
       panelId,
       this.panelsContainer,
       this.globalSDKInitialized,
-      this.panels.length > 0 ? () => this.removePanel(panelId) : undefined
+      this.panels.length > 0 ? () => this.removePanel(panelId) : undefined,
+      () => this.getSampleRate() // Pass function to get sample rate
     )
     this.panels.push({ id: panelId, panel })
     this.updateHeaderAddButton()

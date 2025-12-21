@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { Environment } from '../types'
-import { Environment as SDKEnvironment, AvatarSDK } from '@spatialwalk/avatarkit'
+import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
 
 interface ControlPanelProps {
   environment: Environment
@@ -75,13 +75,6 @@ export function ControlPanel({
         </div>
       </div>
 
-
-      <div className="form-group">
-        <label>Session Token</label>
-        <span style={{ color: '#666', fontSize: '14px', padding: '8px 12px', background: '#f0f0f0', borderRadius: '6px', display: 'inline-block', minWidth: '200px' }}>
-          {(AvatarSDK.configuration as any)?.sessionToken || '-'}
-        </span>
-      </div>
 
       <div className="form-group">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>

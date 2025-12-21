@@ -55,6 +55,11 @@
             }
           }"
           :showVolumeSlider="!!sdk.avatarView.value"
+          :showPlayPauseButton="!!sdk.avatarView.value"
+            :playPauseIcon="conversationState === ConversationState.playing ? '⏸️' : '▶️'"
+            :playPauseTitle="conversationState === ConversationState.playing ? 'Pause' : (conversationState && conversationState !== ConversationState.idle && conversationState !== ConversationState.playing ? 'Resume' : 'Play')"
+            :playPauseDisabled="!conversationState || conversationState === ConversationState.idle"
+          :onPlayPauseClick="handlePlayPause"
           @transform-click="handleOpenTransformModal"
           @set-background="() => {
             if (sdk.avatarView.value) {
@@ -189,17 +194,17 @@ import { Environment } from '../types'
 import { AvatarSDK, DrivingServiceMode, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../composables/useLogger'
 import { useAudioRecorder } from '../composables/useAudioRecorder'
+import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
 import StatusBar from './StatusBar.vue'
 import ControlPanel from './ControlPanel.vue'
 import AvatarCanvas from './AvatarCanvas.vue'
 import LogPanel from './LogPanel.vue'
 
-const AUDIO_SAMPLE_RATE = 16000
-
 interface Props {
   panelId: string
   globalSDKInitialized: boolean
   onRemove?: () => void
+  getSampleRate?: () => number
 }
 
 const props = defineProps<Props>()
@@ -460,10 +465,12 @@ const handleStartRecord = async () => {
     isProcessing.value.startRecord = true
     logger.log('info', 'Starting recording...')
 
-    await audioRecorder.start()
+    // Get sample rate from props (default to 16000)
+    const sampleRate = props.getSampleRate ? props.getSampleRate() : 16000
+    await audioRecorder.start(sampleRate)
 
-    logger.updateStatus('Recording...', 'success')
-    logger.log('success', 'Recording started')
+    logger.updateStatus(`Recording... (${sampleRate} Hz)`, 'success')
+    logger.log('success', `Recording started (${sampleRate} Hz)`)
   } catch (error) {
     logger.updateStatus(
       `Recording failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -503,8 +510,9 @@ const handleStopRecord = async () => {
       const audioBuffer = await audioRecorder.stop()
 
       if (audioBuffer && sdk.avatarController.value) {
-        const duration = (audioBuffer.byteLength / 2 / AUDIO_SAMPLE_RATE).toFixed(2)
-        logger.log('info', `Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${AUDIO_SAMPLE_RATE / 1000}kHz PCM16)`)
+        const sampleRate = props.getSampleRate ? props.getSampleRate() : 16000
+        const duration = (audioBuffer.byteLength / 2 / sampleRate).toFixed(2)
+        logger.log('info', `Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
         sdk.sendAudio(audioBuffer, true)
         logger.log('success', 'Complete audio data sent')
       } else if (!audioBuffer) {
@@ -546,8 +554,35 @@ const handleExternalDataMode = async () => {
     }
     
     // 将 base64 字符串解码为 Uint8Array
-    const audioData = base64ToUint8Array(data.audio)
+    const rawAudioData = base64ToUint8Array(data.audio)
     const animationsData = data.animations.map((anim: string) => base64ToUint8Array(anim))
+    
+    // 获取目标采样率（初始化时选择的采样率）
+    const targetSampleRate = props.getSampleRate ? props.getSampleRate() : 16000
+    const sourceSampleRate = 24000 // API 返回的音频数据是 24kHz
+    
+    // 如果目标采样率与源采样率不同，需要进行重采样
+    let audioData = rawAudioData
+    if (targetSampleRate !== sourceSampleRate) {
+      logger.log('info', `Resampling audio from ${sourceSampleRate}Hz to ${targetSampleRate}Hz...`)
+      logger.updateStatus(`Resampling audio (${sourceSampleRate}Hz → ${targetSampleRate}Hz)...`, 'info')
+      
+      // 1. 将 PCM16 Uint8Array 转换为 Float32Array
+      const int16Array = new Int16Array(rawAudioData.buffer, rawAudioData.byteOffset, rawAudioData.length / 2)
+      const float32Array = new Float32Array(int16Array.length)
+      for (let i = 0; i < int16Array.length; i++) {
+        float32Array[i] = int16Array[i] / 32768.0
+      }
+      
+      // 2. 使用 Web Audio API 进行高质量重采样
+      const resampledFloat32 = await resampleAudioWithWebAudioAPI(float32Array, sourceSampleRate, targetSampleRate)
+      
+      // 3. 转换回 PCM16 格式
+      const resampledInt16 = convertToInt16PCM(resampledFloat32)
+      audioData = convertToUint8Array(resampledInt16)
+      
+      logger.log('success', `Audio resampled from ${sourceSampleRate}Hz to ${targetSampleRate}Hz`)
+    }
     
     logger.log('success', 'Data fetched and decoded successfully')
     logger.updateStatus('Playing data...', 'info')
@@ -588,6 +623,31 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
 
 
 // Interrupt conversation
+const handlePlayPause = async () => {
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('No character loaded', 'warning')
+    return
+  }
+
+  try {
+    const currentState = conversationState.value
+    if (currentState === ConversationState.playing) {
+      // Pause if currently playing
+      sdk.pause()
+      logger.log('info', 'Playback paused')
+      logger.updateStatus('Playback paused', 'info')
+    } else if (currentState) {
+      // Resume if paused or idle (any state that's not playing)
+      await sdk.resume()
+      logger.log('info', 'Playback resumed')
+      logger.updateStatus('Playback resumed', 'info')
+    }
+  } catch (error) {
+    logger.log('error', `Play/Pause failed: ${error instanceof Error ? error.message : String(error)}`)
+    logger.updateStatus(`Play/Pause failed: ${error instanceof Error ? error.message : String(error)}`, 'error')
+  }
+}
+
 const handleInterrupt = () => {
   if (isProcessing.value.interrupt) {
     return

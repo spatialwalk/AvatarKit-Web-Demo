@@ -31,7 +31,6 @@ export function useLogger() {
     log,
     updateStatus,
     clear: clearLogs,
-    clearLogs,
   }
 }
 

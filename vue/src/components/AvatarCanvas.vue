@@ -19,7 +19,18 @@
         🗑️
       </button>
     </div>
-    <div v-if="showVolumeSlider" style="position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000;">
+    <!-- Play/Pause button (bottom left) -->
+    <button
+      v-if="showPlayPauseButton && !playPauseDisabled"
+      @click="onPlayPauseClick"
+      :title="playPauseTitle"
+      style="position: absolute; bottom: 12px; left: 12px; width: 72px; height: 72px; background: transparent; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 36px; z-index: 1000; transition: all 0.2s; line-height: 1;"
+    >
+      {{ playPauseIcon }}
+    </button>
+    
+    <!-- Volume control (above transform button, right side) -->
+    <div v-if="showVolumeSlider" style="position: absolute; right: 12px; bottom: 60px; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1000;">
       <span style="font-size: 18px; color: white; background: rgba(0, 0, 0, 0.7); padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;">
         🔊
       </span>
@@ -30,18 +41,20 @@
         :value="volume"
         @input="(e) => onVolumeChange?.(parseInt((e.target as HTMLInputElement).value))"
         orient="vertical"
-        style="width: 80px; height: 120px; cursor: pointer; writing-mode: bt-lr; -webkit-appearance: slider-vertical;"
+        style="width: 36px; height: 120px; cursor: pointer; writing-mode: bt-lr; -webkit-appearance: slider-vertical;"
       />
       <span style="font-size: 12px; color: white; background: rgba(0, 0, 0, 0.7); padding: 2px 6px; border-radius: 4px; min-width: 36px; text-align: center;">
         {{ volume }}%
       </span>
     </div>
+    
+    <!-- Transform button (bottom right) -->
     <button
       v-if="showTransformButton"
       class="transform-button"
       @click="onTransformClick"
       title="Transform Settings"
-      style="position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 1000; transition: all 0.2s;"
+      style="position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 1000; transition: all 0.2s; line-height: 1;"
     >
       ⚙️
     </button>
@@ -62,6 +75,11 @@ interface Props {
   volume?: number
   onVolumeChange?: (volume: number) => void
   showVolumeSlider?: boolean
+  showPlayPauseButton?: boolean
+  onPlayPauseClick?: () => void
+  playPauseIcon?: string
+  playPauseTitle?: string
+  playPauseDisabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -69,6 +87,10 @@ const props = withDefaults(defineProps<Props>(), {
   showBackgroundButtons: false,
   showVolumeSlider: false,
   volume: 100,
+  showPlayPauseButton: false,
+  playPauseIcon: '▶️',
+  playPauseTitle: 'Play',
+  playPauseDisabled: false,
 })
 
 const canvasContainerRef = ref<HTMLDivElement | null>(null)

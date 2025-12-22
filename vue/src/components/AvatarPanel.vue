@@ -1,8 +1,8 @@
 <template>
   <div class="avatar-panel">
     <div class="avatar-panel-header">
-      <h3>角色面板 {{ panelId }}</h3>
-      <button v-if="onRemove" class="btn-remove" @click="onRemove" title="移除面板">
+      <h3>Avatar Panel {{ panelId }}</h3>
+      <button v-if="onRemove" class="btn-remove" @click="onRemove" title="Remove Panel">
         ×
       </button>
     </div>
@@ -36,7 +36,7 @@
           @click="toggleLogDrawer"
           style="margin-top: 12px"
         >
-          {{ isLogDrawerOpen ? '📋 隐藏日志' : '📋 显示日志' }}
+          {{ isLogDrawerOpen ? '📋 Hide Logs' : '📋 Show Logs' }}
         </button>
       </div>
       <div class="avatar-panel-canvas">
@@ -95,7 +95,7 @@
     <div class="log-drawer" :class="{ open: isLogDrawerOpen }">
       <div class="log-drawer-header">
         <h2>📋 Logs</h2>
-        <button class="btn-close-drawer" @click="closeLogDrawer" title="关闭日志面板">
+        <button class="btn-close-drawer" @click="closeLogDrawer" title="Close Log Panel">
           ×
         </button>
       </div>

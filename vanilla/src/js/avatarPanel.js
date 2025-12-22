@@ -61,8 +61,8 @@ export class AvatarPanel {
     const panelHTML = `
       <div class="avatar-panel" data-panel-id="${this.panelId}">
         <div class="avatar-panel-header">
-          <h3>角色面板 ${this.panelId}</h3>
-          ${this.onRemove ? '<button class="btn-remove" title="移除面板">×</button>' : ''}
+          <h3>Avatar Panel ${this.panelId}</h3>
+          ${this.onRemove ? '<button class="btn-remove" title="Remove Panel">×</button>' : ''}
         </div>
         
         <div class="avatar-panel-content">
@@ -91,7 +91,7 @@ export class AvatarPanel {
               <button id="btnInterrupt-${this.panelId}" class="btn btn-warning" disabled>Interrupt</button>
               <button id="btnDisconnect-${this.panelId}" class="btn btn-danger" disabled>Disconnect</button>
               <button id="btnUnload-${this.panelId}" class="btn btn-danger" disabled>Unload Character</button>
-              <button id="btnToggleLogs-${this.panelId}" class="btn btn-primary" style="margin-top: 12px;">📋 显示日志</button>
+              <button id="btnToggleLogs-${this.panelId}" class="btn btn-primary" style="margin-top: 12px;">📋 Show Logs</button>
             </div>
             
           </div>
@@ -100,7 +100,7 @@ export class AvatarPanel {
           <div class="log-drawer" id="logDrawer-${this.panelId}">
             <div class="log-drawer-header">
               <h2>📋 Logs</h2>
-              <button class="btn-close-drawer" id="btnCloseLogDrawer-${this.panelId}" title="关闭日志面板">×</button>
+              <button class="btn-close-drawer" id="btnCloseLogDrawer-${this.panelId}" title="Close Log Panel">×</button>
             </div>
             <div class="log-panel" id="logPanel-${this.panelId}"></div>
             <div class="log-drawer-footer">
@@ -391,14 +391,14 @@ export class AvatarPanel {
     if (this.elements.logDrawer) {
       this.elements.logDrawer.classList.toggle('open')
       const isOpen = this.elements.logDrawer.classList.contains('open')
-      this.elements.btnToggleLogs.textContent = isOpen ? '📋 隐藏日志' : '📋 显示日志'
+      this.elements.btnToggleLogs.textContent = isOpen ? '📋 Hide Logs' : '📋 Show Logs'
     }
   }
 
   closeLogDrawer() {
     if (this.elements.logDrawer) {
       this.elements.logDrawer.classList.remove('open')
-      this.elements.btnToggleLogs.textContent = '📋 显示日志'
+      this.elements.btnToggleLogs.textContent = '📋 Show Logs'
     }
   }
   

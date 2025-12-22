@@ -50,7 +50,7 @@ export class App {
       this.sdkInitializing = true
       if (statusText) {
         statusText.style.display = 'block'
-        statusText.textContent = '⏳ 正在初始化 SDK...'
+        statusText.textContent = '⏳ Initializing SDK...'
         statusText.style.color = '#ffeb3b'
       }
       
@@ -91,7 +91,7 @@ export class App {
     } catch (error) {
       console.error('Failed to initialize global SDK:', error)
       if (statusText) {
-        statusText.textContent = '❌ SDK 初始化失败'
+        statusText.textContent = '❌ SDK initialization failed'
         statusText.style.color = '#ef4444'
       }
     } finally {
@@ -110,7 +110,7 @@ export class App {
         const modeName = this.currentDrivingServiceMode === 'host' ? 'Host Mode' : 'SDK Mode'
         const sdk = AvatarSDK.configuration
         const envName = sdk?.environment === Environment.cn ? 'CN' : 'International'
-        statusText.textContent = `✅ SDK 已初始化 (${modeName}, ${envName})`
+        statusText.textContent = `✅ SDK initialized (${modeName}, ${envName})`
         statusText.style.color = '#10b981'
         statusText.style.display = 'block'
       }
@@ -214,7 +214,7 @@ export class App {
       }
     } catch (error) {
       console.error('Failed to generate temporary token:', error)
-      alert(`生成临时 token 失败: ${error.message}`)
+      alert(`Failed to generate temporary token: ${error.message}`)
     }
   }
 
@@ -283,7 +283,7 @@ export class App {
     // Create Auto button for generating temporary token
     const autoTokenButton = document.createElement('button')
     autoTokenButton.textContent = 'Auto'
-    autoTokenButton.title = '生成临时token，有效期1小时'
+    autoTokenButton.title = 'Generate temporary token (valid for 1 hour)'
     autoTokenButton.style.cssText = 'padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; background: #10b981; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s;'
     // Auto button can be used at any time
     autoTokenButton.disabled = false
@@ -303,25 +303,25 @@ export class App {
     
     const initButtonSDK = document.createElement('button')
     initButtonSDK.className = 'btn-init-sdk'
-    initButtonSDK.textContent = '🔧 初始化 SDK (SDK Mode)'
+    initButtonSDK.textContent = '🔧 Initialize SDK (SDK Mode)'
     initButtonSDK.style.display = this.globalSDKInitialized ? 'none' : 'block'
     initButtonSDK.addEventListener('click', () => this.initializeGlobalSDK('sdk'))
     
     const initButtonHost = document.createElement('button')
     initButtonHost.className = 'btn-init-sdk'
-    initButtonHost.textContent = '🔧 初始化 SDK (Host Mode)'
+    initButtonHost.textContent = '🔧 Initialize SDK (Host Mode)'
     initButtonHost.style.display = this.globalSDKInitialized ? 'none' : 'block'
     initButtonHost.addEventListener('click', () => this.initializeGlobalSDK('host'))
     
     const statusText = document.createElement('span')
     statusText.id = 'sdkStatusText'
     statusText.style.cssText = 'color: #10b981; margin: 0; display: none;'
-    statusText.textContent = '✅ SDK 已初始化'
+    statusText.textContent = '✅ SDK initialized'
     
     const addPanelButton = document.createElement('button')
     addPanelButton.id = 'btnAddPanelHeader'
     addPanelButton.className = 'btn-add-panel-header'
-    addPanelButton.textContent = '+ 添加角色面板'
+    addPanelButton.textContent = '+ Add Avatar Panel'
     addPanelButton.style.display = this.panels.length < 4 ? 'block' : 'none'
     addPanelButton.addEventListener('click', () => {
       this.addPanel()
@@ -382,7 +382,7 @@ export class App {
 
   removePanel(panelId) {
     if (this.panels.length <= 1) {
-      return // 至少保留一个面板
+      return // Keep at least one panel
     }
     
     const panelIndex = this.panels.findIndex(p => p.id === panelId)

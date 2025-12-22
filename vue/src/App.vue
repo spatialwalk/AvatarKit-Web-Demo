@@ -2,7 +2,7 @@
   <div class="container">
     <div class="header">
       <h1>🚀 SPAvatar SDK - Vue Example (Multi-Character)</h1>
-      <p>支持同时显示多个角色视图</p>
+      <p>Supports multiple avatar views simultaneously</p>
       <div style="margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative">
         <template v-if="!globalSDKInitialized && !sdkInitializing">
           <!-- First row: Environment and Sample Rate -->
@@ -37,13 +37,13 @@
               @click="() => handleInitSDK(DrivingServiceMode.sdk)"
               class="btn-init-sdk"
             >
-              🔧 初始化 SDK (SDK Mode)
+              🔧 Initialize SDK (SDK Mode)
             </button>
             <button 
               @click="() => handleInitSDK(DrivingServiceMode.host)"
               class="btn-init-sdk"
             >
-              🔧 初始化 SDK (Host Mode)
+              🔧 Initialize SDK (Host Mode)
             </button>
           </div>
         </template>
@@ -59,7 +59,7 @@
           >
           <button
             @click="generateTemporaryToken"
-            title="生成临时token，有效期1小时"
+            title="Generate temporary token (valid for 1 hour)"
             :style="{
               padding: '8px 16px',
               borderRadius: '6px',
@@ -77,16 +77,16 @@
             Auto
           </button>
         </div>
-        <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ 正在初始化 SDK...</p>
+        <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ Initializing SDK...</p>
         <p v-if="globalSDKInitialized && currentDrivingServiceMode" style="color: #10b981; margin: 0">
-          ✅ SDK 已初始化 ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }}, {{ selectedEnvironment === Environment.cn ? 'CN' : 'International' }})
+          ✅ SDK initialized ({{ currentDrivingServiceMode === DrivingServiceMode.sdk ? 'SDK Mode' : 'Host Mode' }}, {{ selectedEnvironment === Environment.cn ? 'CN' : 'International' }})
         </p>
         <button 
           v-if="panels.length < 4"
           class="btn-add-panel-header" 
           @click="handleAddPanel"
         >
-          + 添加角色面板
+          + Add Avatar Panel
         </button>
       </div>
     </div>
@@ -213,7 +213,7 @@ const generateTemporaryToken = async () => {
     }
   } catch (error: any) {
     console.error('Failed to generate temporary token:', error)
-    alert(`生成临时 token 失败: ${error.message}`)
+    alert(`Failed to generate temporary token: ${error.message}`)
   }
 }
 
@@ -224,7 +224,7 @@ const handleAddPanel = () => {
 
 const handleRemovePanel = (panelId: string) => {
   if (panels.value.length <= 1) {
-    return // 至少保留一个面板
+    return // Keep at least one panel
   }
   panels.value = panels.value.filter(p => p.id !== panelId)
 }

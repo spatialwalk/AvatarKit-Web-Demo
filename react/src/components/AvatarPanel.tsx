@@ -540,9 +540,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
   return (
     <div className="avatar-panel">
       <div className="avatar-panel-header">
-        <h3>角色面板 {panelId}</h3>
+        <h3>Avatar Panel {panelId}</h3>
         {onRemove && (
-          <button className="btn-remove" onClick={onRemove} title="移除面板">
+          <button className="btn-remove" onClick={onRemove} title="Remove Panel">
             ×
           </button>
         )}
@@ -582,7 +582,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
             onClick={toggleLogDrawer}
             style={{ marginTop: '12px' }}
           >
-            {isLogDrawerOpen ? '📋 隐藏日志' : '📋 显示日志'}
+            {isLogDrawerOpen ? '📋 Hide Logs' : '📋 Show Logs'}
           </button>
         </div>
         <div className="avatar-panel-canvas">
@@ -661,7 +661,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
       <div className={`log-drawer ${isLogDrawerOpen ? 'open' : ''}`}>
         <div className="log-drawer-header">
           <h2>📋 Logs</h2>
-          <button className="btn-close-drawer" onClick={closeLogDrawer} title="关闭日志面板">
+          <button className="btn-close-drawer" onClick={closeLogDrawer} title="Close Log Panel">
             ×
           </button>
         </div>

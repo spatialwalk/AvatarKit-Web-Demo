@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@spatialwalk/avatarkit':
-        specifier: ^1.0.0-beta.26
-        version: 1.0.0-beta.26(@webgpu/types@0.1.66)
+        specifier: ^1.0.0-beta.37
+        version: 1.0.0-beta.37(@webgpu/types@0.1.66)
     devDependencies:
       vite:
         specifier: ^5.0.0
@@ -272,8 +272,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@spatialwalk/avatarkit@1.0.0-beta.26':
-    resolution: {integrity: sha512-8IRv9Q3k0uT+nbhdfEoXubZ/A4eVMHHK73FzNjnshnqlT1Zzu3g3zpLn7002/HGRgaNxYjqr+2UuuD4BUyxypg==}
+  '@spatialwalk/avatarkit@1.0.0-beta.37':
+    resolution: {integrity: sha512-zHst5Z87Jp/vNFztZeMuD8xQ7pLi0jFpA0xgu5rLJOMVnp3rPSdo3lCGiuVn93FSkuFQHR+23OtPQ8AnsLgPKw==}
     peerDependencies:
       '@webgpu/types': '*'
 
@@ -503,7 +503,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.53.2':
     optional: true
 
-  '@spatialwalk/avatarkit@1.0.0-beta.26(@webgpu/types@0.1.66)':
+  '@spatialwalk/avatarkit@1.0.0-beta.37(@webgpu/types@0.1.66)':
     dependencies:
       '@bufbuild/protobuf': 2.10.1
       '@guiiai/logg': 1.2.5

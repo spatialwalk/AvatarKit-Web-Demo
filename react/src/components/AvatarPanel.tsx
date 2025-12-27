@@ -40,7 +40,14 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     interrupt: false,
     disconnect: false,
     unload: false,
+    loadAudio: false,
   })
+  
+  const [showLoadAudioModal, setShowLoadAudioModal] = useState(false)
+  const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null)
+  
+  // Track if audio is being sent (before conversationState updates)
+  const [isSendingAudio, setIsSendingAudio] = useState(false)
 
   // Hooks
   const logger = useLogger()
@@ -119,6 +126,10 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
           onConversationState: (state: ConversationState) => {
             setConversationState(state)
             logger.log('info', `Conversation state: ${state}`)
+            // Reset isSendingAudio when playback starts
+            if (state === ConversationState.playing) {
+              setIsSendingAudio(false)
+            }
           },
           onError: (error: Error) => {
             logger.log('error', `Error: ${error.message}`)
@@ -197,6 +208,99 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
   }
 
+  // Load audio file
+  const handleLoadAudio = () => {
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    if (currentMode !== DrivingServiceMode.sdk) {
+      logger.updateStatus('Load audio is only available in SDK mode', 'warning')
+      return
+    }
+    
+    if (!sdk.isConnected) {
+      logger.updateStatus('Please connect to service first', 'warning')
+      return
+    }
+    
+    if (!sdk.avatarView) {
+      logger.updateStatus('Please load character first', 'warning')
+      return
+    }
+    
+    setShowLoadAudioModal(true)
+    setSelectedAudioFile(null)
+  }
+
+  const handleConfirmLoadAudio = async () => {
+    if (!selectedAudioFile) {
+      logger.updateStatus('Please select an audio file', 'warning')
+      return
+    }
+    
+    const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+    if (currentMode !== DrivingServiceMode.sdk) {
+      logger.updateStatus('Load audio is only available in SDK mode', 'warning')
+      return
+    }
+    
+    if (!sdk.isConnected) {
+      logger.updateStatus('Please connect to service first', 'warning')
+      return
+    }
+    
+    if (!sdk.avatarView) {
+      logger.updateStatus('Please load character first', 'warning')
+      return
+    }
+    
+    const file = selectedAudioFile
+    
+    try {
+      setIsProcessing(prev => ({ ...prev, loadAudio: true }))
+      logger.log('info', `Loading audio file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
+      logger.updateStatus('Loading audio file...', 'info')
+      
+      // Read file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer()
+      
+      // Get sample rate from props (default to 16000)
+      const sampleRate = getSampleRate ? getSampleRate() : 16000
+      const duration = (arrayBuffer.byteLength / 2 / sampleRate).toFixed(2)
+      
+      logger.log('info', `Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+      
+      // Send audio data to SDK
+      if (sdk.avatarController) {
+        setIsSendingAudio(true)
+        sdk.sendAudio(arrayBuffer, true)
+        logger.log('success', 'Audio file sent to avatar')
+        logger.updateStatus('Audio file sent', 'success')
+        setShowLoadAudioModal(false)
+        setSelectedAudioFile(null)
+        // Note: isSendingAudio will be set to false when conversationState changes to 'playing'
+      } else {
+        throw new Error('Avatar controller not available')
+      }
+    } catch (error) {
+      logger.log('error', `Failed to load audio file: ${error instanceof Error ? error.message : String(error)}`)
+      logger.updateStatus(`Failed to load audio: ${error instanceof Error ? error.message : String(error)}`, 'error')
+    } finally {
+      setIsProcessing(prev => ({ ...prev, loadAudio: false }))
+    }
+  }
+
+  const handleCancelLoadAudio = () => {
+    setShowLoadAudioModal(false)
+    setSelectedAudioFile(null)
+  }
+
+  const handleAudioFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedAudioFile(event.target.files[0])
+    } else {
+      setSelectedAudioFile(null)
+    }
+  }
+
   // Start recording (network mode only)
   const handleStartRecord = async () => {
     if (isProcessing.startRecord || audioRecorder.isRecording) {
@@ -267,8 +371,10 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
           const sampleRate = getSampleRate ? getSampleRate() : 16000
           const duration = (audioBuffer.byteLength / 2 / sampleRate).toFixed(2)
           logger.log('info', `Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+          setIsSendingAudio(true)
           sdk.sendAudio(audioBuffer, true)
           logger.log('success', 'Complete audio data sent')
+          // Note: isSendingAudio will be set to false when conversationState changes to 'playing'
         } else if (!audioBuffer) {
           logger.log('warning', 'No audio data collected')
         }
@@ -561,6 +667,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
             isLoading={isLoading}
             isConnected={sdk.isConnected}
             currentPlaybackMode={(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
+            conversationState={conversationState}
+            isSendingAudio={isSendingAudio}
             characterIdList={characterIdList}
             onCharacterIdChange={(id) => {
               setCharacterId(id)
@@ -571,6 +679,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
             }}
             onLoadCharacter={() => handleLoadCharacter()}
             onConnect={handleConnect}
+            onLoadAudio={handleLoadAudio}
             onStartRecord={handleStartRecord}
             onStopRecord={handleStopRecord}
             onInterrupt={handleInterrupt}
@@ -667,6 +776,86 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
         </div>
         <LogPanel logs={logger.logs} onClear={logger.clear} />
       </div>
+      
+      {/* Load Audio Modal */}
+      {showLoadAudioModal && (
+        <div 
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={handleCancelLoadAudio}
+        >
+          <div
+            className="modal-content"
+            style={{
+              background: 'white',
+              padding: '24px',
+              borderRadius: '12px',
+              minWidth: '400px',
+              maxWidth: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Load Audio File</h3>
+            <p style={{ marginBottom: '16px', fontSize: '14px', color: '#666' }}>
+              Select a PCM audio file to send to the avatar (PCM16 format recommended)
+            </p>
+            <input
+              type="file"
+              accept=".pcm,audio/*"
+              onChange={handleAudioFileChange}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '14px',
+                marginBottom: '16px',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleCancelLoadAudio}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f0f0f0',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLoadAudio}
+                disabled={!selectedAudioFile || isProcessing.loadAudio}
+                style={{
+                  padding: '8px 16px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: selectedAudioFile && !isProcessing.loadAudio ? 'pointer' : 'not-allowed',
+                  opacity: selectedAudioFile && !isProcessing.loadAudio ? 1 : 0.6,
+                }}
+              >
+                Load
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Transform Settings Modal */}
       {isTransformModalOpen && (

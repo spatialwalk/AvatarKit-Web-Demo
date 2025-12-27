@@ -44,7 +44,10 @@
       <button :disabled="!avatarView || currentPlaybackMode !== 'network' || isConnected || isLoading" @click="onConnect">
         {{ onInit ? '3. Connect Service' : '2. Connect Service' }}
       </button>
-      <button :disabled="!avatarController || currentPlaybackMode !== 'network' || !isConnected || isLoading || isRecording" @click="onStartRecord">
+      <button v-if="currentPlaybackMode === 'network'" :disabled="!avatarController || !isConnected || isLoading || conversationState === 'playing' || conversationState === 'pausing' || isSendingAudio" @click="onLoadAudio">
+        Load Audio
+      </button>
+      <button :disabled="!avatarController || currentPlaybackMode !== 'network' || !isConnected || isLoading || isRecording || conversationState === 'playing' || conversationState === 'pausing' || isSendingAudio" @click="onStartRecord">
         {{ onInit ? '4. Start Recording' : '3. Start Recording' }}
       </button>
       <button :disabled="!avatarController || (currentPlaybackMode === 'network' && !isRecording) || (currentPlaybackMode === 'external' && isLoading)" @click="onStopRecord">
@@ -107,7 +110,8 @@ const props = defineProps<{
   isLoading: boolean
   isConnected: boolean
   currentPlaybackMode: 'network' | 'external'
-  conversationState: 'idle' | 'playing' | null
+  conversationState: 'idle' | 'playing' | 'pausing' | null
+  isSendingAudio?: boolean
   init?: () => void
 }>()
 
@@ -116,6 +120,7 @@ const emit = defineEmits<{
   init: []
   loadCharacter: []
   connect: []
+  loadAudio: []
   startRecord: []
   stopRecord: []
   interrupt: []
@@ -139,6 +144,7 @@ const handleAddCharacterId = () => {
 const onInit = props.init ? () => emit('init') : undefined
 const onLoadCharacter = () => emit('loadCharacter')
 const onConnect = () => emit('connect')
+const onLoadAudio = () => emit('loadAudio')
 const onStartRecord = () => emit('startRecord')
 const onStopRecord = () => emit('stopRecord')
 const onInterrupt = () => emit('interrupt')

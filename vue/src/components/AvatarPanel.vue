@@ -24,12 +24,14 @@
           @character-id-change="handleCharacterIdChange"
           @load-character="handleLoadCharacter"
           @connect="handleConnect"
+          @load-audio="handleLoadAudio"
           @start-record="handleStartRecord"
           @stop-record="handleStopRecord"
           @interrupt="handleInterrupt"
           @disconnect="handleDisconnect"
           @unload-character="handleUnloadCharacter"
           :conversation-state="conversationState"
+          :is-sending-audio="isSendingAudio"
         />
         <button 
           class="btn btn-primary" 
@@ -57,7 +59,7 @@
           :showVolumeSlider="!!sdk.avatarView.value"
           :showPlayPauseButton="!!sdk.avatarView.value"
             :playPauseIcon="conversationState === ConversationState.playing ? '⏸️' : '▶️'"
-            :playPauseTitle="conversationState === ConversationState.playing ? 'Pause' : (conversationState && conversationState !== ConversationState.idle && conversationState !== ConversationState.playing ? 'Resume' : 'Play')"
+            :playPauseTitle="conversationState === ConversationState.playing ? 'Pause' : (conversationState === ConversationState.pausing ? 'Resume' : 'Play')"
             :playPauseDisabled="!conversationState || conversationState === ConversationState.idle"
           :onPlayPauseClick="handlePlayPause"
           @transform-click="handleOpenTransformModal"
@@ -100,6 +102,43 @@
         </button>
       </div>
       <LogPanel :logs="logger.logs.value" @clear="logger.clear" />
+    </div>
+    
+    <!-- Load Audio Modal -->
+    <div
+      v-if="showLoadAudioModal"
+      class="modal-overlay"
+      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;"
+      @click.self="handleCancelLoadAudio"
+    >
+      <div
+        class="modal-content"
+        style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%;"
+      >
+        <h3 style="margin-top: 0; margin-bottom: 16px;">Load Audio File</h3>
+        <p style="margin-bottom: 16px; font-size: 14px; color: #666;">Select a PCM audio file to send to the avatar (PCM16 format recommended)</p>
+        <input
+          type="file"
+          accept=".pcm,audio/*"
+          @change="handleAudioFileChange"
+          style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;"
+        />
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button
+            @click="handleCancelLoadAudio"
+            style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleConfirmLoadAudio"
+            :disabled="!selectedAudioFile || isProcessing.loadAudio"
+            style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;"
+          >
+            Load
+          </button>
+        </div>
+      </div>
     </div>
     
     <!-- Transform Settings Modal -->
@@ -225,6 +264,7 @@ const isProcessing = ref({
   interrupt: false,
   disconnect: false,
   unload: false,
+  loadAudio: false,
 })
 
 // Composables
@@ -367,6 +407,10 @@ const handleLoadCharacter = async () => {
         onConversationState: (state: ConversationState) => {
           conversationState.value = state
           logger.log('info', `Conversation state: ${state}`)
+          // Reset isSendingAudio when playback starts
+          if (state === ConversationState.playing) {
+            isSendingAudio.value = false
+          }
         },
         onError: (error: Error) => {
           logger.log('error', `Error: ${error.message}`)
@@ -477,9 +521,109 @@ const handleStartRecord = async () => {
       'error',
     )
     logger.log('error', `Recording failed: ${error instanceof Error ? error.message : String(error)}`)
-    isProcessing.value.startRecord = false
   } finally {
     isProcessing.value.startRecord = false
+  }
+}
+
+// Load audio file
+const showLoadAudioModal = ref(false)
+const selectedAudioFile = ref<File | null>(null)
+
+// Track if audio is being sent (before conversationState updates)
+const isSendingAudio = ref(false)
+
+const handleLoadAudio = () => {
+  const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+  if (currentMode !== DrivingServiceMode.sdk) {
+    logger.updateStatus('Load audio is only available in SDK mode', 'warning')
+    return
+  }
+  
+  if (!sdk.isConnected.value) {
+    logger.updateStatus('Please connect to service first', 'warning')
+    return
+  }
+  
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('Please load character first', 'warning')
+    return
+  }
+  
+  showLoadAudioModal.value = true
+  selectedAudioFile.value = null
+}
+
+const handleConfirmLoadAudio = async () => {
+  if (!selectedAudioFile.value) {
+    logger.updateStatus('Please select an audio file', 'warning')
+    return
+  }
+  
+  const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
+  if (currentMode !== DrivingServiceMode.sdk) {
+    logger.updateStatus('Load audio is only available in SDK mode', 'warning')
+    return
+  }
+  
+  if (!sdk.isConnected.value) {
+    logger.updateStatus('Please connect to service first', 'warning')
+    return
+  }
+  
+  if (!sdk.avatarView.value) {
+    logger.updateStatus('Please load character first', 'warning')
+    return
+  }
+  
+  const file = selectedAudioFile.value
+  
+  try {
+    isProcessing.value.loadAudio = true
+    logger.log('info', `Loading audio file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
+    logger.updateStatus('Loading audio file...', 'info')
+    
+    // Read file as ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer()
+    
+    // Get sample rate from props (default to 16000)
+    const sampleRate = props.getSampleRate ? props.getSampleRate() : 16000
+    const duration = (arrayBuffer.byteLength / 2 / sampleRate).toFixed(2)
+    
+    logger.log('info', `Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+    
+    // Send audio data to SDK
+    if (sdk.avatarController.value) {
+      isSendingAudio.value = true
+      sdk.sendAudio(arrayBuffer, true)
+      logger.log('success', 'Audio file sent to avatar')
+      logger.updateStatus('Audio file sent', 'success')
+      showLoadAudioModal.value = false
+      selectedAudioFile.value = null
+      // Note: conversationState will be updated by onConversationState callback when playback starts
+      // isSendingAudio will be set to false when conversationState changes to 'playing'
+    } else {
+      throw new Error('Avatar controller not available')
+    }
+  } catch (error) {
+    logger.log('error', `Failed to load audio file: ${error instanceof Error ? error.message : String(error)}`)
+    logger.updateStatus(`Failed to load audio: ${error instanceof Error ? error.message : String(error)}`, 'error')
+  } finally {
+    isProcessing.value.loadAudio = false
+  }
+}
+
+const handleCancelLoadAudio = () => {
+  showLoadAudioModal.value = false
+  selectedAudioFile.value = null
+}
+
+const handleAudioFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    selectedAudioFile.value = target.files[0]
+  } else {
+    selectedAudioFile.value = null
   }
 }
 
@@ -513,8 +657,10 @@ const handleStopRecord = async () => {
         const sampleRate = props.getSampleRate ? props.getSampleRate() : 16000
         const duration = (audioBuffer.byteLength / 2 / sampleRate).toFixed(2)
         logger.log('info', `Recording completed, total length: ${audioBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+        isSendingAudio.value = true
         sdk.sendAudio(audioBuffer, true)
         logger.log('success', 'Complete audio data sent')
+        // Note: isSendingAudio will be set to false when conversationState changes to 'playing'
       } else if (!audioBuffer) {
         logger.log('warning', 'No audio data collected')
       }

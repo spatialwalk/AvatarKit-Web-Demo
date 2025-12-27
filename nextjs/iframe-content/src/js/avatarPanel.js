@@ -36,6 +36,7 @@ export class AvatarPanel {
       interrupt: false,
       disconnect: false,
       unload: false,
+      loadAudio: false,
     }
 
     // Initialize logger
@@ -83,6 +84,7 @@ export class AvatarPanel {
               </div>
               <button id="btnLoadCharacter-${this.panelId}" class="btn btn-primary" disabled>1. Load Character</button>
               <button id="btnConnect-${this.panelId}" class="btn btn-primary" disabled>2. Connect Service</button>
+              <button id="btnLoadAudio-${this.panelId}" class="btn btn-primary" disabled style="display: none;">Load Audio</button>
               <button id="btnStartRecord-${this.panelId}" class="btn btn-primary" disabled>3. Start Recording</button>
               <button id="btnStopRecord-${this.panelId}" class="btn btn-danger" disabled>Stop Recording / Play Data</button>
               <button id="btnInterrupt-${this.panelId}" class="btn btn-warning" disabled>Interrupt</button>
@@ -177,6 +179,7 @@ export class AvatarPanel {
       logPanel: document.getElementById(`logPanel-${this.panelId}`),
       btnLoadCharacter: document.getElementById(`btnLoadCharacter-${this.panelId}`),
       btnConnect: document.getElementById(`btnConnect-${this.panelId}`),
+      btnLoadAudio: document.getElementById(`btnLoadAudio-${this.panelId}`),
       btnStartRecord: document.getElementById(`btnStartRecord-${this.panelId}`),
       btnStopRecord: document.getElementById(`btnStopRecord-${this.panelId}`),
       btnInterrupt: document.getElementById(`btnInterrupt-${this.panelId}`),
@@ -199,6 +202,10 @@ export class AvatarPanel {
       newCharacterIdInput: document.getElementById(`newCharacterIdInput-${this.panelId}`),
       btnCancelAddId: document.getElementById(`btnCancelAddId-${this.panelId}`),
       btnConfirmAddId: document.getElementById(`btnConfirmAddId-${this.panelId}`),
+      loadAudioModal: document.getElementById(`loadAudioModal-${this.panelId}`),
+      audioFileInput: document.getElementById(`audioFileInput-${this.panelId}`),
+      btnCancelLoadAudio: document.getElementById(`btnCancelLoadAudio-${this.panelId}`),
+      btnConfirmLoadAudio: document.getElementById(`btnConfirmLoadAudio-${this.panelId}`),
       btnSetBackground: document.getElementById(`btnSetBackground-${this.panelId}`),
       btnRemoveBackground: document.getElementById(`btnRemoveBackground-${this.panelId}`),
       btnPlayPause: document.getElementById(`btnPlayPause-${this.panelId}`),
@@ -408,6 +415,30 @@ export class AvatarPanel {
     if (this.elements.btnConfirmAddId) {
       this.elements.btnConfirmAddId.addEventListener('click', () => this.handleAddCharacterId())
     }
+    
+    // Load Audio modal events
+    if (this.elements.btnCancelLoadAudio) {
+      this.elements.btnCancelLoadAudio.addEventListener('click', () => this.hideLoadAudioModal())
+    }
+    if (this.elements.btnConfirmLoadAudio) {
+      this.elements.btnConfirmLoadAudio.addEventListener('click', () => this.handleLoadAudio())
+    }
+    if (this.elements.loadAudioModal) {
+      this.elements.loadAudioModal.addEventListener('click', (e) => {
+        if (e.target === this.elements.loadAudioModal) {
+          this.hideLoadAudioModal()
+        }
+      })
+    }
+    if (this.elements.audioFileInput) {
+      this.elements.audioFileInput.addEventListener('change', () => {
+        const file = this.elements.audioFileInput.files[0]
+        if (this.elements.btnConfirmLoadAudio) {
+          this.elements.btnConfirmLoadAudio.disabled = !file
+        }
+      })
+    }
+    
     if (this.elements.addCharacterIdModal) {
       this.elements.addCharacterIdModal.addEventListener('click', (e) => {
         if (e.target === this.elements.addCharacterIdModal) {
@@ -567,11 +598,18 @@ export class AvatarPanel {
       
       if (this.currentPlaybackMode === 'sdk') {
         this.elements.btnConnect.disabled = false
+        if (this.elements.btnLoadAudio) {
+          this.elements.btnLoadAudio.style.display = 'inline-block'
+          this.elements.btnLoadAudio.disabled = true
+        }
         this.elements.btnStartRecord.disabled = true
         this.elements.btnStopRecord.disabled = true
         this.elements.btnInterrupt.disabled = true
         this.elements.btnDisconnect.disabled = true
       } else {
+        if (this.elements.btnLoadAudio) {
+          this.elements.btnLoadAudio.style.display = 'none'
+        }
         this.elements.btnConnect.disabled = true
         this.elements.btnStartRecord.disabled = true
         this.elements.btnStopRecord.disabled = false
@@ -655,12 +693,111 @@ export class AvatarPanel {
       this.updateStatus('Connecting...', 'info')
       await this.sdkManager.connect()
       this.updateStatus('Connected', 'success')
+      if (this.elements.btnLoadAudio && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnLoadAudio.disabled = false
+      }
     } catch (error) {
       this.logger.error('Connection failed', error)
       this.updateStatus(`Connection failed: ${error.message}`, 'error')
       this.elements.btnConnect.disabled = false
     } finally {
       this.isProcessing.connect = false
+    }
+  }
+
+  showLoadAudioModal() {
+    if (this.currentPlaybackMode !== 'sdk') {
+      this.logger.warn('Load audio is only available in SDK mode')
+      return
+    }
+    
+    if (!this.sdkManager.isConnected) {
+      this.logger.warn('Please connect to service first')
+      return
+    }
+    
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('Please load character first')
+      return
+    }
+    
+    if (this.elements.loadAudioModal && this.elements.audioFileInput) {
+      this.elements.loadAudioModal.style.display = 'flex'
+      this.elements.audioFileInput.value = ''
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = true
+      }
+    }
+  }
+
+  hideLoadAudioModal() {
+    if (this.elements.loadAudioModal && this.elements.audioFileInput) {
+      this.elements.loadAudioModal.style.display = 'none'
+      this.elements.audioFileInput.value = ''
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = true
+      }
+    }
+  }
+
+  async handleLoadAudio() {
+    if (!this.elements.audioFileInput || !this.elements.audioFileInput.files[0]) {
+      this.logger.warn('Please select an audio file')
+      return
+    }
+    
+    if (this.currentPlaybackMode !== 'sdk') {
+      this.logger.warn('Load audio is only available in SDK mode')
+      return
+    }
+    
+    if (!this.sdkManager.isConnected) {
+      this.logger.warn('Please connect to service first')
+      return
+    }
+    
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('Please load character first')
+      return
+    }
+    
+    const file = this.elements.audioFileInput.files[0]
+    
+    try {
+      this.isProcessing.loadAudio = true
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = true
+      }
+      
+      this.logger.info(`Loading audio file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
+      this.updateStatus('Loading audio file...', 'info')
+      
+      // Read file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer()
+      
+      // Get sample rate from App (default to 16000 if not available)
+      const sampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
+      const duration = (arrayBuffer.byteLength / 2 / sampleRate).toFixed(2)
+      
+      this.logger.info(`Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+      
+      // Send audio data to SDK
+      if (this.sdkManager.avatarView?.controller) {
+        this.sdkManager.sendAudio(arrayBuffer, true)
+        this.logger.success('Audio file sent to avatar')
+        this.updateStatus('Audio file sent', 'success')
+        this.hideLoadAudioModal()
+      } else {
+        throw new Error('Avatar controller not available')
+      }
+    } catch (error) {
+      this.logger.error('Failed to load audio file', error)
+      this.updateStatus(`Failed to load audio: ${error.message}`, 'error')
+    } finally {
+      this.isProcessing.loadAudio = false
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = false
+      }
     }
   }
 
@@ -1205,6 +1342,16 @@ export class AvatarPanel {
       return
     }
     
+    // Disable load audio and start record buttons when playing or pausing
+    if (state === 'playing' || state === 'pausing') {
+      if (this.elements.btnLoadAudio && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnLoadAudio.disabled = true
+      }
+      if (this.elements.btnStartRecord && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnStartRecord.disabled = true
+      }
+    }
+    
     // Update play/pause button based on state
     if (this.elements.btnPlayPause) {
       if (state === 'playing') {
@@ -1225,23 +1372,26 @@ export class AvatarPanel {
       }
     }
     
-    if (state === 'playing') {
+    // Enable buttons when idle
+    if (state === 'idle') {
+      if (this.currentPlaybackMode === 'host') {
+        this.elements.btnStopRecord.disabled = false
+        this.elements.btnInterrupt.disabled = true
+        this.updateStatus('Playback completed, ready to play again', 'info')
+      } else if (this.currentPlaybackMode === 'sdk') {
+        if (this.sdkManager.isConnected) {
+          if (this.elements.btnLoadAudio) {
+            this.elements.btnLoadAudio.disabled = false
+          }
+          this.elements.btnStartRecord.disabled = false
+          this.elements.btnStopRecord.disabled = true
+          this.updateStatus('Ready to record', 'info')
+        }
+      }
+    } else if (state === 'playing') {
+      // Enable interrupt button when playing in host mode
       if (this.currentPlaybackMode === 'host') {
         this.elements.btnInterrupt.disabled = false
-      }
-    } else {
-      if (state === 'idle') {
-        if (this.currentPlaybackMode === 'host') {
-          this.elements.btnStopRecord.disabled = false
-          this.elements.btnInterrupt.disabled = true
-          this.updateStatus('Playback completed, ready to play again', 'info')
-        } else if (this.currentPlaybackMode === 'sdk') {
-          if (this.sdkManager.isConnected) {
-            this.elements.btnStartRecord.disabled = false
-            this.elements.btnStopRecord.disabled = true
-            this.updateStatus('Ready to record', 'info')
-          }
-        }
       }
     }
   }

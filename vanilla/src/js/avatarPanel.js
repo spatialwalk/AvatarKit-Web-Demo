@@ -36,6 +36,7 @@ export class AvatarPanel {
       interrupt: false,
       disconnect: false,
       unload: false,
+      loadAudio: false,
     }
 
     // Initialize logger
@@ -86,6 +87,7 @@ export class AvatarPanel {
               </div>
               <button id="btnLoadCharacter-${this.panelId}" class="btn btn-primary" disabled>1. Load Character</button>
               <button id="btnConnect-${this.panelId}" class="btn btn-primary" disabled>2. Connect Service</button>
+              <button id="btnLoadAudio-${this.panelId}" class="btn btn-primary" disabled style="display: none;">Load Audio</button>
               <button id="btnStartRecord-${this.panelId}" class="btn btn-primary" disabled>3. Start Recording</button>
               <button id="btnStopRecord-${this.panelId}" class="btn btn-danger" disabled>Stop Recording / Play Data</button>
               <button id="btnInterrupt-${this.panelId}" class="btn btn-warning" disabled>Interrupt</button>
@@ -144,6 +146,19 @@ export class AvatarPanel {
           </div>
         </div>
         
+        <!-- Load Audio Modal -->
+        <div id="loadAudioModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div class="modal-content" style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%;">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Load Audio File</h3>
+            <p style="margin-bottom: 16px; font-size: 14px; color: #666;">Select a PCM audio file to send to the avatar (PCM16 format recommended)</p>
+            <input type="file" id="audioFileInput-${this.panelId}" accept=".pcm,audio/*" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button id="btnCancelLoadAudio-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+              <button id="btnConfirmLoadAudio-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;" disabled>Load</button>
+            </div>
+          </div>
+        </div>
+        
         <!-- Transform Settings Modal -->
         <div id="transformModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
           <div class="modal-content" style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%; max-height: 90vh; overflow-y: auto;">
@@ -180,6 +195,7 @@ export class AvatarPanel {
       logPanel: document.getElementById(`logPanel-${this.panelId}`),
       btnLoadCharacter: document.getElementById(`btnLoadCharacter-${this.panelId}`),
       btnConnect: document.getElementById(`btnConnect-${this.panelId}`),
+      btnLoadAudio: document.getElementById(`btnLoadAudio-${this.panelId}`),
       btnStartRecord: document.getElementById(`btnStartRecord-${this.panelId}`),
       btnStopRecord: document.getElementById(`btnStopRecord-${this.panelId}`),
       btnInterrupt: document.getElementById(`btnInterrupt-${this.panelId}`),
@@ -202,6 +218,10 @@ export class AvatarPanel {
       newCharacterIdInput: document.getElementById(`newCharacterIdInput-${this.panelId}`),
       btnCancelAddId: document.getElementById(`btnCancelAddId-${this.panelId}`),
       btnConfirmAddId: document.getElementById(`btnConfirmAddId-${this.panelId}`),
+      loadAudioModal: document.getElementById(`loadAudioModal-${this.panelId}`),
+      audioFileInput: document.getElementById(`audioFileInput-${this.panelId}`),
+      btnCancelLoadAudio: document.getElementById(`btnCancelLoadAudio-${this.panelId}`),
+      btnConfirmLoadAudio: document.getElementById(`btnConfirmLoadAudio-${this.panelId}`),
       btnSetBackground: document.getElementById(`btnSetBackground-${this.panelId}`),
       btnRemoveBackground: document.getElementById(`btnRemoveBackground-${this.panelId}`),
       btnPlayPause: document.getElementById(`btnPlayPause-${this.panelId}`),
@@ -313,6 +333,9 @@ export class AvatarPanel {
 
     this.elements.btnLoadCharacter.addEventListener('click', () => this.handleLoadCharacter())
     this.elements.btnConnect.addEventListener('click', () => this.handleConnect())
+    if (this.elements.btnLoadAudio) {
+      this.elements.btnLoadAudio.addEventListener('click', () => this.showLoadAudioModal())
+    }
     this.elements.btnStartRecord.addEventListener('click', () => this.handleStartRecord())
     this.elements.btnStopRecord.addEventListener('click', () => this.handleStopRecord())
     this.elements.btnInterrupt.addEventListener('click', () => this.handleInterrupt())
@@ -382,6 +405,29 @@ export class AvatarPanel {
           this.hideAddCharacterIdModal()
         } else if (e.key === 'Enter') {
           this.handleAddCharacterId()
+        }
+      })
+    }
+    
+    // Load Audio modal events
+    if (this.elements.btnCancelLoadAudio) {
+      this.elements.btnCancelLoadAudio.addEventListener('click', () => this.hideLoadAudioModal())
+    }
+    if (this.elements.btnConfirmLoadAudio) {
+      this.elements.btnConfirmLoadAudio.addEventListener('click', () => this.handleLoadAudio())
+    }
+    if (this.elements.loadAudioModal) {
+      this.elements.loadAudioModal.addEventListener('click', (e) => {
+        if (e.target === this.elements.loadAudioModal) {
+          this.hideLoadAudioModal()
+        }
+      })
+    }
+    if (this.elements.audioFileInput) {
+      this.elements.audioFileInput.addEventListener('change', () => {
+        const file = this.elements.audioFileInput.files[0]
+        if (this.elements.btnConfirmLoadAudio) {
+          this.elements.btnConfirmLoadAudio.disabled = !file
         }
       })
     }
@@ -528,11 +574,18 @@ export class AvatarPanel {
       
       if (this.currentPlaybackMode === 'sdk') {
         this.elements.btnConnect.disabled = false
+        if (this.elements.btnLoadAudio) {
+          this.elements.btnLoadAudio.style.display = 'inline-block'
+          this.elements.btnLoadAudio.disabled = true
+        }
         this.elements.btnStartRecord.disabled = true
         this.elements.btnStopRecord.disabled = true
         this.elements.btnInterrupt.disabled = true
         this.elements.btnDisconnect.disabled = true
       } else {
+        if (this.elements.btnLoadAudio) {
+          this.elements.btnLoadAudio.style.display = 'none'
+        }
         this.elements.btnConnect.disabled = true
         this.elements.btnStartRecord.disabled = true
         this.elements.btnStopRecord.disabled = false
@@ -624,6 +677,9 @@ export class AvatarPanel {
       this.updateStatus('Connecting...', 'info')
       await this.sdkManager.connect()
       this.updateStatus('Connected', 'success')
+      if (this.elements.btnLoadAudio && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnLoadAudio.disabled = false
+      }
     } catch (error) {
       this.logger.error('Connection failed', error)
       this.updateStatus(`Connection failed: ${error.message}`, 'error')
@@ -667,6 +723,102 @@ export class AvatarPanel {
       this.elements.btnStopRecord.disabled = true
     } finally {
       this.isProcessing.startRecord = false
+    }
+  }
+
+  showLoadAudioModal() {
+    if (this.currentPlaybackMode !== 'sdk') {
+      this.logger.warn('Load audio is only available in SDK mode')
+      return
+    }
+    
+    if (!this.sdkManager.isConnected) {
+      this.logger.warn('Please connect to service first')
+      return
+    }
+    
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('Please load character first')
+      return
+    }
+    
+    if (this.elements.loadAudioModal && this.elements.audioFileInput) {
+      this.elements.loadAudioModal.style.display = 'flex'
+      this.elements.audioFileInput.value = ''
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = true
+      }
+    }
+  }
+
+  hideLoadAudioModal() {
+    if (this.elements.loadAudioModal && this.elements.audioFileInput) {
+      this.elements.loadAudioModal.style.display = 'none'
+      this.elements.audioFileInput.value = ''
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = true
+      }
+    }
+  }
+
+  async handleLoadAudio() {
+    if (!this.elements.audioFileInput || !this.elements.audioFileInput.files[0]) {
+      this.logger.warn('Please select an audio file')
+      return
+    }
+    
+    if (this.currentPlaybackMode !== 'sdk') {
+      this.logger.warn('Load audio is only available in SDK mode')
+      return
+    }
+    
+    if (!this.sdkManager.isConnected) {
+      this.logger.warn('Please connect to service first')
+      return
+    }
+    
+    if (!this.sdkManager.avatarView) {
+      this.logger.warn('Please load character first')
+      return
+    }
+    
+    const file = this.elements.audioFileInput.files[0]
+    
+    try {
+      this.isProcessing.loadAudio = true
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = true
+      }
+      
+      this.logger.info(`Loading audio file: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`)
+      this.updateStatus('Loading audio file...', 'info')
+      
+      // Read file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer()
+      
+      // Get sample rate from App (default to 16000 if not available)
+      const sampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
+      const duration = (arrayBuffer.byteLength / 2 / sampleRate).toFixed(2)
+      
+      this.logger.info(`Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+      
+      // Send audio data to SDK
+      if (this.sdkManager.avatarView?.controller) {
+        this.sdkManager.sendAudio(arrayBuffer, true)
+        this.logger.success('Audio file sent to avatar')
+        this.updateStatus('Audio file sent', 'success')
+        this.hideLoadAudioModal()
+      } else {
+        throw new Error('Avatar controller not available')
+      }
+    } catch (error) {
+      this.logger.error('Failed to load audio file', error)
+      this.updateStatus(`Failed to load audio: ${error.message}`, 'error')
+    } finally {
+      this.isProcessing.loadAudio = false
+      if (this.elements.btnConfirmLoadAudio) {
+        this.elements.btnConfirmLoadAudio.disabled = false
+      }
     }
   }
 
@@ -1005,6 +1157,9 @@ export class AvatarPanel {
       this.updateStatus('Disconnected', 'info')
 
       this.elements.btnConnect.disabled = false
+      if (this.elements.btnLoadAudio && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnLoadAudio.disabled = true
+      }
       this.elements.btnStartRecord.disabled = true
       this.elements.btnStopRecord.disabled = true
       this.elements.btnInterrupt.disabled = true
@@ -1135,6 +1290,16 @@ export class AvatarPanel {
       return
     }
     
+    // Disable load audio and start record buttons when playing or pausing
+    if (state === 'playing' || state === 'pausing') {
+      if (this.elements.btnLoadAudio && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnLoadAudio.disabled = true
+      }
+      if (this.elements.btnStartRecord && this.currentPlaybackMode === 'sdk') {
+        this.elements.btnStartRecord.disabled = true
+      }
+    }
+    
     // Update play/pause button based on state
     if (this.elements.btnPlayPause) {
       if (state === 'playing') {
@@ -1155,11 +1320,23 @@ export class AvatarPanel {
       }
     }
     
-    if (state === 'playing') {
-      if (this.currentPlaybackMode === 'host') {
+    // Update button states based on conversation state
+    if (state === 'playing' || state === 'pausing') {
+      // Disable load audio and start record buttons when playing or pausing
+      if (this.currentPlaybackMode === 'sdk') {
+        if (this.elements.btnLoadAudio) {
+          this.elements.btnLoadAudio.disabled = true
+        }
+        if (this.elements.btnStartRecord) {
+          this.elements.btnStartRecord.disabled = true
+        }
+      }
+      
+      if (state === 'playing' && this.currentPlaybackMode === 'host') {
         this.elements.btnInterrupt.disabled = false
       }
     } else {
+      // Enable buttons when idle
       if (state === 'idle') {
         if (this.currentPlaybackMode === 'host') {
           this.elements.btnStopRecord.disabled = false
@@ -1167,6 +1344,9 @@ export class AvatarPanel {
           this.updateStatus('Playback completed, ready to play again', 'info')
         } else if (this.currentPlaybackMode === 'sdk') {
           if (this.sdkManager.isConnected) {
+            if (this.elements.btnLoadAudio) {
+              this.elements.btnLoadAudio.disabled = false
+            }
             this.elements.btnStartRecord.disabled = false
             this.elements.btnStopRecord.disabled = true
             this.updateStatus('Ready to record', 'info')

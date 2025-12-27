@@ -17,6 +17,8 @@ interface ControlPanelProps {
   isLoading: boolean
   isConnected: boolean
   currentPlaybackMode: 'network' | 'external'
+  conversationState?: 'idle' | 'playing' | 'pausing' | null
+  isSendingAudio?: boolean
   onCharacterIdChange: (id: string) => void
   onInit?: () => void
   onLoadCharacter: () => void
@@ -39,10 +41,13 @@ export function ControlPanel({
   isLoading,
   isConnected,
   currentPlaybackMode,
+  conversationState,
+  isSendingAudio = false,
   onCharacterIdChange,
   onInit,
   onLoadCharacter,
   onConnect,
+  onLoadAudio,
   onStartRecord,
   onStopRecord,
   onInterrupt,
@@ -152,7 +157,12 @@ export function ControlPanel({
         <button disabled={!avatarView || currentPlaybackMode !== 'network' || isConnected || isLoading} onClick={onConnect}>
           {onInit ? '3. Connect Service' : '2. Connect Service'}
         </button>
-        <button disabled={!avatarController || currentPlaybackMode !== 'network' || !isConnected || isRecording || isLoading} onClick={onStartRecord}>
+        {currentPlaybackMode === 'network' && (
+          <button disabled={!avatarController || !isConnected || isLoading || conversationState === 'playing' || conversationState === 'pausing' || isSendingAudio} onClick={onLoadAudio}>
+            Load Audio
+          </button>
+        )}
+        <button disabled={!avatarController || currentPlaybackMode !== 'network' || !isConnected || isRecording || isLoading || conversationState === 'playing' || conversationState === 'pausing' || isSendingAudio} onClick={onStartRecord}>
           {onInit ? '4. Start Recording' : '3. Start Recording'}
         </button>
         <button disabled={!avatarController || (currentPlaybackMode === 'network' && !isRecording) || (currentPlaybackMode === 'external' && isLoading)} onClick={onStopRecord}>

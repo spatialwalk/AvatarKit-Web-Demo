@@ -146,6 +146,9 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
       audioFormat: {
         channelCount: 1,
         sampleRate: selectedSampleRate.value
+      },
+      wasmConfig: {
+        wasmPath: '/assets/avatar_core_wasm.wasm'
       }
     } as any)
     

@@ -114,10 +114,6 @@ export class AvatarPanel {
               <div class="performance-display" id="performanceDisplay-${this.panelId}">
                 <div class="fps-display" id="fpsDisplay-${this.panelId}">FPS: --</div>
               </div>
-              <div style="position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 1000;">
-                <button id="btnSetBackground-${this.panelId}" title="Set Background" style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 16px; transition: all 0.2s;" disabled>🖼️</button>
-                <button id="btnRemoveBackground-${this.panelId}" title="Remove Background" style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: none; font-size: 16px; transition: all 0.2s;" disabled>🗑️</button>
-            </div>
               <!-- Play/Pause button (bottom left) -->
               <button id="btnPlayPause-${this.panelId}" title="Play/Pause" style="position: absolute; bottom: 12px; left: 12px; width: 72px; height: 72px; background: transparent; color: white; border: none; cursor: pointer; display: none; font-size: 36px; z-index: 1000; transition: all 0.2s;" disabled>▶️</button>
               
@@ -222,8 +218,6 @@ export class AvatarPanel {
       audioFileInput: document.getElementById(`audioFileInput-${this.panelId}`),
       btnCancelLoadAudio: document.getElementById(`btnCancelLoadAudio-${this.panelId}`),
       btnConfirmLoadAudio: document.getElementById(`btnConfirmLoadAudio-${this.panelId}`),
-      btnSetBackground: document.getElementById(`btnSetBackground-${this.panelId}`),
-      btnRemoveBackground: document.getElementById(`btnRemoveBackground-${this.panelId}`),
       btnPlayPause: document.getElementById(`btnPlayPause-${this.panelId}`),
       btnTransform: document.getElementById(`btnTransform-${this.panelId}`),
       transformModal: document.getElementById(`transformModal-${this.panelId}`),
@@ -345,8 +339,6 @@ export class AvatarPanel {
     this.elements.btnToggleLogs.addEventListener('click', () => this.toggleLogDrawer())
     this.elements.btnCloseLogDrawer.addEventListener('click', () => this.closeLogDrawer())
     this.elements.btnClearLog.addEventListener('click', () => this.logger.clear())
-    this.elements.btnSetBackground.addEventListener('click', () => this.handleSetBackground())
-    this.elements.btnRemoveBackground.addEventListener('click', () => this.handleRemoveBackground())
     
     // Transform button events
     if (this.elements.btnTransform) {
@@ -617,19 +609,6 @@ export class AvatarPanel {
         this.elements.volumeValue.style.display = 'block'
       }
       
-      // Show background control buttons after character is loaded
-      if (this.elements.btnSetBackground) {
-        this.elements.btnSetBackground.style.display = 'inline-flex'
-        this.elements.btnSetBackground.style.alignItems = 'center'
-        this.elements.btnSetBackground.style.justifyContent = 'center'
-        this.elements.btnSetBackground.disabled = false
-      }
-      if (this.elements.btnRemoveBackground) {
-        this.elements.btnRemoveBackground.style.display = 'inline-flex'
-        this.elements.btnRemoveBackground.style.alignItems = 'center'
-        this.elements.btnRemoveBackground.style.justifyContent = 'center'
-        this.elements.btnRemoveBackground.disabled = false
-      }
       
       // Play/pause button will be shown/hidden based on conversation state in onConversationState
       // Don't show it here, let onConversationState handle it
@@ -1230,14 +1209,6 @@ export class AvatarPanel {
       if (this.elements.volumeValue) {
         this.elements.volumeValue.style.display = 'none'
       }
-      if (this.elements.btnSetBackground) {
-        this.elements.btnSetBackground.style.display = 'none'
-        this.elements.btnSetBackground.disabled = true
-      }
-      if (this.elements.btnRemoveBackground) {
-        this.elements.btnRemoveBackground.style.display = 'none'
-        this.elements.btnRemoveBackground.disabled = true
-      }
       
       // Hide transform button after character is unloaded
       if (this.elements.btnPlayPause) {
@@ -1393,44 +1364,6 @@ export class AvatarPanel {
 
   // CPU和GPU监控已移到App级别，这里不再需要
 
-  handleSetBackground() {
-    if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
-      return
-    }
-    
-    try {
-      // Set background image using the demo background image
-      // Background methods are directly on AvatarView
-      const backgroundImagePath = '/src/demo-background.png'
-      this.sdkManager.avatarView.setBackgroundImage(backgroundImagePath)
-      this.sdkManager.avatarView.isOpaque = true
-      this.logger.success('Background image set')
-      this.updateStatus('Background image set', 'success')
-    } catch (error) {
-      this.logger.error('Failed to set background', error)
-      this.updateStatus(`Failed to set background: ${error.message}`, 'error')
-    }
-  }
-
-  handleRemoveBackground() {
-    if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
-      return
-    }
-    
-    try {
-      // Remove background image
-      // Background methods are directly on AvatarView
-      this.sdkManager.avatarView.setBackgroundImage(null)
-      this.sdkManager.avatarView.isOpaque = false
-      this.logger.success('Background image removed')
-      this.updateStatus('Background image removed', 'success')
-    } catch (error) {
-      this.logger.error('Failed to remove background', error)
-      this.updateStatus(`Failed to remove background: ${error.message}`, 'error')
-    }
-  }
 
   destroy() {
     // Stop FPS monitoring

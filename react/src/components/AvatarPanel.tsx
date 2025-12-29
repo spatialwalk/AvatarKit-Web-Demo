@@ -699,7 +699,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
             ref={canvasContainerRef} 
             avatarView={sdk.avatarView}
             showTransformButton={!!sdk.avatarView}
-            showBackgroundButtons={!!sdk.avatarView}
             volume={volume}
             onVolumeChange={(v) => {
               setVolume(v)
@@ -715,32 +714,6 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
             playPauseTitle={conversationState === 'playing' ? 'Pause' : (conversationState === 'pausing' ? 'Resume' : 'Play')}
             playPauseDisabled={conversationState === 'idle'}
             onPlayPauseClick={handlePlayPause}
-            onSetBackground={() => {
-              if (sdk.avatarView) {
-                try {
-                  sdk.avatarView.setBackgroundImage('/src/demo-background.png')
-                  sdk.avatarView.isOpaque = true
-                  logger.log('success', 'Background image set')
-                  logger.updateStatus('Background image set', 'success')
-                } catch (error) {
-                  logger.log('error', `Failed to set background: ${error instanceof Error ? error.message : String(error)}`)
-                  logger.updateStatus(`Failed to set background: ${error instanceof Error ? error.message : String(error)}`, 'error')
-                }
-              }
-            }}
-            onRemoveBackground={() => {
-              if (sdk.avatarView) {
-                try {
-                  sdk.avatarView.setBackgroundImage(null)
-                  sdk.avatarView.isOpaque = false
-                  logger.log('success', 'Background image removed')
-                  logger.updateStatus('Background image removed', 'success')
-                } catch (error) {
-                  logger.log('error', `Failed to remove background: ${error instanceof Error ? error.message : String(error)}`)
-                  logger.updateStatus(`Failed to remove background: ${error instanceof Error ? error.message : String(error)}`, 'error')
-                }
-              }
-            }}
             onTransformClick={() => {
               // Try to get current transform values, fallback to defaults
               if (sdk.avatarView?.transform) {

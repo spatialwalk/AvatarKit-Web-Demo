@@ -3,22 +3,6 @@
     <div class="performance-display">
       <div class="fps-display">FPS: {{ fps !== null ? fps : '--' }}</div>
     </div>
-    <div v-if="showBackgroundButtons" style="position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 1000;">
-      <button
-        @click="onSetBackground"
-        title="Set Background"
-        style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;"
-      >
-        🖼️
-      </button>
-      <button
-        @click="onRemoveBackground"
-        title="Remove Background"
-        style="width: 32px; height: 32px; background: rgba(0, 0, 0, 0.7); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;"
-      >
-        🗑️
-      </button>
-    </div>
     <!-- Play/Pause button (bottom left) -->
     <button
       v-if="showPlayPauseButton && !playPauseDisabled"
@@ -69,9 +53,6 @@ interface Props {
   avatarView?: AvatarView | null
   showTransformButton?: boolean
   onTransformClick?: () => void
-  showBackgroundButtons?: boolean
-  onSetBackground?: () => void
-  onRemoveBackground?: () => void
   volume?: number
   onVolumeChange?: (volume: number) => void
   showVolumeSlider?: boolean
@@ -84,7 +65,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showTransformButton: false,
-  showBackgroundButtons: false,
   showVolumeSlider: false,
   volume: 100,
   showPlayPauseButton: false,

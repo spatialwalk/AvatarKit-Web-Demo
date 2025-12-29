@@ -46,7 +46,6 @@
           ref="avatarCanvasRef" 
           :avatarView="(sdk.avatarView.value as any) ?? null"
           :showTransformButton="!!sdk.avatarView.value"
-          :showBackgroundButtons="!!sdk.avatarView.value"
           :volume="volume"
           :onVolumeChange="(v) => {
             volume = v
@@ -63,32 +62,6 @@
             :playPauseDisabled="!conversationState || conversationState === ConversationState.idle"
           :onPlayPauseClick="handlePlayPause"
           @transform-click="handleOpenTransformModal"
-          @set-background="() => {
-            if (sdk.avatarView.value) {
-              try {
-                sdk.avatarView.value.setBackgroundImage('/src/demo-background.png')
-                sdk.avatarView.value.isOpaque = true
-                logger.log('success', 'Background image set')
-                logger.updateStatus('Background image set', 'success')
-              } catch (error) {
-                logger.log('error', `Failed to set background: ${error instanceof Error ? error.message : String(error)}`)
-                logger.updateStatus(`Failed to set background: ${error instanceof Error ? error.message : String(error)}`, 'error')
-              }
-            }
-          }"
-          @remove-background="() => {
-            if (sdk.avatarView.value) {
-              try {
-                sdk.avatarView.value.setBackgroundImage(null)
-                sdk.avatarView.value.isOpaque = false
-                logger.log('success', 'Background image removed')
-                logger.updateStatus('Background image removed', 'success')
-              } catch (error) {
-                logger.log('error', `Failed to remove background: ${error instanceof Error ? error.message : String(error)}`)
-                logger.updateStatus(`Failed to remove background: ${error instanceof Error ? error.message : String(error)}`, 'error')
-              }
-            }
-          }"
         />
       </div>
     </div>

@@ -233,38 +233,6 @@ export class AvatarSDKManager {
     return this.avatarView.controller.getVolume()
   }
 
-  /**
-   * Set background image
-   * @param {HTMLImageElement | string | null} image - Background image (HTMLImageElement, image URL string, or null to remove)
-   */
-  setBackgroundImage(image) {
-    if (!this.avatarView) {
-      throw new Error('Character not loaded')
-    }
-    this.avatarView.setBackgroundImage(image)
-  }
-
-  /**
-   * Set canvas opacity
-   * @param {boolean} opaque - Whether canvas background should be opaque
-   */
-  setIsOpaque(opaque) {
-    if (!this.avatarView) {
-      throw new Error('Character not loaded')
-    }
-    this.avatarView.isOpaque = opaque
-  }
-
-  /**
-   * Get canvas opacity
-   * @returns {boolean}
-   */
-  getIsOpaque() {
-    if (!this.avatarView) {
-      throw new Error('Character not loaded')
-    }
-    return this.avatarView.isOpaque
-  }
 
   /**
    * Disconnect

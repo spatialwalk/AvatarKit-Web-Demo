@@ -9,9 +9,6 @@ interface AvatarCanvasProps {
   avatarView?: AvatarView | null
   onTransformClick?: () => void
   showTransformButton?: boolean
-  onSetBackground?: () => void
-  onRemoveBackground?: () => void
-  showBackgroundButtons?: boolean
   volume?: number
   onVolumeChange?: (volume: number) => void
   showVolumeSlider?: boolean
@@ -23,7 +20,7 @@ interface AvatarCanvasProps {
 }
 
 export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props, ref) => {
-  const { avatarView, onTransformClick, showTransformButton = false, onSetBackground, onRemoveBackground, showBackgroundButtons = false, volume = 100, onVolumeChange, showVolumeSlider = false, showPlayPauseButton = false, onPlayPauseClick, playPauseIcon = '▶️', playPauseTitle = 'Play', playPauseDisabled = false } = props
+  const { avatarView, onTransformClick, showTransformButton = false, volume = 100, onVolumeChange, showVolumeSlider = false, showPlayPauseButton = false, onPlayPauseClick, playPauseIcon = '▶️', playPauseTitle = 'Play', playPauseDisabled = false } = props
   const [fps, setFps] = useState<number | null>(null)
   
   const frameCountRef = useRef(0)
@@ -62,50 +59,6 @@ export const AvatarCanvas = forwardRef<HTMLDivElement, AvatarCanvasProps>((props
       <div className="performance-display">
         <div className="fps-display">FPS: {fps !== null ? fps : '--'}</div>
       </div>
-      {showBackgroundButtons && (
-        <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px', zIndex: 1000 }}>
-          <button
-            onClick={onSetBackground}
-            title="Set Background"
-            style={{
-              width: '32px',
-              height: '32px',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              transition: 'all 0.2s',
-            }}
-          >
-            🖼️
-          </button>
-          <button
-            onClick={onRemoveBackground}
-            title="Remove Background"
-            style={{
-              width: '32px',
-              height: '32px',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px',
-              transition: 'all 0.2s',
-            }}
-          >
-            🗑️
-          </button>
-        </div>
-      )}
       {/* Play/Pause button (bottom left) */}
       {showPlayPauseButton && !playPauseDisabled && (
         <button

@@ -118,3 +118,62 @@ export function mergeAudioChunks(chunks) {
   return mergedFloat32
 }
 
+/**
+ * Decode audio file (mp3, wav, etc.) to PCM format
+ * @param {ArrayBuffer} arrayBuffer - Audio file as ArrayBuffer
+ * @param {number} targetSampleRate - Target sample rate (from SDK initialization config, e.g. 16000, 24000)
+ * @returns {Promise<{data: Uint8Array, sampleRate: number, duration: number}>}
+ * Note: Output is 16-bit PCM (bit depth), sample rate is determined by targetSampleRate parameter
+ */
+export async function decodeAudioFile(arrayBuffer, targetSampleRate = 16000) {
+  const audioContext = new AudioContext()
+  
+  try {
+    // Decode audio file using Web Audio API
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0))
+    
+    // Get audio data (mono)
+    let audioData
+    if (audioBuffer.numberOfChannels === 1) {
+      audioData = audioBuffer.getChannelData(0)
+    } else {
+      // Convert stereo to mono by averaging channels
+      const channel0 = audioBuffer.getChannelData(0)
+      const channel1 = audioBuffer.getChannelData(1)
+      audioData = new Float32Array(channel0.length)
+      for (let i = 0; i < channel0.length; i++) {
+        audioData[i] = (channel0[i] + channel1[i]) / 2
+      }
+    }
+    
+    const sourceSampleRate = audioBuffer.sampleRate
+    
+    // Resample if needed
+    let resampledData
+    if (sourceSampleRate !== targetSampleRate) {
+      resampledData = await resampleAudioWithWebAudioAPI(audioData, sourceSampleRate, targetSampleRate)
+    } else {
+      resampledData = audioData
+    }
+    
+    // Convert to Int16 PCM
+    const pcm16 = convertToInt16PCM(resampledData)
+    
+    // Convert to Uint8Array
+    const uint8Data = convertToUint8Array(pcm16)
+    
+    const duration = resampledData.length / targetSampleRate
+    
+    await audioContext.close()
+    
+    return {
+      data: uint8Data,
+      sampleRate: targetSampleRate,
+      duration
+    }
+  } catch (error) {
+    await audioContext.close()
+    throw error
+  }
+}
+

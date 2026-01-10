@@ -6,7 +6,7 @@
 import { Logger, updateStatus } from './logger.js'
 import { AudioRecorder } from './audioRecorder.js'
 import { AvatarSDKManager } from './avatarSDK.js'
-import { resampleAudio, resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils.js'
+import { resampleAudio, resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array, decodeAudioFile } from '../utils/audioUtils.js'
 
 export class AvatarPanel {
   constructor(panelId, container, globalSDKInitialized, onRemove, getSampleRateFn = null) {
@@ -161,6 +161,19 @@ export class AvatarPanel {
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
               <button id="btnCancelTransform-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
               <button id="btnConfirmTransform-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Apply</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Load Audio Modal -->
+        <div id="loadAudioModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div class="modal-content" style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%;">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Load Audio File</h3>
+            <p style="margin-bottom: 16px; font-size: 14px; color: #666;">Select an audio file to send to the avatar (PCM, MP3, or WAV format)</p>
+            <input type="file" id="audioFileInput-${this.panelId}" accept=".pcm,.mp3,.wav,audio/*" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button id="btnCancelLoadAudio-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+              <button id="btnConfirmLoadAudio-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;" disabled>Load</button>
             </div>
           </div>
         </div>
@@ -751,14 +764,32 @@ export class AvatarPanel {
       const arrayBuffer = await file.arrayBuffer()
       
       // Get sample rate from App (default to 16000 if not available)
-      const sampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
-      const duration = (arrayBuffer.byteLength / 2 / sampleRate).toFixed(2)
+      const targetSampleRate = this.getSampleRateFn ? this.getSampleRateFn() : 16000
       
-      this.logger.info(`Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+      // Check file type
+      const fileName = file.name.toLowerCase()
+      const isAudioFile = fileName.endsWith('.mp3') || fileName.endsWith('.wav') || file.type.startsWith('audio/')
+      
+      let audioData
+      let duration
+      
+      if (isAudioFile) {
+        // Decode audio file (mp3, wav, etc.)
+        this.logger.info('Decoding audio file...')
+        const decoded = await decodeAudioFile(arrayBuffer, targetSampleRate)
+        audioData = decoded.data.buffer
+        duration = decoded.duration
+        this.logger.info(`Audio file decoded: ${audioData.byteLength} bytes (${duration.toFixed(2)}s, ${decoded.sampleRate}Hz, 16-bit PCM)`)
+      } else {
+        // Assume it's PCM format
+        duration = (arrayBuffer.byteLength / 2 / targetSampleRate)
+        audioData = arrayBuffer
+        this.logger.info(`Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration.toFixed(2)}s, ${targetSampleRate}Hz, 16-bit PCM)`)
+      }
       
       // Send audio data to SDK
       if (this.sdkManager.avatarView?.controller) {
-        this.sdkManager.sendAudio(arrayBuffer, true)
+        this.sdkManager.sendAudio(audioData, true)
         this.logger.success('Audio file sent to avatar')
         this.updateStatus('Audio file sent', 'success')
         this.hideLoadAudioModal()

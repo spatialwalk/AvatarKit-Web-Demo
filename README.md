@@ -55,13 +55,13 @@ npm run dev
 
 ### 6. Start Using
 
+> ⚠️ **Important**: The default App ID and Session Token provided in these demos are **paired together** and can **only be used to drive the publicly available test characters** (Rohan, Dr.Kellan, Priya, Josh, etc.). If you want to create your own characters and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and characters.
+
 **SDK Mode (Real-time Audio Streaming):**
-1. **Generate Session Token** (Required for Demo) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
-   - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider.
-   - The token will be automatically filled into the read-only input field
-   - **Note**: The Session Token input field is read-only and can only be set via the "Auto" button in demos
-   - If SDK is already initialized, the token will be set immediately
-   - If SDK is not initialized yet, the token will be set when you initialize the SDK
+1. **App ID and Session Token** - The demo automatically generates a default Session Token on page load. You can also manually edit both App ID and Session Token if needed.
+   - ⚠️ **Note**: The default App ID and Session Token are paired and only work with test characters. For your own characters, create your App at the [Developer Platform](https://dash.spatialreal.ai).
+   - The Session Token input field is editable - you can manually enter your own token
+   - Click "Inject" button to inject the token to SDK after initialization
 2. Click "初始化 SDK (SDK Mode)" to initialize the SDK
    - Select environment (International/CN)
    - The Session Token will be automatically set if you generated it in step 1
@@ -77,12 +77,10 @@ npm run dev
 **Host Mode (Pre-recorded Audio/Animation):**
 > ⚠️ **Note**: Host Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
 
-1. **Generate Session Token** (Required for Demo) - Click the "Auto" button next to "Session Token" to generate a temporary token (valid for 1 hour)
-   - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider.
-   - The token will be automatically filled into the read-only input field
-   - **Note**: The Session Token input field is read-only and can only be set via the "Auto" button in demos
-   - If SDK is already initialized, the token will be set immediately
-   - If SDK is not initialized yet, the token will be set when you initialize the SDK
+1. **App ID and Session Token** - The demo automatically generates a default Session Token on page load. You can also manually edit both App ID and Session Token if needed.
+   - ⚠️ **Note**: The default App ID and Session Token are paired and only work with test characters. For your own characters, create your App at the [Developer Platform](https://dash.spatialreal.ai).
+   - The Session Token input field is editable - you can manually enter your own token
+   - Click "Inject" button to inject the token to SDK after initialization
 2. Click "初始化 SDK (Host Mode)" to initialize the SDK in Host mode
    - Select environment (International/CN)
    - The Session Token will be automatically set if you generated it in step 1
@@ -323,11 +321,14 @@ Examples support two environments:
 - **`intl`** - International production environment (default)
 - **`cn`** - China production environment
 
-### Session Token (Required)
+### App ID and Session Token (Required)
 
-**All environments now require a Session Token for authentication.**
+**All environments now require an App ID and Session Token for authentication.**
 
-> ⚠️ **Important Note**: The "Auto" button in these demos is **only for demonstration purposes**. In actual production applications, you must **manually inject a valid Session Token** obtained from your SDK provider. The auto-generation feature is not available in production and should not be relied upon.
+> ⚠️ **Important Note**: 
+> - The default App ID and Session Token provided in these demos are **paired together** and can **only be used to drive the publicly available test characters** (Rohan, Dr.Kellan, Priya, Josh, etc.).
+> - If you want to create your own characters and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and characters.
+> - The "Auto" button in these demos is **only for demonstration purposes**. In actual production applications, you must **manually inject a valid Session Token** obtained from your SDK provider. The auto-generation feature is not available in production and should not be relied upon.
 
 **Demo Quick Setup:**
 1. Click the **"Auto"** button next to the "Session Token" input field
@@ -348,6 +349,12 @@ Examples support two environments:
 - Token expires after 1 hour
 - You can generate a new token anytime by clicking "Auto" again
 
+### App ID
+
+The App ID is used to identify your application. The demos provide a default App ID that is paired with the default Session Token.
+
+> ⚠️ **Important**: The default App ID and Session Token are **paired together** and can **only be used to drive the publicly available test characters**. To create and test your own characters, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App.
+
 ### Character ID
 
 Character ID can be obtained from the SDK management platform and is used to identify the virtual character to load.
@@ -355,6 +362,7 @@ Character ID can be obtained from the SDK management platform and is used to ide
 **Getting Test Character IDs:**
 - Visit [Test Avatars](https://docs.spatialreal.ai/overview/test-avatars) to get test character IDs for testing
 - Test avatars include: Rohan, Dr.Kellan, Priya, and Josh
+- **Note**: These test characters can only be used with the default App ID and Session Token provided in the demos
 
 **Adding Custom Character IDs:**
 - Click the ➕ button next to the "Character ID" label to add a new character ID
@@ -405,11 +413,12 @@ Character ID can be obtained from the SDK management platform and is used to ide
 
 ## ❓ FAQ
 
-### Q: How to get Session Token?
+### Q: How to get App ID and Session Token?
 
 A: 
+- **For Demo**: The demos provide a default App ID and Session Token that are paired together. These can only be used to drive the publicly available test characters (Rohan, Dr.Kellan, Priya, Josh, etc.). The Session Token is automatically generated on page load, and you can also manually edit both App ID and Session Token if needed.
+- **For Your Own Characters**: If you want to create your own characters and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and characters. You will get your own App ID and can generate Session Tokens for your App.
 - **For Production**: Session Token needs to be obtained from the SDK provider. Please contact the SDK provider or check the main SDK documentation for more information. You must manually inject the token using `AvatarSDK.setSessionToken(token)` in your application.
-- **For Demo**: The demos include an "Auto" button that generates a temporary token for demonstration purposes only. This feature is not available in production applications.
 
 ### Q: Can't see the character after running the example?
 

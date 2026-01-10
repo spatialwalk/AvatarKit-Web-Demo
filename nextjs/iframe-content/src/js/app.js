@@ -121,7 +121,17 @@ export class App {
       const sampleRate = sampleRateSelect ? parseInt(sampleRateSelect.value, 10) : 16000
       this.selectedSampleRate = sampleRate
       
-      await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
+      // 如果还没有 token，自动生成一个默认 token
+      const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
+      if (sessionTokenInput && !sessionTokenInput.value.trim()) {
+        await this.generateDefaultToken(sessionTokenInput, envSelect)
+      }
+      
+      // Get App ID
+      const appIdInput = document.getElementById('sdkAppIdInput')
+      const appId = appIdInput ? appIdInput.value : 'app_mj8526em_9fpt9s'
+      
+      await AvatarSDK.initialize(appId, { 
         environment: selectedEnvironment,
         drivingServiceMode,
         audioFormat: {
@@ -131,7 +141,6 @@ export class App {
       })
       
       // Set Session Token if provided
-      const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
       const sessionToken = sessionTokenInput ? sessionTokenInput.value.trim() : ''
       if (sessionToken) {
         AvatarSDK.setSessionToken(sessionToken)
@@ -190,16 +199,16 @@ export class App {
       // Session Token input should remain visible after SDK initialization
       // so users can inject token at any time
       const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
-      const autoTokenButton = sessionTokenInput ? sessionTokenInput.nextElementSibling : null
+      const injectTokenButton = sessionTokenInput ? sessionTokenInput.nextElementSibling : null
       if (sessionTokenInput) {
-        // Keep it visible but enable it
+        // Keep it visible and editable
         sessionTokenInput.disabled = false
       }
-      if (autoTokenButton && autoTokenButton.tagName === 'BUTTON') {
-        // Keep Auto button visible and enabled
-        autoTokenButton.disabled = false
-        autoTokenButton.style.opacity = '1'
-        autoTokenButton.style.cursor = 'pointer'
+      if (injectTokenButton && injectTokenButton.tagName === 'BUTTON') {
+        // Keep Inject button visible and enabled
+        injectTokenButton.disabled = false
+        injectTokenButton.style.opacity = '1'
+        injectTokenButton.style.cursor = 'pointer'
       }
       // 通知所有面板更新 SDK 状态
       this.updateAllPanelsSDKStatus()
@@ -266,6 +275,19 @@ export class App {
       <option value="48000">48000 Hz</option>
     `
     
+    // Create App ID input
+    const appIdLabel = document.createElement('label')
+    appIdLabel.textContent = 'App ID:'
+    appIdLabel.style.cssText = 'color: white; font-size: 14px; margin-right: 4px;'
+    
+    const appIdInput = document.createElement('input')
+    appIdInput.id = 'sdkAppIdInput'
+    appIdInput.type = 'text'
+    appIdInput.placeholder = 'App ID'
+    appIdInput.value = 'app_mj8526em_9fpt9s'
+    appIdInput.disabled = this.globalSDKInitialized
+    appIdInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 300px;'
+    
     // Create Session Token input
     const sessionTokenLabel = document.createElement('label')
     sessionTokenLabel.textContent = 'Session Token:'
@@ -274,25 +296,23 @@ export class App {
     const sessionTokenInput = document.createElement('input')
     sessionTokenInput.id = 'sdkSessionTokenInput'
     sessionTokenInput.type = 'text'
-    sessionTokenInput.placeholder = 'Session Token (auto-generated only)'
-    sessionTokenInput.readOnly = true
-    sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: #f0f0f0; color: #666; min-width: 200px; cursor: not-allowed;'
+    sessionTokenInput.placeholder = 'Session Token (manual input or auto-generated)'
+    sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: white; color: #333; min-width: 300px; cursor: text;'
     
-    // Create Auto button for generating temporary token
-    const autoTokenButton = document.createElement('button')
-    autoTokenButton.textContent = 'Auto'
-    autoTokenButton.title = 'Generate temporary token (valid for 1 hour)'
-    autoTokenButton.style.cssText = 'padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; background: #10b981; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s;'
-    // Auto button can be used at any time
-    autoTokenButton.disabled = false
-    autoTokenButton.addEventListener('click', async () => {
-      await this.generateTemporaryToken(sessionTokenInput, envSelect)
+    // Create Inject button for injecting token
+    const injectTokenButton = document.createElement('button')
+    injectTokenButton.textContent = 'Inject'
+    injectTokenButton.title = 'Inject token to SDK'
+    injectTokenButton.style.cssText = 'padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; background: #10b981; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s;'
+    injectTokenButton.disabled = false
+    injectTokenButton.addEventListener('click', () => {
+      this.injectToken(sessionTokenInput)
     })
-    autoTokenButton.addEventListener('mouseenter', () => {
-      autoTokenButton.style.background = '#059669'
+    injectTokenButton.addEventListener('mouseenter', () => {
+      injectTokenButton.style.background = '#059669'
     })
-    autoTokenButton.addEventListener('mouseleave', () => {
-      autoTokenButton.style.background = '#10b981'
+    injectTokenButton.addEventListener('mouseleave', () => {
+      injectTokenButton.style.background = '#10b981'
     })
     
     // Second row: Init buttons
@@ -334,13 +354,24 @@ export class App {
       firstRow.appendChild(envSelect)
       firstRow.appendChild(sampleRateLabel)
       firstRow.appendChild(sampleRateSelect)
+      firstRow.appendChild(appIdLabel)
+      firstRow.appendChild(appIdInput)
       secondRow.appendChild(initButtonSDK)
       secondRow.appendChild(initButtonHost)
     }
     // Session Token input should always be visible (can be set at any time)
     firstRow.appendChild(sessionTokenLabel)
     firstRow.appendChild(sessionTokenInput)
-    firstRow.appendChild(autoTokenButton)
+    firstRow.appendChild(injectTokenButton)
+    
+    // Create Developer Platform link
+    const devPlatformLink = document.createElement('a')
+    devPlatformLink.href = 'https://dash.spatialreal.ai'
+    devPlatformLink.target = '_blank'
+    devPlatformLink.rel = 'noopener noreferrer'
+    devPlatformLink.textContent = 'Developer Platform'
+    devPlatformLink.style.cssText = 'color: white; font-size: 14px; text-decoration: underline; cursor: pointer; margin-left: 8px;'
+    firstRow.appendChild(devPlatformLink)
     buttonContainer.appendChild(firstRow)
     buttonContainer.appendChild(secondRow)
     buttonContainer.appendChild(statusText)
@@ -404,8 +435,8 @@ export class App {
     })
   }
 
-  async generateTemporaryToken(sessionTokenInput, envSelect) {
-    if (!sessionTokenInput || !envSelect) return
+  async generateDefaultToken(sessionTokenInput, envSelect) {
+    if (!sessionTokenInput || !envSelect) return null
     
     try {
       // Get environment
@@ -416,7 +447,7 @@ export class App {
       // Calculate expireAt (current timestamp + 1 hour)
       const expireAt = Math.floor(Date.now() / 1000) + 3600
       
-      // API Key
+      // API Key (hardcoded for token generation)
       const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
       
       // Make API request
@@ -442,27 +473,51 @@ export class App {
       
       if (token) {
         sessionTokenInput.value = token
-        
-        // 如果 SDK 已初始化，立即设置 token
-        if (AvatarSDK.isInitialized) {
-          AvatarSDK.setSessionToken(token)
-          console.log('Temporary token generated and set to SDK')
-        } else {
-          console.log('Temporary token generated (will be set when SDK initializes)')
-        }
+        return token
       } else {
         throw new Error('Token not found in response')
       }
     } catch (error) {
-      console.error('Failed to generate temporary token:', error)
-      alert(`Failed to generate temporary token: ${error.message}`)
+      console.error('Failed to generate default token:', error)
+      return null
+    }
+  }
+
+  injectToken(sessionTokenInput) {
+    if (!sessionTokenInput) return
+    
+    const token = sessionTokenInput.value.trim()
+    if (!token) {
+      alert('Please enter a session token')
+      return
+    }
+    
+    if (!AvatarSDK.isInitialized) {
+      alert('SDK not initialized yet. Please initialize SDK first.')
+      return
+    }
+    
+    try {
+      AvatarSDK.setSessionToken(token)
+      console.log('Session token injected to SDK')
+      alert('Session token injected successfully')
+    } catch (error) {
+      console.error('Failed to inject token:', error)
+      alert(`Failed to inject token: ${error.message}`)
     }
   }
 
 }
 
 // Initialize application after page load
-document.addEventListener('DOMContentLoaded', () => {
-  new App()
+document.addEventListener('DOMContentLoaded', async () => {
+  const app = new App()
+  
+  // 页面加载时自动生成默认 token
+  const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
+  const envSelect = document.getElementById('sdkEnvironmentSelect')
+  if (sessionTokenInput && envSelect && !sessionTokenInput.value.trim()) {
+    await app.generateDefaultToken(sessionTokenInput, envSelect)
+  }
 })
 

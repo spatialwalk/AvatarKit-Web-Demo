@@ -89,10 +89,10 @@
         style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%;"
       >
         <h3 style="margin-top: 0; margin-bottom: 16px;">Load Audio File</h3>
-        <p style="margin-bottom: 16px; font-size: 14px; color: #666;">Select a PCM audio file to send to the avatar (PCM16 format recommended)</p>
+        <p style="margin-bottom: 16px; font-size: 14px; color: #666;">Select an audio file to send to the avatar (PCM, MP3, or WAV format)</p>
         <input
           type="file"
-          accept=".pcm,audio/*"
+          accept=".pcm,.mp3,.wav,audio/*"
           @change="handleAudioFileChange"
           style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;"
         />
@@ -206,7 +206,7 @@ import { Environment } from '../types'
 import { AvatarSDK, DrivingServiceMode, ConversationState } from '@spatialwalk/avatarkit'
 import { useLogger } from '../composables/useLogger'
 import { useAudioRecorder } from '../composables/useAudioRecorder'
-import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array } from '../utils/audioUtils'
+import { resampleAudioWithWebAudioAPI, convertToInt16PCM, convertToUint8Array, decodeAudioFile } from '../utils/audioUtils'
 import StatusBar from './StatusBar.vue'
 import ControlPanel from './ControlPanel.vue'
 import AvatarCanvas from './AvatarCanvas.vue'
@@ -560,15 +560,33 @@ const handleConfirmLoadAudio = async () => {
     const arrayBuffer = await file.arrayBuffer()
     
     // Get sample rate from props (default to 16000)
-    const sampleRate = props.getSampleRate ? props.getSampleRate() : 16000
-    const duration = (arrayBuffer.byteLength / 2 / sampleRate).toFixed(2)
+    const targetSampleRate = props.getSampleRate ? props.getSampleRate() : 16000
     
-    logger.log('info', `Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration}s, ${sampleRate / 1000}kHz PCM16)`)
+    // Check file type
+    const fileName = file.name.toLowerCase()
+    const isAudioFile = fileName.endsWith('.mp3') || fileName.endsWith('.wav') || file.type.startsWith('audio/')
+    
+    let audioData: ArrayBuffer
+    let duration: number
+    
+    if (isAudioFile) {
+      // Decode audio file (mp3, wav, etc.)
+      logger.log('info', 'Decoding audio file...')
+      const decoded = await decodeAudioFile(arrayBuffer, targetSampleRate)
+      audioData = decoded.data.buffer
+      duration = decoded.duration
+      logger.log('info', `Audio file decoded: ${audioData.byteLength} bytes (${duration.toFixed(2)}s, ${decoded.sampleRate}Hz, 16-bit PCM)`)
+    } else {
+      // Assume it's PCM format
+      duration = (arrayBuffer.byteLength / 2 / targetSampleRate)
+      audioData = arrayBuffer
+      logger.log('info', `Audio file loaded: ${arrayBuffer.byteLength} bytes (${duration.toFixed(2)}s, ${targetSampleRate}Hz, 16-bit PCM)`)
+    }
     
     // Send audio data to SDK
     if (sdk.avatarController.value) {
       isSendingAudio.value = true
-      sdk.sendAudio(arrayBuffer, true)
+      sdk.sendAudio(audioData, true)
       logger.log('success', 'Audio file sent to avatar')
       logger.updateStatus('Audio file sent', 'success')
       showLoadAudioModal.value = false

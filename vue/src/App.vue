@@ -5,7 +5,7 @@
       <p>Supports multiple avatar views simultaneously</p>
       <div style="margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative">
         <template v-if="!globalSDKInitialized && !sdkInitializing">
-          <!-- First row: Environment and Sample Rate -->
+          <!-- First row: Environment, Sample Rate, and API Key -->
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center">
             <span class="arrow-pointing-right" style="color: #ff0000; font-size: 48px; font-weight: bold; line-height: 1; flex-shrink: 0">→</span>
             <label style="color: white; font-size: 14px; margin-right: 4px">Environment:</label>
@@ -30,6 +30,14 @@
               <option :value="44100">44100 Hz</option>
               <option :value="48000">48000 Hz</option>
             </select>
+            <label style="color: white; font-size: 14px; margin-right: 4px">App ID:</label>
+            <input
+              v-model="appId"
+              type="text"
+              placeholder="App ID"
+              :disabled="globalSDKInitialized"
+              style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 300px; flex-shrink: 0"
+            >
           </div>
           <!-- Second row: Init buttons -->
           <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: center">
@@ -53,29 +61,36 @@
           <input
             v-model="sessionToken"
             type="text"
-            placeholder="Session Token (auto-generated only)"
-            readonly
-            style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: #f0f0f0; color: #666; min-width: 200px; flex-shrink: 0; cursor: not-allowed"
+            placeholder="Session Token (manual input or auto-generated)"
+            style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: white; color: #333; min-width: 300px; flex-shrink: 0; cursor: text"
           >
           <button
-            @click="generateTemporaryToken"
-            title="Generate temporary token (valid for 1 hour)"
+            @click="injectToken"
+            title="Inject token to SDK"
             :style="{
               padding: '8px 16px',
               borderRadius: '6px',
               border: 'none',
               fontSize: '14px',
-              background: autoButtonHover ? '#059669' : '#10b981',
+              background: injectButtonHover ? '#059669' : '#10b981',
               color: 'white',
               cursor: 'pointer',
               fontWeight: 500,
               transition: 'all 0.2s'
             }"
-            @mouseenter="autoButtonHover = true"
-            @mouseleave="autoButtonHover = false"
+            @mouseenter="injectButtonHover = true"
+            @mouseleave="injectButtonHover = false"
           >
-            Auto
+            Inject
           </button>
+          <a
+            href="https://dash.spatialreal.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            style="color: white; font-size: 14px; text-decoration: underline; cursor: pointer; margin-left: 8px;"
+          >
+            Developer Platform
+          </a>
         </div>
         <p v-if="sdkInitializing" style="color: #ffeb3b; margin: 0">⏳ Initializing SDK...</p>
         <p v-if="globalSDKInitialized && currentDrivingServiceMode" style="color: #10b981; margin: 0">
@@ -121,16 +136,68 @@ const sdkInitializing = ref(false)
 const currentDrivingServiceMode = ref<DrivingServiceMode | null>(null)
 const selectedEnvironment = ref<Environment>(Environment.intl)
 const selectedSampleRate = ref(16000)
+const appId = ref('app_mj8526em_9fpt9s')
 const sessionToken = ref('')
-const autoButtonHover = ref(false)
+const injectButtonHover = ref(false)
 
 // 检查是否已经初始化
-onMounted(() => {
+onMounted(async () => {
   if (AvatarSDK.isInitialized) {
     globalSDKInitialized.value = true
     currentDrivingServiceMode.value = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
   }
+  
+  // 页面加载时自动生成默认 token
+  if (!sessionToken.value.trim()) {
+    await generateDefaultToken()
+  }
 })
+
+// 生成默认 token（在初始化时自动调用）
+const generateDefaultToken = async () => {
+  try {
+      // Get environment
+      const isCN = selectedEnvironment.value === Environment.cn
+      const consoleApiHost = isCN ? 'console.open.spatialwalk.top' : 'console.ap-northeast.spatialwalk.cloud'
+      
+      // Calculate expireAt (current timestamp + 1 hour)
+      const expireAt = Math.floor(Date.now() / 1000) + 3600
+      
+      // API Key (hardcoded for token generation)
+      const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
+      
+      // Make API request
+      const response = await fetch(`https://${consoleApiHost}/v1/console/session-tokens`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+      body: JSON.stringify({
+        expireAt: expireAt,
+        modelVersion: ''
+      })
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Failed to generate token: ${response.status} ${errorText}`)
+    }
+    
+    const data = await response.json()
+    const token = data.token || data.sessionToken || data.data?.token || data.data?.sessionToken
+    
+    if (token) {
+      sessionToken.value = token
+      return token
+    } else {
+      throw new Error('Token not found in response')
+    }
+  } catch (error: any) {
+    console.error('Failed to generate default token:', error)
+    return null
+  }
+}
 
 // 手动初始化 SDK
 const handleInitSDK = async (mode: DrivingServiceMode) => {
@@ -140,7 +207,13 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
 
   try {
     sdkInitializing.value = true
-    await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
+    
+    // 如果还没有 token，自动生成一个默认 token
+    if (!sessionToken.value.trim()) {
+      await generateDefaultToken()
+    }
+    
+      await AvatarSDK.initialize(appId.value, {
       environment: selectedEnvironment.value,
       drivingServiceMode: mode,
       audioFormat: {
@@ -167,56 +240,25 @@ const handleInitSDK = async (mode: DrivingServiceMode) => {
 }
 
 
-// Generate temporary token
-const generateTemporaryToken = async () => {
+// 注入 token 到 SDK
+const injectToken = () => {
+  if (!sessionToken.value.trim()) {
+    alert('Please enter a session token')
+    return
+  }
+  
+  if (!AvatarSDK.isInitialized) {
+    alert('SDK not initialized yet. Please initialize SDK first.')
+    return
+  }
+  
   try {
-    // Get environment
-    const isCN = selectedEnvironment.value === Environment.cn
-    const consoleApiHost = isCN ? 'console.open.spatialwalk.top' : 'console.ap-northeast.spatialwalk.cloud'
-    
-    // Calculate expireAt (current timestamp + 1 hour)
-    const expireAt = Math.floor(Date.now() / 1000) + 3600
-    
-    // API Key
-    const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
-    
-    // Make API request
-    const response = await fetch(`https://${consoleApiHost}/v1/console/session-tokens`, {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        expireAt: expireAt,
-        modelVersion: ''
-      })
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Failed to generate token: ${response.status} ${errorText}`)
-    }
-    
-    const data = await response.json()
-    const token = data.token || data.sessionToken || data.data?.token || data.data?.sessionToken
-    
-    if (token) {
-      sessionToken.value = token
-      
-      // 如果 SDK 已初始化，立即设置 token
-      if (AvatarSDK.isInitialized) {
-        AvatarSDK.setSessionToken(token)
-        console.log('Temporary token generated and set to SDK')
-      } else {
-        console.log('Temporary token generated (will be set when SDK initializes)')
-      }
-    } else {
-      throw new Error('Token not found in response')
-    }
+    AvatarSDK.setSessionToken(sessionToken.value.trim())
+    console.log('Session token injected to SDK')
+    alert('Session token injected successfully')
   } catch (error: any) {
-    console.error('Failed to generate temporary token:', error)
-    alert(`Failed to generate temporary token: ${error.message}`)
+    console.error('Failed to inject token:', error)
+    alert(`Failed to inject token: ${error.message}`)
   }
 }
 

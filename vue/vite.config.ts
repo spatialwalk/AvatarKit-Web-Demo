@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [
     vue(),
-    // Ensure WASM files use correct MIME type
+    // Ensure WASM files use correct MIME type in development
     {
       name: 'configure-wasm-mime',
       configureServer(server) {
@@ -23,6 +23,7 @@ export default defineConfig({
       },
     },
     // Copy WASM file to dist/assets after build
+    // Note: SDK requires fixed path /assets/avatar_core_wasm.wasm, so we manually copy it
     {
       name: 'copy-wasm-file',
       closeBundle() {
@@ -32,12 +33,12 @@ export default defineConfig({
         
         if (existsSync(wasmSource)) {
           copyFileSync(wasmSource, wasmDest)
-          console.log('✅ Copied WASM file to dist/assets/')
+          console.log('✅ Copied WASM file to dist/assets/avatar_core_wasm.wasm')
         } else {
           console.warn('⚠️ WASM file not found at:', wasmSource)
         }
         
-        // Create _headers file for Cloudflare Pages
+        // Create _headers file for Cloudflare Pages and similar platforms
         const headersContent = '/*.wasm\n  Content-Type: application/wasm\n'
         writeFileSync(headersDest, headersContent)
         console.log('✅ Created _headers file for Cloudflare Pages')
@@ -59,7 +60,24 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@spatialwalk/avatarkit'],
   },
-  // Mark WASM files as static assets
+  // Mark WASM files as static assets (prevents Vite from trying to process them as modules)
   assetsInclude: ['**/*.wasm'],
+  build: {
+    // Ensure WASM files are not inlined as base64 (they must be separate files)
+    assetsInlineLimit: 0, // Disable inlining for all assets, or set a small value like 4096
+    rollupOptions: {
+      output: {
+        // Customize asset file naming to ensure WASM files have predictable names
+        assetFileNames: (assetInfo) => {
+          // Keep WASM files with fixed name (SDK requires /assets/avatar_core_wasm.wasm)
+          if (assetInfo.name?.endsWith('.wasm')) {
+            return 'assets/[name][extname]'
+          }
+          // Other assets can use hash for cache busting
+          return 'assets/[name]-[hash][extname]'
+        },
+      },
+    },
+  },
 })
 

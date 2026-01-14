@@ -87,11 +87,28 @@ export function useAvatarSDK() {
     }
   }
 
+  // Initialize audio context (MUST be called in user gesture context)
+  const initializeAudioContext = async () => {
+    if (!avatarViewRef.value?.controller) {
+      throw new Error('Character not loaded')
+    }
+    
+    const controller = avatarViewRef.value.controller as any
+    if (typeof controller.initializeAudioContext !== 'function') {
+      throw new Error('initializeAudioContext() is not available')
+    }
+    
+    await controller.initializeAudioContext()
+  }
+
   // Connect service (network mode only)
   const connect = async () => {
     if (!avatarViewRef.value?.controller) {
       throw new Error('Character not loaded')
     }
+
+    // ⚠️ CRITICAL: Initialize audio context first (MUST be called in user gesture context)
+    await initializeAudioContext()
 
     await avatarViewRef.value.controller.start()
   }
@@ -226,6 +243,7 @@ export function useAvatarSDK() {
     initialize,
     loadCharacter,
     connect,
+    initializeAudioContext,
     sendAudio,
     yieldAudioData,
     yieldFramesData,

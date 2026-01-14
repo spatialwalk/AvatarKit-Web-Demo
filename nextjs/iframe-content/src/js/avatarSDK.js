@@ -161,6 +161,24 @@ export class AvatarSDKManager {
   }
 
   /**
+   * Initialize audio context (MUST be called in user gesture context)
+   * @returns {Promise<void>}
+   */
+  async initializeAudioContext() {
+    if (!this.avatarView?.controller) {
+      throw new Error('Character not loaded')
+    }
+    
+    if (typeof this.avatarView.controller.initializeAudioContext !== 'function') {
+      throw new Error('initializeAudioContext() is not available')
+    }
+    
+    this.logger.info('Initializing audio context...')
+    await this.avatarView.controller.initializeAudioContext()
+    this.logger.success('Audio context initialized')
+  }
+
+  /**
    * Connect service
    * @returns {Promise<void>}
    */
@@ -168,6 +186,9 @@ export class AvatarSDKManager {
     if (!this.avatarView?.controller) {
       throw new Error('Character not loaded')
     }
+
+    // ⚠️ CRITICAL: Initialize audio context first (MUST be called in user gesture context)
+    await this.initializeAudioContext()
 
     this.logger.info('Starting to connect WebSocket service')
     await this.avatarView.controller.start()

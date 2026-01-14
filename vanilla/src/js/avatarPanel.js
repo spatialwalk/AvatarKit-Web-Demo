@@ -939,6 +939,9 @@ export class AvatarPanel {
       this.logger.success('Data fetched and decoded successfully')
       this.updateStatus('Playing data...', 'info')
       
+      // ⚠️ CRITICAL: Initialize audio context first (MUST be called in user gesture context)
+      await this.sdkManager.initializeAudioContext()
+      
       // 使用 SDK 播放数据
       // 1. 发送音频数据（最后一个 chunk 标记为结束）
       const conversationId = this.sdkManager.yieldAudioData(audioData, true)

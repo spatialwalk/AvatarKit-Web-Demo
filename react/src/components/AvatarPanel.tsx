@@ -465,6 +465,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
       logger.log('success', 'Data fetched and decoded successfully')
       logger.updateStatus('Playing data...', 'info')
       
+      // ⚠️ CRITICAL: Initialize audio context first (MUST be called in user gesture context)
+      await sdk.initializeAudioContext()
+      
       // 使用 SDK 播放数据
       // 1. 发送音频数据（最后一个 chunk 标记为结束）
       const conversationId = sdk.yieldAudioData(audioData, true)

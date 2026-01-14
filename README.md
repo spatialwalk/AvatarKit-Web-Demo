@@ -264,6 +264,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)
 5. **Connect Service** - Establish WebSocket connection
    - Connect to animation service
    - Wait for successful connection
+   - ⚠️ **Important**: Audio context is automatically initialized when connecting (must be in user gesture context)
 
 6. **Start Recording** - Capture audio and send to server
    - Browser will request microphone permission
@@ -306,6 +307,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
    - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
 
 5. **Play Data** - Load and play pre-recorded audio and animation files
+   - ⚠️ **Important**: Audio context is automatically initialized before sending audio data (must be in user gesture context)
    - Audio files are automatically resampled from 24kHz to 16kHz
    - First, audio data is sent via `yieldAudioData()` to get a `conversationId`
    - Then, animation keyframes are sent via `yieldFramesData()` with the `conversationId`
@@ -371,10 +373,137 @@ Character ID can be obtained from the SDK management platform and is used to ide
 - The new ID will be added to the dropdown list and automatically selected
 - Added IDs are temporary and only persist for the current session (not saved after page refresh)
 
+### ⚠️ Audio Context Initialization (Required)
+
+> **🚨 Critical**: Before using any audio-related features, you **MUST** initialize the audio context in a user gesture context (e.g., `click`, `touchstart` event handlers). This is required by browser security policies. Calling `initializeAudioContext()` outside a user gesture will fail.
+
+**How It Works in Demos:**
+- **SDK Mode**: Audio context is automatically initialized when you click "Connect Service" (inside the button's click event handler)
+- **Host Mode**: Audio context is automatically initialized when you click "Play Data" (inside the button's click event handler)
+- All audio operations (sending audio, playing audio, etc.) require prior initialization
+
+**For Your Own Projects:**
+```typescript
+// SDK Mode: Initialize audio context before calling start()
+button.addEventListener('click', async () => {
+  await avatarView.controller.initializeAudioContext() // MUST be in user gesture context
+  await avatarView.controller.start()
+  // Now you can send audio data
+  avatarView.controller.send(audioData, false)
+})
+
+// Host Mode: Initialize audio context before calling yieldAudioData()
+button.addEventListener('click', async () => {
+  await avatarView.controller.initializeAudioContext() // MUST be in user gesture context
+  // Now you can send audio data
+  const conversationId = avatarView.controller.yieldAudioData(audioData, false)
+  avatarView.controller.yieldFramesData(keyframes, conversationId)
+})
+```
+
+**Important Notes:**
+- `initializeAudioContext()` **MUST** be called within a user gesture event handler (click, touchstart, etc.)
+- Calling `initializeAudioContext()` outside a user gesture context will fail
+- All audio operations require prior initialization
+- Initialization only needs to be done once per `AvatarController` instance
+- See SDK documentation for more details
+
+### ⚠️ WASM Configuration (Required for Production)
+
+> **🚨 Critical**: All demo projects include essential WASM (WebAssembly) configuration that is **required for production deployment**. This configuration ensures WASM files are properly served with correct MIME types and are accessible in production environments.
+
+**Why This Matters:**
+- WASM files must be served with the `application/wasm` MIME type for browsers to execute them correctly
+- Some hosting platforms (like Cloudflare Pages) require explicit headers configuration
+- Without proper configuration, WASM files may fail to load in production, causing the SDK to malfunction
+
+**What's Configured:**
+
+All Vite-based demos (vanilla, Vue, React, and Next.js iframe-content) include:
+
+1. **Development Server MIME Type Configuration**
+   - Automatically sets `Content-Type: application/wasm` for `.wasm` files during development
+   - Ensures WASM files load correctly in the dev server
+
+2. **Build-Time WASM File Copying**
+   - Automatically copies WASM files from `node_modules/@spatialwalk/avatarkit/dist/` to `dist/assets/` after build
+   - Ensures WASM files are included in the production build output
+
+3. **Production Headers File Generation**
+   - Automatically creates `dist/_headers` file for Cloudflare Pages deployment
+   - Configures `Content-Type: application/wasm` for all `.wasm` files
+   - Required for Cloudflare Pages and other platforms that support `_headers` files
+
+4. **Vite Configuration**
+   - `optimizeDeps.exclude: ['@spatialwalk/avatarkit']` - Prevents Vite from pre-bundling the SDK, allowing WASM files to load correctly
+   - `assetsInclude: ['**/*.wasm']` - Marks WASM files as static assets
+
+**For Your Own Projects:**
+
+If you're integrating the SDK into your own project, you **must** include similar configuration:
+
+```typescript
+// vite.config.ts example
+import { copyFileSync, existsSync, writeFileSync } from 'fs'
+import { join } from 'path'
+
+export default defineConfig({
+  plugins: [
+    // ... your other plugins
+    {
+      name: 'configure-wasm-mime',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url?.endsWith('.wasm')) {
+            res.setHeader('Content-Type', 'application/wasm')
+          }
+          next()
+        })
+      },
+    },
+    {
+      name: 'copy-wasm-file',
+      closeBundle() {
+        const wasmSource = join(__dirname, 'node_modules/@spatialwalk/avatarkit/dist/avatar_core_wasm.wasm')
+        const wasmDest = join(__dirname, 'dist/assets/avatar_core_wasm.wasm')
+        const headersDest = join(__dirname, 'dist/_headers')
+        
+        if (existsSync(wasmSource)) {
+          copyFileSync(wasmSource, wasmDest)
+        }
+        
+        const headersContent = '/*.wasm\n  Content-Type: application/wasm\n'
+        writeFileSync(headersDest, headersContent)
+      },
+    },
+  ],
+  optimizeDeps: {
+    exclude: ['@spatialwalk/avatarkit'],
+  },
+  assetsInclude: ['**/*.wasm'],
+})
+```
+
+**For Other Build Tools:**
+
+- **Webpack**: Configure `module.rules` to handle `.wasm` files with correct MIME type
+- **Rollup**: Use plugins to copy WASM files and configure headers
+- **Other Platforms**: Ensure your hosting platform serves `.wasm` files with `Content-Type: application/wasm`
+
+**Verification:**
+
+After building, verify:
+1. WASM file exists in `dist/assets/avatar_core_wasm.wasm`
+2. `dist/_headers` file exists (for Cloudflare Pages)
+3. Your hosting platform serves `.wasm` files with correct MIME type
+
+> ⚠️ **Note**: Next.js main app doesn't need WASM configuration because the SDK runs in a separate iframe (Vite app) that has its own WASM configuration.
+
 ## 🔧 Technical Details
 
 - **SDK Import**: All examples use standard npm package import `import('@spatialwalk/avatarkit')`
 - **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.39`
+- **Audio Context Initialization**: ⚠️ **Critical**: Before using any audio-related features, you **MUST** initialize the audio context in a user gesture context using `avatarView.controller.initializeAudioContext()`. All demos automatically handle this when you click "Connect Service" (SDK Mode) or "Play Data" (Host Mode). See [Audio Context Initialization](#-audio-context-initialization-required) section for details.
 - **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI, positioned on the right side above the transform button.
 - **Play/Pause Control**: A play/pause button is available in the bottom left corner of the character view. It appears when the character is in `playing` or `pausing` state, allowing you to pause or resume playback.
 - **Initialization Modes**: 
@@ -404,7 +533,7 @@ Character ID can be obtained from the SDK management platform and is used to ide
   - SDK Mode: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
   - Host Mode: Pre-recorded PCM16 audio files (24kHz, automatically resampled to 16kHz). Animation keyframes must be generated using the SPAvatar server-side SDK.
 - **Audio Resampling**: High-quality resampling using Web Audio API's OfflineAudioContext with anti-aliasing
-- **WASM Support**: All examples are configured with correct WASM MIME types
+- **WASM Support**: All examples are configured with correct WASM MIME types, automatic WASM file copying, and production headers generation. See [WASM Configuration](#-wasm-configuration-required-for-production) section for details.
 - **Rendering Backend**: Automatically selects WebGPU or WebGL
 - **State Management**: 
   - React: Uses custom Hooks (`useAvatarSDK`, `useAudioRecorder`, `useLogger`)

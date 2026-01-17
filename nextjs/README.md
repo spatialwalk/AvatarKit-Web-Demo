@@ -1,6 +1,6 @@
 # Next.js iframe Integration Example
 
-This is a SPAvatarKit SDK example using Next.js with iframe integration, demonstrating how to integrate the SDK in a Next.js application without encountering WASM packaging compatibility issues.
+This is an AvatarKit SDK example using Next.js with iframe integration, demonstrating how to integrate the SDK in a Next.js application without encountering WASM packaging compatibility issues.
 
 ## 💡 Why Use iframe Integration?
 
@@ -136,7 +136,7 @@ The example includes a basic postMessage communication setup. You can extend thi
 ```typescript
 // In Next.js app
 iframeRef.current?.contentWindow?.postMessage(
-  { type: 'command', action: 'loadCharacter', characterId: 'xxx' },
+  { type: 'command', action: 'loadAvatar', avatarId: 'xxx' },
   '*'
 )
 ```
@@ -155,7 +155,7 @@ window.addEventListener('message', (event) => {
 ## 📋 Features
 
 - ✅ SDK initialization
-- ✅ Character loading (with progress display)
+- ✅ Avatar loading (with progress display)
 - ✅ WebSocket connection management
 - ✅ Real-time audio recording and sending
 - ✅ Real-time animation rendering
@@ -168,7 +168,7 @@ window.addEventListener('message', (event) => {
 
 ## 🎯 Use Cases
 
-- Next.js projects that need to integrate SPAvatar SDK
+- Next.js projects that need to integrate Avatar SDK
 - Avoiding WASM packaging conflicts
 - Maintaining clean separation between Next.js app and SDK code
 - Multi-framework integration scenarios

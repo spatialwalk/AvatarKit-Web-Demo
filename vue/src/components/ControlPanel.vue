@@ -10,11 +10,11 @@
 
     <div class="form-group">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
-        <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Character ID</label>
+        <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Avatar ID</label>
         <button
           @click="showAddIdModal = true"
           style="padding: 0; margin: 0; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0"
-          title="Add new Character ID"
+          title="Add new Avatar ID"
         >
           ➕
         </button>
@@ -23,14 +23,14 @@
           target="_blank"
           rel="noopener noreferrer"
           style="padding: 0; margin: 0; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; text-decoration: none;"
-          title="Get test character IDs"
+          title="Get test avatar IDs"
         >
           🔗
         </a>
       </div>
-      <select :value="characterId" @change="handleCharacterIdChange">
-        <option value="">Select Character ID</option>
-        <option v-for="id in characterIdList" :key="id" :value="id">{{ id }}</option>
+      <select :value="avatarId" @change="handleAvatarIdChange">
+        <option value="">Select Avatar ID</option>
+        <option v-for="id in avatarIdList" :key="id" :value="id">{{ id }}</option>
       </select>
     </div>
 
@@ -38,8 +38,8 @@
       <button v-if="onInit" :disabled="isInitialized || isLoading" @click="onInit">
         1. Initialize SDK
       </button>
-      <button :disabled="!isInitialized || !!avatarView || isLoading || !characterId.trim()" @click="onLoadCharacter">
-        {{ onInit ? '2. Load Character' : '1. Load Character' }}
+      <button :disabled="!isInitialized || !!avatarView || isLoading || !avatarId.trim()" @click="onLoadAvatar">
+        {{ onInit ? '2. Load Avatar' : '1. Load Avatar' }}
       </button>
       <button :disabled="!avatarView || currentPlaybackMode !== 'network' || isConnected || isLoading" @click="onConnect">
         {{ onInit ? '3. Connect Service' : '2. Connect Service' }}
@@ -59,32 +59,32 @@
       <button :disabled="!avatarController || currentPlaybackMode !== 'network' || !isConnected" @click="onDisconnect">
         Disconnect
       </button>
-      <button :disabled="!avatarView || isLoading" @click="onUnloadCharacter" style="background: #ef4444;">
-        Unload Character
+      <button :disabled="!avatarView || isLoading" @click="onUnloadAvatar" style="background: #ef4444;">
+        Unload Avatar
       </button>
     </div>
 
 
     
-    <!-- Add Character ID Modal -->
+    <!-- Add Avatar ID Modal -->
     <div
       v-if="showAddIdModal"
       class="modal-overlay"
       @click="showAddIdModal = false"
     >
       <div class="modal-content" @click.stop>
-        <h3>Add New Character ID</h3>
+        <h3>Add New Avatar ID</h3>
         <input
-          v-model="newCharacterId"
+          v-model="newAvatarId"
           type="text"
-          placeholder="Enter Character ID"
-          @keydown.enter="handleAddCharacterId"
+          placeholder="Enter Avatar ID"
+          @keydown.enter="handleAddAvatarId"
           @keydown.esc="showAddIdModal = false"
           autofocus
         />
         <div class="modal-actions">
           <button @click="showAddIdModal = false">Cancel</button>
-          <button @click="handleAddCharacterId" :disabled="!newCharacterId.trim()">Add</button>
+          <button @click="handleAddAvatarId" :disabled="!newAvatarId.trim()">Add</button>
         </div>
       </div>
     </div>
@@ -97,12 +97,12 @@ import { Environment } from '../types'
 import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
 
 const showAddIdModal = ref(false)
-const newCharacterId = ref('')
+const newAvatarId = ref('')
 
 const props = defineProps<{
   environment: Environment
-  characterId: string
-  characterIdList: string[]
+  avatarId: string
+  avatarIdList: string[]
   isInitialized: boolean
   avatarView: any
   avatarController: any
@@ -116,40 +116,40 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  characterIdChange: [id: string]
+  avatarIdChange: [id: string]
   init: []
-  loadCharacter: []
+  loadAvatar: []
   connect: []
   loadAudio: []
   startRecord: []
   stopRecord: []
   interrupt: []
   disconnect: []
-  unloadCharacter: []
+  unloadAvatar: []
 }>()
 
-const handleCharacterIdChange = (e: Event) => {
-  emit('characterIdChange', (e.target as HTMLSelectElement).value)
+const handleAvatarIdChange = (e: Event) => {
+  emit('avatarIdChange', (e.target as HTMLSelectElement).value)
 }
 
-const handleAddCharacterId = () => {
-  const trimmedId = newCharacterId.value.trim()
+const handleAddAvatarId = () => {
+  const trimmedId = newAvatarId.value.trim()
   if (trimmedId) {
-    emit('characterIdChange', trimmedId)
-    newCharacterId.value = ''
+    emit('avatarIdChange', trimmedId)
+    newAvatarId.value = ''
     showAddIdModal.value = false
   }
 }
 
 const onInit = props.init ? () => emit('init') : undefined
-const onLoadCharacter = () => emit('loadCharacter')
+const onLoadAvatar = () => emit('loadAvatar')
 const onConnect = () => emit('connect')
 const onLoadAudio = () => emit('loadAudio')
 const onStartRecord = () => emit('startRecord')
 const onStopRecord = () => emit('stopRecord')
 const onInterrupt = () => emit('interrupt')
 const onDisconnect = () => emit('disconnect')
-const onUnloadCharacter = () => emit('unloadCharacter')
+const onUnloadAvatar = () => emit('unloadAvatar')
 </script>
 
 <style scoped>

@@ -12,8 +12,8 @@
         <StatusBar :message="logger.statusMessage.value" :type="logger.statusClass.value" />
         <ControlPanel
           :environment="AvatarSDK.configuration?.environment || Environment.intl"
-          :character-id="characterId"
-          :character-id-list="characterIdList"
+          :avatar-id="avatarId"
+          :avatar-id-list="avatarIdList"
           :is-initialized="globalSDKInitialized"
           :avatar-view="sdk.avatarView.value"
           :avatar-controller="sdk.avatarController.value"
@@ -21,15 +21,15 @@
           :is-loading="isLoading"
           :is-connected="sdk.isConnected.value"
           :current-playback-mode="(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'"
-          @character-id-change="handleCharacterIdChange"
-          @load-character="handleLoadCharacter"
+          @avatar-id-change="handleAvatarIdChange"
+          @load-avatar="handleLoadAvatar"
           @connect="handleConnect"
           @load-audio="handleLoadAudio"
           @start-record="handleStartRecord"
           @stop-record="handleStopRecord"
           @interrupt="handleInterrupt"
           @disconnect="handleDisconnect"
-          @unload-character="handleUnloadCharacter"
+          @unload-avatar="handleUnloadAvatar"
           :conversation-state="conversationState"
           :is-sending-audio="isSendingAudio"
         />
@@ -222,15 +222,15 @@ interface Props {
 const props = defineProps<Props>()
 
 // Configuration state
-const characterIdList = ref<string[]>([])
-const characterId = ref('')
+const avatarIdList = ref<string[]>([])
+const avatarId = ref('')
 const isLoading = ref(false)
 const conversationState = ref<ConversationState | null>(null)
 const volume = ref(100)
 
 // Operation state flags
 const isProcessing = ref({
-  loadCharacter: false,
+  loadAvatar: false,
   connect: false,
   startRecord: false,
   stopRecord: false,
@@ -291,7 +291,7 @@ const handleOpenTransformModal = () => {
 
 const handleApplyTransform = () => {
   if (!sdk.avatarView.value) {
-    logger.updateStatus('Please load character first', 'warning')
+    logger.updateStatus('Please load avatar first', 'warning')
     return
   }
   
@@ -329,14 +329,14 @@ const handleApplyTransform = () => {
   }
 }
 
-// Load character (mode is determined by SDK initialization)
-const handleLoadCharacter = async () => {
-  if (isProcessing.value.loadCharacter || sdk.avatarView.value) {
+// Load avatar (mode is determined by SDK initialization)
+const handleLoadAvatar = async () => {
+  if (isProcessing.value.loadAvatar || sdk.avatarView.value) {
     return
   }
 
-  if (!props.globalSDKInitialized || !characterId.value.trim()) {
-    logger.updateStatus('Please wait for SDK initialization and enter character ID', 'warning')
+  if (!props.globalSDKInitialized || !avatarId.value.trim()) {
+    logger.updateStatus('Please wait for SDK initialization and enter avatar ID', 'warning')
     return
   }
 
@@ -356,17 +356,17 @@ const handleLoadCharacter = async () => {
   }
 
   try {
-    isProcessing.value.loadCharacter = true
+    isProcessing.value.loadAvatar = true
     isLoading.value = true
     
     // Get current driving service mode from SDK configuration
     const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
     const modeName = currentMode === DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
-    logger.updateStatus(`Loading character (${modeName})...`, 'info')
-    logger.log('info', `Starting to load character: ${characterId.value} (mode: ${modeName})`)
+    logger.updateStatus(`Loading avatar (${modeName})...`, 'info')
+    logger.log('info', `Starting to load avatar: ${avatarId.value} (mode: ${modeName})`)
 
-    await sdk.loadCharacter(
-      characterId.value,
+    await sdk.loadAvatar(
+      avatarId.value,
       canvasContainer,
       {
         onConnectionState: (state) => {
@@ -400,8 +400,8 @@ const handleLoadCharacter = async () => {
       // Ignore if volume not available
     }
 
-    logger.updateStatus('Character loaded successfully', 'success')
-    logger.log('success', 'Character loaded successfully')
+    logger.updateStatus('Avatar loaded successfully', 'success')
+    logger.log('success', 'Avatar loaded successfully')
     
     await nextTick()
     isLoading.value = false
@@ -413,7 +413,7 @@ const handleLoadCharacter = async () => {
     logger.log('error', `Load failed: ${error instanceof Error ? error.message : String(error)}`)
     isLoading.value = false
   } finally {
-    isProcessing.value.loadCharacter = false
+    isProcessing.value.loadAvatar = false
   }
 }
 
@@ -430,7 +430,7 @@ const handleConnect = async () => {
   }
 
   if (!sdk.avatarView.value) {
-    logger.updateStatus('Please load character first', 'warning')
+    logger.updateStatus('Please load avatar first', 'warning')
     return
   }
 
@@ -474,7 +474,7 @@ const handleStartRecord = async () => {
   }
 
   if (!sdk.avatarView.value) {
-    logger.updateStatus('Please load character first', 'warning')
+    logger.updateStatus('Please load avatar first', 'warning')
     return
   }
 
@@ -519,7 +519,7 @@ const handleLoadAudio = () => {
   }
   
   if (!sdk.avatarView.value) {
-    logger.updateStatus('Please load character first', 'warning')
+    logger.updateStatus('Please load avatar first', 'warning')
     return
   }
   
@@ -545,7 +545,7 @@ const handleConfirmLoadAudio = async () => {
   }
   
   if (!sdk.avatarView.value) {
-    logger.updateStatus('Please load character first', 'warning')
+    logger.updateStatus('Please load avatar first', 'warning')
     return
   }
   
@@ -632,7 +632,7 @@ const handleStopRecord = async () => {
     }
   } else {
     if (!sdk.avatarView.value) {
-      logger.updateStatus('Please load character first', 'warning')
+      logger.updateStatus('Please load avatar first', 'warning')
       return
     }
   }
@@ -765,7 +765,7 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
 // Interrupt conversation
 const handlePlayPause = async () => {
   if (!sdk.avatarView.value) {
-    logger.updateStatus('No character loaded', 'warning')
+    logger.updateStatus('No avatar loaded', 'warning')
     return
   }
 
@@ -794,7 +794,7 @@ const handleInterrupt = () => {
   }
 
   if (!sdk.avatarView.value) {
-    logger.updateStatus('No character loaded', 'warning')
+    logger.updateStatus('No avatar loaded', 'warning')
     return
   }
 
@@ -856,14 +856,14 @@ const handleDisconnect = async () => {
   }
 }
 
-// Unload character
-const handleUnloadCharacter = () => {
+// Unload avatar
+const handleUnloadAvatar = () => {
   if (isProcessing.value.unload) {
     return
   }
 
   if (!sdk.avatarView.value) {
-    logger.updateStatus('No character loaded', 'warning')
+    logger.updateStatus('No avatar loaded', 'warning')
     return
   }
 
@@ -888,17 +888,17 @@ const handleUnloadCharacter = () => {
       })
     }
 
-    sdk.unloadCharacter()
+    sdk.unloadAvatar()
     
     // Reset state
     isLoading.value = false
     conversationState.value = null
     shouldContinueSendingData.value = false
     
-    logger.updateStatus('Character unloaded', 'info')
-    logger.log('info', 'Character unloaded, can reload new character')
+    logger.updateStatus('Avatar unloaded', 'info')
+    logger.log('info', 'Avatar unloaded, can reload new avatar')
   } catch (error) {
-    logger.log('error', `Unload character failed: ${error instanceof Error ? error.message : String(error)}`)
+    logger.log('error', `Unload avatar failed: ${error instanceof Error ? error.message : String(error)}`)
   } finally {
     isProcessing.value.unload = false
   }
@@ -907,17 +907,17 @@ const handleUnloadCharacter = () => {
 // 监听全局 SDK 初始化状态
 watch(() => props.globalSDKInitialized, (initialized) => {
   if (initialized) {
-    logger.updateStatus('SDK initialized, ready to load character', 'success')
+    logger.updateStatus('SDK initialized, ready to load avatar', 'success')
   } else {
     logger.updateStatus('Waiting for initialization...', 'info')
   }
 }, { immediate: true })
 
 // Event handlers
-const handleCharacterIdChange = (id: string) => {
-  characterId.value = id
-  if (id && !characterIdList.value.includes(id)) {
-    characterIdList.value.push(id)
+const handleAvatarIdChange = (id: string) => {
+  avatarId.value = id
+  if (id && !avatarIdList.value.includes(id)) {
+    avatarIdList.value.push(id)
   }
 }
 
@@ -930,9 +930,9 @@ onUnmounted(() => {
     })
   }
 
-  // Unload character - SDK will handle disconnect and other cleanup automatically
+  // Unload avatar - SDK will handle disconnect and other cleanup automatically
   if (sdk.avatarView.value) {
-    sdk.unloadCharacter()
+    sdk.unloadAvatar()
   }
 
   // Cleanup audio recorder (demo state management)

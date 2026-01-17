@@ -1,6 +1,6 @@
 # Vanilla JS Example
 
-This is a SPAvatarKit SDK example using native JavaScript, demonstrating how to integrate the SDK without using any framework.
+This is an AvatarKit SDK example using native JavaScript, demonstrating how to integrate the SDK without using any framework.
 
 ## 🚀 Quick Start
 
@@ -27,7 +27,7 @@ Open browser and visit: `http://localhost:5174/demo.html`
 ## 📋 Features
 
 - ✅ SDK initialization
-- ✅ Character loading (with progress display)
+- ✅ Avatar loading (with progress display)
 - ✅ WebSocket connection management
 - ✅ Real-time audio recording and sending
 - ✅ Real-time animation rendering
@@ -74,8 +74,8 @@ const sdkManager = new AvatarSDKManager(logger)
 // Initialize SDK
 await sdkManager.initialize(environment, sessionToken)
 
-// Load character
-await sdkManager.loadCharacter(characterId, canvasContainer, callbacks)
+// Load avatar
+await sdkManager.loadAvatar(avatarId, canvasContainer, callbacks)
 
 // Connect service
 await sdkManager.connect()
@@ -135,9 +135,9 @@ logger.error('Error')
 - You can also manually enter a Session Token if you have one
 - The token must be valid and not expired
 
-### Character ID
+### Avatar ID
 
-Get character ID from SDK management platform to load the specified virtual character.
+Get avatar ID from SDK management platform to load the specified virtual avatar.
 
 ## 📁 Project Structure
 
@@ -184,14 +184,14 @@ This structure makes the code:
 - Requires user authorization for microphone permission
 - Recommended to use HTTPS or localhost (required by some browsers)
 - Ensure `@spatialwalk/avatarkit` SDK is installed: `npm install @spatialwalk/avatarkit`
-- **Host Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
+- **Host Mode**: Requires the Avatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
 
 ## 🔍 View Code
 
 The code is modularized, main files:
 
 - **`src/js/app.js`** - Main application logic, integrates all modules
-- **`src/js/avatarSDK.js`** - SDK wrapper, handles initialization and character management
+- **`src/js/avatarSDK.js`** - SDK wrapper, handles initialization and avatar management
 - **`src/js/audioRecorder.js`** - Audio recording and processing
 - **`src/js/logger.js`** - Log and status management
 - **`src/utils/audioUtils.js`** - Audio utility functions

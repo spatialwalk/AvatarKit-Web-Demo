@@ -1,6 +1,6 @@
 # React Example
 
-This is a SPAvatarKit SDK example using React Hooks with multi-character panel support, demonstrating how to integrate the SDK in a React application.
+This is an AvatarKit SDK example using React Hooks with multi-avatar panel support, demonstrating how to integrate the SDK in a React application.
 
 ## 🚀 Quick Start
 
@@ -33,7 +33,7 @@ Open browser and visit: `http://localhost:5176`
 - ✅ Reactive state updates
 - ✅ Complete error handling
 - ✅ Resource cleanup (on component unmount)
-- ✅ Multi-character panel support (up to 4 simultaneous instances)
+- ✅ Multi-avatar panel support (up to 4 simultaneous instances)
 - ✅ Global SDK initialization with lazy loading
 - ✅ Independent panel state management
 - ✅ Audio volume control (0-100% slider)
@@ -87,8 +87,8 @@ const sdk = useAvatarSDK()
 // Initialize
 await sdk.initialize(environment, sessionToken)
 
-// Load character
-await sdk.loadCharacter(characterId, canvasContainer, callbacks)
+// Load avatar
+await sdk.loadAvatar(avatarId, canvasContainer, callbacks)
 
 // Connect service
 await sdk.connect()
@@ -156,9 +156,9 @@ logger.clearLogs()
 - You can also manually enter a Session Token if you have one
 - The token must be valid and not expired
 
-### Character ID
+### Avatar ID
 
-Get character ID from SDK management platform.
+Get avatar ID from SDK management platform.
 
 ## 📁 Project Structure
 
@@ -228,7 +228,7 @@ Use `useState` to manage reactive state, use `useRef` to store values that need 
 - Requires user authorization for microphone permission
 - Ensure `@spatialwalk/avatarkit` SDK is installed: `npm install @spatialwalk/avatarkit`
 - Resources are automatically cleaned up on component unmount, no manual management needed
-- **Host Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
+- **Host Mode**: Requires the Avatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
 
 ## 🔍 View Code
 

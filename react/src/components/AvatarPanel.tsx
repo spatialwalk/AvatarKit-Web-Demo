@@ -25,15 +25,15 @@ interface AvatarPanelProps {
 
 export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSampleRate }: AvatarPanelProps) {
   // Configuration state
-  const [characterIdList, setCharacterIdList] = useState<string[]>([])
-  const [characterId, setCharacterId] = useState('')
+  const [avatarIdList, setAvatarIdList] = useState<string[]>([])
+  const [avatarId, setAvatarId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [volume, setVolume] = useState(100)
   const [conversationState, setConversationState] = useState<ConversationState | null>(null)
   
   // Operation state flags
   const [isProcessing, setIsProcessing] = useState({
-    loadCharacter: false,
+    loadAvatar: false,
     connect: false,
     startRecord: false,
     stopRecord: false,
@@ -78,21 +78,21 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
   // 监听全局 SDK 初始化状态
   useEffect(() => {
     if (globalSDKInitialized) {
-      logger.updateStatus('SDK initialized, ready to load character', 'success')
+      logger.updateStatus('SDK initialized, ready to load avatar', 'success')
     } else {
       logger.updateStatus('Waiting for initialization...', 'info')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalSDKInitialized])
 
-  // Load character (mode is determined by SDK initialization)
-  const handleLoadCharacter = async () => {
-    if (isProcessing.loadCharacter || sdk.avatarView) {
+  // Load avatar (mode is determined by SDK initialization)
+  const handleLoadAvatar = async () => {
+    if (isProcessing.loadAvatar || sdk.avatarView) {
       return
     }
 
-    if (!globalSDKInitialized || !characterId.trim()) {
-      logger.updateStatus('Please wait for SDK initialization and enter character ID', 'warning')
+    if (!globalSDKInitialized || !avatarId.trim()) {
+      logger.updateStatus('Please wait for SDK initialization and enter avatar ID', 'warning')
       return
     }
 
@@ -102,17 +102,17 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
 
     try {
-      setIsProcessing(prev => ({ ...prev, loadCharacter: true }))
+      setIsProcessing(prev => ({ ...prev, loadAvatar: true }))
       setIsLoading(true)
       
       // Get current driving service mode from SDK configuration
       const currentMode = AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk
       const modeName = currentMode === DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
-      logger.updateStatus(`Loading character (${modeName})...`, 'info')
-      logger.log('info', `Starting to load character: ${characterId} (mode: ${modeName})`)
+      logger.updateStatus(`Loading avatar (${modeName})...`, 'info')
+      logger.log('info', `Starting to load avatar: ${avatarId} (mode: ${modeName})`)
 
-      await sdk.loadCharacter(
-        characterId,
+      await sdk.loadAvatar(
+        avatarId,
         canvasContainerRef.current,
         {
           onConnectionState: (state: string) => {
@@ -146,8 +146,8 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
         // Ignore if volume not available
       }
 
-      logger.updateStatus('Character loaded successfully', 'success')
-      logger.log('success', 'Character loaded successfully')
+      logger.updateStatus('Avatar loaded successfully', 'success')
+      logger.log('success', 'Avatar loaded successfully')
       
       requestAnimationFrame(() => {
         setIsLoading(false)
@@ -160,7 +160,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
       logger.log('error', `Load failed: ${error instanceof Error ? error.message : String(error)}`)
       setIsLoading(false)
     } finally {
-      setIsProcessing(prev => ({ ...prev, loadCharacter: false }))
+      setIsProcessing(prev => ({ ...prev, loadAvatar: false }))
     }
   }
 
@@ -177,7 +177,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
 
     if (!sdk.avatarView) {
-      logger.updateStatus('Please load character first', 'warning')
+      logger.updateStatus('Please load avatar first', 'warning')
       return
     }
 
@@ -222,7 +222,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
     
     if (!sdk.avatarView) {
-      logger.updateStatus('Please load character first', 'warning')
+      logger.updateStatus('Please load avatar first', 'warning')
       return
     }
     
@@ -248,7 +248,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
     
     if (!sdk.avatarView) {
-      logger.updateStatus('Please load character first', 'warning')
+      logger.updateStatus('Please load avatar first', 'warning')
       return
     }
     
@@ -332,7 +332,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
 
     if (!sdk.avatarView) {
-      logger.updateStatus('Please load character first', 'warning')
+      logger.updateStatus('Please load avatar first', 'warning')
       return
     }
 
@@ -374,7 +374,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
       }
     } else {
       if (!sdk.avatarView) {
-        logger.updateStatus('Please load character first', 'warning')
+        logger.updateStatus('Please load avatar first', 'warning')
         return
       }
     }
@@ -505,7 +505,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
   // Interrupt conversation
   const handlePlayPause = async () => {
     if (!sdk.avatarView) {
-      logger.updateStatus('No character loaded', 'warning')
+      logger.updateStatus('No avatar loaded', 'warning')
       return
     }
 
@@ -533,7 +533,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
 
     if (!sdk.avatarView) {
-      logger.updateStatus('No character loaded', 'warning')
+      logger.updateStatus('No avatar loaded', 'warning')
       return
     }
 
@@ -595,14 +595,14 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
     }
   }
 
-  // Unload character
-  const handleUnloadCharacter = () => {
+  // Unload avatar
+  const handleUnloadAvatar = () => {
     if (isProcessing.unload) {
       return
     }
 
     if (!sdk.avatarView) {
-      logger.updateStatus('No character loaded', 'warning')
+      logger.updateStatus('No avatar loaded', 'warning')
       return
     }
 
@@ -627,17 +627,17 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
         })
       }
 
-      sdk.unloadCharacter()
+      sdk.unloadAvatar()
       
       // Reset state
       setIsLoading(false)
       setConversationState(null)
       shouldContinueSendingDataRef.current = false
       
-      logger.updateStatus('Character unloaded', 'info')
-      logger.log('info', 'Character unloaded, can reload new character')
+      logger.updateStatus('Avatar unloaded', 'info')
+      logger.log('info', 'Avatar unloaded, can reload new avatar')
     } catch (error) {
-      logger.log('error', `Unload character failed: ${error instanceof Error ? error.message : String(error)}`)
+      logger.log('error', `Unload avatar failed: ${error instanceof Error ? error.message : String(error)}`)
     } finally {
       setIsProcessing(prev => ({ ...prev, unload: false }))
     }
@@ -653,9 +653,9 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
         })
       }
 
-      // Unload character - SDK will handle disconnect and other cleanup automatically
+      // Unload avatar - SDK will handle disconnect and other cleanup automatically
       if (sdk.avatarView) {
-        sdk.unloadCharacter()
+        sdk.unloadAvatar()
       }
 
       // Cleanup audio recorder (demo state management)
@@ -680,7 +680,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
           <StatusBar message={logger.statusMessage} type={logger.statusClass} />
           <ControlPanel
             environment={AvatarSDK.configuration?.environment || Environment.intl}
-            characterId={characterId}
+            avatarId={avatarId}
             isInitialized={globalSDKInitialized}
             avatarView={sdk.avatarView}
             avatarController={sdk.avatarController}
@@ -690,22 +690,22 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
             currentPlaybackMode={(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk) === DrivingServiceMode.sdk ? 'network' : 'external'}
             conversationState={conversationState}
             isSendingAudio={isSendingAudio}
-            characterIdList={characterIdList}
-            onCharacterIdChange={(id) => {
-              setCharacterId(id)
+            avatarIdList={avatarIdList}
+            onAvatarIdChange={(id) => {
+              setAvatarId(id)
               // Add to list if not exists
-              if (id && !characterIdList.includes(id)) {
-                setCharacterIdList([...characterIdList, id])
+              if (id && !avatarIdList.includes(id)) {
+                setAvatarIdList([...avatarIdList, id])
               }
             }}
-            onLoadCharacter={() => handleLoadCharacter()}
+            onLoadAvatar={() => handleLoadAvatar()}
             onConnect={handleConnect}
             onLoadAudio={handleLoadAudio}
             onStartRecord={handleStartRecord}
             onStopRecord={handleStopRecord}
             onInterrupt={handleInterrupt}
             onDisconnect={handleDisconnect}
-            onUnloadCharacter={handleUnloadCharacter}
+            onUnloadAvatar={handleUnloadAvatar}
           />
           <button 
             className="btn btn-primary" 
@@ -1014,7 +1014,7 @@ export function AvatarPanel({ panelId, globalSDKInitialized, onRemove, getSample
   
   function handleApplyTransform() {
     if (!sdk.avatarView) {
-      logger.updateStatus('Please load character first', 'warning')
+      logger.updateStatus('Please load avatar first', 'warning')
       return
     }
     

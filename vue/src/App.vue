@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="header">
-      <h1>🚀 SPAvatar SDK - Vue Example (Multi-Character)</h1>
+      <h1>🚀 Avatar SDK - Vue Example (Multi-Avatar)</h1>
       <p>Supports multiple avatar views simultaneously</p>
       <div style="margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative">
         <template v-if="!globalSDKInitialized && !sdkInitializing">

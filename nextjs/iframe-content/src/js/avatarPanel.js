@@ -29,7 +29,7 @@ export class AvatarPanel {
 
     // Operation state flags
     this.isProcessing = {
-      loadCharacter: false,
+      loadAvatar: false,
       connect: false,
       startRecord: false,
       stopRecord: false,
@@ -75,21 +75,21 @@ export class AvatarPanel {
               </div>
               <div class="form-group">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
-                  <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Character ID</label>
-                  <button id="btnAddCharacterId-${this.panelId}" style="padding: 0; margin: 0; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0" title="Add new Character ID">➕</button>
-                  <a href="https://docs.spatialreal.ai/overview/test-avatars" target="_blank" rel="noopener noreferrer" style="padding: 0; margin: 0; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; text-decoration: none;" title="Get test character IDs">🔗</a>
+                  <label style="margin-bottom: 0; display: inline-block; line-height: 22px">Avatar ID</label>
+                  <button id="btnAddAvatarId-${this.panelId}" style="padding: 0; margin: 0; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0" title="Add new Avatar ID">➕</button>
+                  <a href="https://docs.spatialreal.ai/overview/test-avatars" target="_blank" rel="noopener noreferrer" style="padding: 0; margin: 0; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; line-height: 22px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; text-decoration: none;" title="Get test avatar IDs">🔗</a>
                 </div>
-                <select id="characterId-${this.panelId}">
+                <select id="avatarId-${this.panelId}">
                 </select>
               </div>
-              <button id="btnLoadCharacter-${this.panelId}" class="btn btn-primary" disabled>1. Load Character</button>
+              <button id="btnLoadAvatar-${this.panelId}" class="btn btn-primary" disabled>1. Load Avatar</button>
               <button id="btnConnect-${this.panelId}" class="btn btn-primary" disabled>2. Connect Service</button>
               <button id="btnLoadAudio-${this.panelId}" class="btn btn-primary" disabled style="display: none;">Load Audio</button>
               <button id="btnStartRecord-${this.panelId}" class="btn btn-primary" disabled>3. Start Recording</button>
               <button id="btnStopRecord-${this.panelId}" class="btn btn-danger" disabled>Stop Recording / Play Data</button>
               <button id="btnInterrupt-${this.panelId}" class="btn btn-warning" disabled>Interrupt</button>
               <button id="btnDisconnect-${this.panelId}" class="btn btn-danger" disabled>Disconnect</button>
-              <button id="btnUnload-${this.panelId}" class="btn btn-danger" disabled>Unload Character</button>
+              <button id="btnUnload-${this.panelId}" class="btn btn-danger" disabled>Unload Avatar</button>
               <button id="btnToggleLogs-${this.panelId}" class="btn btn-primary" style="margin-top: 12px;">📋 Show Logs</button>
             </div>
             
@@ -127,11 +127,11 @@ export class AvatarPanel {
           </div>
         </div>
         
-        <!-- Add Character ID Modal -->
-        <div id="addCharacterIdModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <!-- Add Avatar ID Modal -->
+        <div id="addAvatarIdModal-${this.panelId}" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
           <div class="modal-content" style="background: white; padding: 24px; border-radius: 12px; min-width: 400px; max-width: 90%;">
-            <h3 style="margin-top: 0; margin-bottom: 16px;">Add New Character ID</h3>
-            <input type="text" id="newCharacterIdInput-${this.panelId}" placeholder="Enter Character ID" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Add New Avatar ID</h3>
+            <input type="text" id="newAvatarIdInput-${this.panelId}" placeholder="Enter Avatar ID" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 16px; box-sizing: border-box;">
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
               <button id="btnCancelAddId-${this.panelId}" style="padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
               <button id="btnConfirmAddId-${this.panelId}" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Add</button>
@@ -186,7 +186,7 @@ export class AvatarPanel {
     this.elements = {
       status: document.getElementById(`status-${this.panelId}`),
       logPanel: document.getElementById(`logPanel-${this.panelId}`),
-      btnLoadCharacter: document.getElementById(`btnLoadCharacter-${this.panelId}`),
+      btnLoadAvatar: document.getElementById(`btnLoadAvatar-${this.panelId}`),
       btnConnect: document.getElementById(`btnConnect-${this.panelId}`),
       btnLoadAudio: document.getElementById(`btnLoadAudio-${this.panelId}`),
       btnStartRecord: document.getElementById(`btnStartRecord-${this.panelId}`),
@@ -205,10 +205,10 @@ export class AvatarPanel {
       canvasContainer: document.querySelector(`.canvas-container[data-panel-id="${this.panelId}"]`),
       fpsDisplay: document.getElementById(`fpsDisplay-${this.panelId}`),
       environmentDisplay: document.getElementById(`environment-${this.panelId}`),
-      characterId: document.getElementById(`characterId-${this.panelId}`),
-      btnAddCharacterId: document.getElementById(`btnAddCharacterId-${this.panelId}`),
-      addCharacterIdModal: document.getElementById(`addCharacterIdModal-${this.panelId}`),
-      newCharacterIdInput: document.getElementById(`newCharacterIdInput-${this.panelId}`),
+      avatarId: document.getElementById(`avatarId-${this.panelId}`),
+      btnAddAvatarId: document.getElementById(`btnAddAvatarId-${this.panelId}`),
+      addAvatarIdModal: document.getElementById(`addAvatarIdModal-${this.panelId}`),
+      newAvatarIdInput: document.getElementById(`newAvatarIdInput-${this.panelId}`),
       btnCancelAddId: document.getElementById(`btnCancelAddId-${this.panelId}`),
       btnConfirmAddId: document.getElementById(`btnConfirmAddId-${this.panelId}`),
       loadAudioModal: document.getElementById(`loadAudioModal-${this.panelId}`),
@@ -226,7 +226,7 @@ export class AvatarPanel {
     }
     
     // Debug: Log missing elements
-    const requiredElements = ['btnLoadCharacter', 'btnConnect', 'btnStartRecord', 'btnStopRecord', 'btnInterrupt', 'btnDisconnect', 'btnUnload', 'volumeSlider', 'volumeValue', 'volumeIcon', 'btnToggleLogs', 'btnClearLog', 'btnCloseLogDrawer']
+    const requiredElements = ['btnLoadAvatar', 'btnConnect', 'btnStartRecord', 'btnStopRecord', 'btnInterrupt', 'btnDisconnect', 'btnUnload', 'volumeSlider', 'volumeValue', 'volumeIcon', 'btnToggleLogs', 'btnClearLog', 'btnCloseLogDrawer']
     const missingElements = requiredElements.filter(key => !this.elements[key])
     if (missingElements.length > 0) {
       console.error(`[AvatarPanel ${this.panelId}] Missing elements:`, missingElements)
@@ -261,7 +261,7 @@ export class AvatarPanel {
   async checkSDKStatus() {
     // 如果已经初始化，立即启用按钮
     if (this.globalSDKInitialized) {
-      this.elements.btnLoadCharacter.disabled = false
+      this.elements.btnLoadAvatar.disabled = false
       return
     }
 
@@ -271,7 +271,7 @@ export class AvatarPanel {
         const { AvatarSDK } = await import('@spatialwalk/avatarkit')
         if (AvatarSDK.isInitialized) {
           this.globalSDKInitialized = true
-          this.elements.btnLoadCharacter.disabled = false
+          this.elements.btnLoadAvatar.disabled = false
           if (this.checkInterval) {
             clearInterval(this.checkInterval)
             this.checkInterval = null
@@ -301,7 +301,7 @@ export class AvatarPanel {
         this.checkInterval = null
       }
        // 启用加载按钮
-       this.elements.btnLoadCharacter.disabled = false
+       this.elements.btnLoadAvatar.disabled = false
        // 更新环境显示
        this.updateEnvironmentDisplay()
      }
@@ -338,8 +338,8 @@ export class AvatarPanel {
       })
     }
 
-    if (this.elements.btnLoadCharacter) {
-      this.elements.btnLoadCharacter.addEventListener('click', () => this.handleLoadCharacter())
+    if (this.elements.btnLoadAvatar) {
+      this.elements.btnLoadAvatar.addEventListener('click', () => this.handleLoadAvatar())
     }
     if (this.elements.btnConnect) {
       this.elements.btnConnect.addEventListener('click', () => this.handleConnect())
@@ -360,7 +360,7 @@ export class AvatarPanel {
       this.elements.volumeSlider.addEventListener('input', (e) => this.handleVolumeChange(e))
     }
     if (this.elements.btnUnload) {
-      this.elements.btnUnload.addEventListener('click', () => this.handleUnloadCharacter())
+      this.elements.btnUnload.addEventListener('click', () => this.handleUnloadAvatar())
     }
     if (this.elements.btnToggleLogs) {
       this.elements.btnToggleLogs.addEventListener('click', () => this.toggleLogDrawer())
@@ -406,15 +406,15 @@ export class AvatarPanel {
       this.elements.transformScale.addEventListener('keydown', handleKeyDown)
     }
     
-    // Add Character ID modal events
-    if (this.elements.btnAddCharacterId) {
-      this.elements.btnAddCharacterId.addEventListener('click', () => this.showAddCharacterIdModal())
+    // Add Avatar ID modal events
+    if (this.elements.btnAddAvatarId) {
+      this.elements.btnAddAvatarId.addEventListener('click', () => this.showAddAvatarIdModal())
     }
     if (this.elements.btnCancelAddId) {
-      this.elements.btnCancelAddId.addEventListener('click', () => this.hideAddCharacterIdModal())
+      this.elements.btnCancelAddId.addEventListener('click', () => this.hideAddAvatarIdModal())
     }
     if (this.elements.btnConfirmAddId) {
-      this.elements.btnConfirmAddId.addEventListener('click', () => this.handleAddCharacterId())
+      this.elements.btnConfirmAddId.addEventListener('click', () => this.handleAddAvatarId())
     }
     
     // Load Audio modal events
@@ -440,19 +440,19 @@ export class AvatarPanel {
       })
     }
     
-    if (this.elements.addCharacterIdModal) {
-      this.elements.addCharacterIdModal.addEventListener('click', (e) => {
-        if (e.target === this.elements.addCharacterIdModal) {
-          this.hideAddCharacterIdModal()
+    if (this.elements.addAvatarIdModal) {
+      this.elements.addAvatarIdModal.addEventListener('click', (e) => {
+        if (e.target === this.elements.addAvatarIdModal) {
+          this.hideAddAvatarIdModal()
         }
       })
     }
-    if (this.elements.newCharacterIdInput) {
-      this.elements.newCharacterIdInput.addEventListener('keydown', (e) => {
+    if (this.elements.newAvatarIdInput) {
+      this.elements.newAvatarIdInput.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-          this.hideAddCharacterIdModal()
+          this.hideAddAvatarIdModal()
         } else if (e.key === 'Enter') {
-          this.handleAddCharacterId()
+          this.handleAddAvatarId()
         }
       })
     }
@@ -473,40 +473,40 @@ export class AvatarPanel {
     }
   }
   
-  showAddCharacterIdModal() {
-    if (this.elements.addCharacterIdModal && this.elements.newCharacterIdInput) {
-      this.elements.addCharacterIdModal.style.display = 'flex'
-      this.elements.newCharacterIdInput.value = ''
+  showAddAvatarIdModal() {
+    if (this.elements.addAvatarIdModal && this.elements.newAvatarIdInput) {
+      this.elements.addAvatarIdModal.style.display = 'flex'
+      this.elements.newAvatarIdInput.value = ''
       setTimeout(() => {
-        this.elements.newCharacterIdInput.focus()
+        this.elements.newAvatarIdInput.focus()
       }, 100)
     }
   }
   
-  hideAddCharacterIdModal() {
-    if (this.elements.addCharacterIdModal && this.elements.newCharacterIdInput) {
-      this.elements.addCharacterIdModal.style.display = 'none'
-      this.elements.newCharacterIdInput.value = ''
+  hideAddAvatarIdModal() {
+    if (this.elements.addAvatarIdModal && this.elements.newAvatarIdInput) {
+      this.elements.addAvatarIdModal.style.display = 'none'
+      this.elements.newAvatarIdInput.value = ''
     }
   }
   
-  handleAddCharacterId() {
-    if (!this.elements.newCharacterIdInput || !this.elements.characterId) {
+  handleAddAvatarId() {
+    if (!this.elements.newAvatarIdInput || !this.elements.avatarId) {
       return
     }
     
-    const newId = this.elements.newCharacterIdInput.value.trim()
+    const newId = this.elements.newAvatarIdInput.value.trim()
     if (!newId) {
       return
     }
     
     // Check if ID already exists
-    const select = this.elements.characterId
+    const select = this.elements.avatarId
     const existingOptions = Array.from(select.options).map(opt => opt.value)
     
     if (existingOptions.includes(newId)) {
-      this.logger.warn(`Character ID ${newId} already exists`)
-      this.updateStatus(`Character ID already exists`, 'warning')
+      this.logger.warn(`Avatar ID ${newId} already exists`)
+      this.updateStatus(`Avatar ID already exists`, 'warning')
       return
     }
     
@@ -520,15 +520,15 @@ export class AvatarPanel {
     select.value = newId
     select.dispatchEvent(new Event('change'))
     
-    this.logger.info(`Added new Character ID: ${newId}`)
-    this.updateStatus(`Added new Character ID: ${newId}`, 'success')
+    this.logger.info(`Added new Avatar ID: ${newId}`)
+    this.updateStatus(`Added new Avatar ID: ${newId}`, 'success')
     
     // Close modal
-    this.hideAddCharacterIdModal()
+    this.hideAddAvatarIdModal()
   }
 
-  async handleLoadCharacter() {
-    if (this.isProcessing.loadCharacter || this.sdkManager.avatarView) {
+  async handleLoadAvatar() {
+    if (this.isProcessing.loadAvatar || this.sdkManager.avatarView) {
       return
     }
 
@@ -553,15 +553,15 @@ export class AvatarPanel {
       this.sdkManager.isInitialized = true
     }
 
-    const characterId = this.elements.characterId.value.trim()
-    if (!characterId) {
-      this.logger.error('Please enter character ID')
+    const avatarId = this.elements.avatarId.value.trim()
+    if (!avatarId) {
+      this.logger.error('Please enter avatar ID')
       return
     }
 
     try {
-      this.isProcessing.loadCharacter = true
-      this.elements.btnLoadCharacter.disabled = true
+      this.isProcessing.loadAvatar = true
+      this.elements.btnLoadAvatar.disabled = true
       this.elements.btnUnload.disabled = true
       
       // Get current driving service mode from SDK configuration
@@ -569,7 +569,7 @@ export class AvatarPanel {
       const currentMode = sdk.AvatarSDK.configuration?.drivingServiceMode || sdk.DrivingServiceMode.sdk
       const modeName = currentMode === sdk.DrivingServiceMode.sdk ? 'SDK mode (network)' : 'Host mode (external data)'
       
-      this.updateStatus(`Loading character (${modeName})...`, 'info')
+      this.updateStatus(`Loading avatar (${modeName})...`, 'info')
       
       // Set current playback mode for UI state management
       this.currentPlaybackMode = currentMode === sdk.DrivingServiceMode.sdk ? 'sdk' : 'host'
@@ -587,15 +587,15 @@ export class AvatarPanel {
         return
       }
 
-      await this.sdkManager.loadCharacter(
-        characterId,
+      await this.sdkManager.loadAvatar(
+        avatarId,
         this.elements.canvasContainer,
         (state) => this.onConnectionState(state),
         (state) => this.onConversationState(state),
         (error) => this.onError(error)
       )
 
-      this.updateStatus('Character loaded successfully', 'success')
+      this.updateStatus('Avatar loaded successfully', 'success')
       
       if (this.currentPlaybackMode === 'sdk') {
         this.elements.btnConnect.disabled = false
@@ -619,7 +619,7 @@ export class AvatarPanel {
       }
       this.elements.btnUnload.disabled = false
       
-      // Show and enable volume slider after character is loaded
+      // Show and enable volume slider after avatar is loaded
       if (this.elements.volumeSlider) {
         this.elements.volumeSlider.style.display = 'block'
         this.elements.volumeSlider.disabled = false
@@ -639,7 +639,7 @@ export class AvatarPanel {
       // Play/pause button will be shown/hidden based on conversation state in onConversationState
       // Don't show it here, let onConversationState handle it
       
-      // Show transform button after character is loaded
+      // Show transform button after avatar is loaded
       if (this.elements.btnTransform) {
         this.elements.btnTransform.style.display = 'flex'
         this.elements.btnTransform.style.alignItems = 'center'
@@ -647,11 +647,11 @@ export class AvatarPanel {
         this.elements.btnTransform.style.lineHeight = '1'
       }
     } catch (error) {
-      this.logger.error('Character load failed', error)
+      this.logger.error('Avatar load failed', error)
       this.updateStatus(`Load failed: ${error.message}`, 'error')
-      this.elements.btnLoadCharacter.disabled = false
+      this.elements.btnLoadAvatar.disabled = false
     } finally {
-      this.isProcessing.loadCharacter = false
+      this.isProcessing.loadAvatar = false
     }
   }
 
@@ -666,7 +666,7 @@ export class AvatarPanel {
     }
 
     if (!this.sdkManager.avatarView) {
-      this.logger.error('Please load character first')
+      this.logger.error('Please load avatar first')
       return
     }
 
@@ -705,7 +705,7 @@ export class AvatarPanel {
     }
     
     if (!this.sdkManager.avatarView) {
-      this.logger.warn('Please load character first')
+      this.logger.warn('Please load avatar first')
       return
     }
     
@@ -745,7 +745,7 @@ export class AvatarPanel {
     }
     
     if (!this.sdkManager.avatarView) {
-      this.logger.warn('Please load character first')
+      this.logger.warn('Please load avatar first')
       return
     }
     
@@ -818,7 +818,7 @@ export class AvatarPanel {
     }
 
     if (!this.sdkManager.avatarView) {
-      this.logger.error('Please load character first')
+      this.logger.error('Please load avatar first')
       return
     }
 
@@ -855,7 +855,7 @@ export class AvatarPanel {
       }
     } else {
       if (!this.sdkManager.avatarView) {
-        this.logger.error('Please load character first')
+        this.logger.error('Please load avatar first')
         return
       }
     }
@@ -1040,8 +1040,8 @@ export class AvatarPanel {
   
   handleApplyTransform() {
     if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
-      this.updateStatus('Please load character first', 'warning')
+      this.logger.warn('No avatar loaded')
+      this.updateStatus('Please load avatar first', 'warning')
       return
     }
     
@@ -1093,7 +1093,7 @@ export class AvatarPanel {
 
   async handlePlayPause() {
     if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
+      this.logger.warn('No avatar loaded')
       return
     }
 
@@ -1121,7 +1121,7 @@ export class AvatarPanel {
     }
 
     if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
+      this.logger.warn('No avatar loaded')
       return
     }
 
@@ -1196,13 +1196,13 @@ export class AvatarPanel {
     }
   }
 
-  handleUnloadCharacter() {
+  handleUnloadAvatar() {
     if (this.isProcessing.unload) {
       return
     }
 
     if (!this.sdkManager.avatarView) {
-      this.logger.warn('No character loaded')
+      this.logger.warn('No avatar loaded')
       return
     }
 
@@ -1227,15 +1227,15 @@ export class AvatarPanel {
         })
       }
 
-      this.sdkManager.unloadCharacter()
-      this.updateStatus('Character unloaded', 'info')
+      this.sdkManager.unloadAvatar()
+      this.updateStatus('Avatar unloaded', 'info')
       
       // Reset state
       this.currentPlaybackMode = 'sdk'
       this.conversationState = null
       this.shouldContinueSendingData = false
       
-      this.elements.btnLoadCharacter.disabled = false
+      this.elements.btnLoadAvatar.disabled = false
       this.elements.btnConnect.disabled = true
       this.elements.btnStartRecord.disabled = true
       this.elements.btnStopRecord.disabled = true
@@ -1254,7 +1254,7 @@ export class AvatarPanel {
         this.elements.volumeValue.style.display = 'none'
       }
       
-      // Hide transform button after character is unloaded
+      // Hide transform button after avatar is unloaded
       if (this.elements.btnPlayPause) {
         this.elements.btnPlayPause.style.display = 'none'
         this.elements.btnPlayPause.disabled = true
@@ -1263,8 +1263,8 @@ export class AvatarPanel {
         this.elements.btnTransform.style.display = 'none'
       }
     } catch (error) {
-      this.logger.error(`Unload character failed: ${error.message}`, error)
-      this.updateStatus(`Unload character failed: ${error.message}`, 'error')
+      this.logger.error(`Unload avatar failed: ${error.message}`, error)
+      this.updateStatus(`Unload avatar failed: ${error.message}`, 'error')
       this.elements.btnUnload.disabled = false
     } finally {
       this.isProcessing.unload = false
@@ -1407,9 +1407,9 @@ export class AvatarPanel {
       this.audioRecorder.stop().catch(() => {})
     }
 
-    // Unload character - SDK will handle disconnect and other cleanup automatically
+    // Unload avatar - SDK will handle disconnect and other cleanup automatically
     if (this.sdkManager.avatarView) {
-      this.sdkManager.unloadCharacter()
+      this.sdkManager.unloadAvatar()
     }
 
     // Remove panel from DOM

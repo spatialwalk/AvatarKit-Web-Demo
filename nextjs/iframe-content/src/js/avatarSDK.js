@@ -1,6 +1,6 @@
 /**
  * SDK wrapper
- * Manages SDK initialization, character loading, and connection state
+ * Manages SDK initialization, avatar loading, and connection state
  */
 
 /**
@@ -74,37 +74,37 @@ export class AvatarSDKManager {
   }
 
   /**
-   * Load character
-   * @param {string} characterId - Character ID
+   * Load avatar
+   * @param {string} avatarId - Avatar ID
    * @param {HTMLElement} canvasContainer - Canvas container
    * @param {Function} onConnectionState - Connection state callback
    * @param {Function} onConversationState - Conversation state callback
    * @param {Function} onError - Error callback
    * @returns {Promise<void>}
    */
-  async loadCharacter(characterId, canvasContainer, onConnectionState, onConversationState, onError) {
+  async loadAvatar(avatarId, canvasContainer, onConnectionState, onConversationState, onError) {
     // Handle backward compatibility: if third parameter is not a function, 
     // it might be the old playbackMode parameter
     if (typeof canvasContainer !== 'object' || !(canvasContainer instanceof HTMLElement)) {
       if (typeof onConnectionState === 'string') {
-        // Old API: loadCharacter(characterId, canvasContainer, playbackMode, ...)
+        // Old API: loadAvatar(avatarId, canvasContainer, playbackMode, ...)
         // This means canvasContainer is actually a callback function
         this.logger.error('Invalid API usage: canvasContainer must be an HTMLElement')
         throw new Error('Invalid API: canvasContainer must be an HTMLElement. Please check your code uses the new API without playbackMode parameter.')
       }
     }
     
-    if (!characterId.trim()) {
-      throw new Error('Please enter character ID')
+    if (!avatarId.trim()) {
+      throw new Error('Please enter avatar ID')
     }
 
-    this.logger.info(`Starting to load character: ${characterId}`)
+    this.logger.info(`Starting to load avatar: ${avatarId}`)
 
-    const avatar = await this.avatarManager.load(characterId, (progress) => {
+    const avatar = await this.avatarManager.load(avatarId, (progress) => {
       this.logger.info(`Loading progress: ${progress.type} ${progress.progress ? `(${progress.progress}%)` : ''}`)
     })
 
-    this.logger.success('Character loaded successfully', { id: avatar.id, name: avatar.name })
+    this.logger.success('Avatar loaded successfully', { id: avatar.id, name: avatar.name })
 
     // Check that container exists and is a valid HTMLElement
     if (!canvasContainer) {
@@ -157,7 +157,7 @@ export class AvatarSDKManager {
       }
     }
 
-    this.logger.success('Character view created')
+    this.logger.success('Avatar view created')
   }
 
   /**
@@ -166,7 +166,7 @@ export class AvatarSDKManager {
    */
   async initializeAudioContext() {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     
     if (typeof this.avatarView.controller.initializeAudioContext !== 'function') {
@@ -184,7 +184,7 @@ export class AvatarSDKManager {
    */
   async connect() {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
 
     // ⚠️ CRITICAL: Initialize audio context first (MUST be called in user gesture context)
@@ -200,7 +200,7 @@ export class AvatarSDKManager {
    */
   pause() {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     this.avatarView.controller.pause()
     this.logger.info('Playback paused')
@@ -211,7 +211,7 @@ export class AvatarSDKManager {
    */
   async resume() {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     await this.avatarView.controller.resume()
     this.logger.info('Playback resumed')
@@ -222,7 +222,7 @@ export class AvatarSDKManager {
    */
   interrupt() {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     this.avatarView.controller.interrupt()
     this.logger.info('Current conversation interrupted')
@@ -234,7 +234,7 @@ export class AvatarSDKManager {
    */
   setVolume(volume) {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     if (typeof volume !== 'number' || volume < 0 || volume > 1) {
       throw new Error('Volume must be a number between 0.0 and 1.0')
@@ -249,7 +249,7 @@ export class AvatarSDKManager {
    */
   getVolume() {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     return this.avatarView.controller.getVolume()
   }
@@ -267,16 +267,16 @@ export class AvatarSDKManager {
   }
 
   /**
-   * Unload character
-   * ⚠️ Important: SDK currently only supports one character at a time. If you want to load a new character, you must unload the current one first
+   * Unload avatar
+   * ⚠️ Important: SDK currently only supports one avatar at a time. If you want to load a new avatar, you must unload the current one first
    */
-  unloadCharacter() {
+  unloadAvatar() {
     if (this.avatarView) {
       this.avatarView.dispose() // Clean up all resources, including closing connection, releasing WASM resources, removing Canvas, etc.
       this.avatarView = null
       this.isConnected = false
       this.conversationState = null
-      this.logger.info('Character unloaded, can reload new character')
+      this.logger.info('Avatar unloaded, can reload new avatar')
     }
   }
 
@@ -287,7 +287,7 @@ export class AvatarSDKManager {
    */
   sendAudio(audioData, isFinal = false) {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     this.avatarView.controller.send(audioData, isFinal)
   }
@@ -301,7 +301,7 @@ export class AvatarSDKManager {
    */
   yieldAudioData(audioData, isLast = false) {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     if (!this.avatarView.controller.yieldAudioData) {
       throw new Error('yieldAudioData() is only available in host mode')
@@ -316,7 +316,7 @@ export class AvatarSDKManager {
    */
   yieldFramesData(keyframes, conversationId) {
     if (!this.avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     if (!this.avatarView.controller.yieldFramesData) {
       throw new Error('yieldFramesData() is only available in host mode')

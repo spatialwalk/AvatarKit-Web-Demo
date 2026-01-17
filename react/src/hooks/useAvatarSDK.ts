@@ -39,9 +39,9 @@ export function useAvatarSDK() {
     }
   }
 
-  // Load character
-  const loadCharacter = async (
-    characterId: string,
+  // Load avatar
+  const loadAvatar = async (
+    avatarId: string,
     container: HTMLElement,
     callbacks?: {
       onConnectionState?: (state: ConnectionState) => void
@@ -56,7 +56,7 @@ export function useAvatarSDK() {
 
     try {
       // 1. Load Avatar
-      const avatar = await avatarManager.load(characterId)
+      const avatar = await avatarManager.load(avatarId)
       
       // 2. Validate container is a valid HTMLElement
       if (!container || !(container instanceof HTMLElement)) {
@@ -84,14 +84,14 @@ export function useAvatarSDK() {
       avatarViewRef.current = avatarView
       setAvatarController(avatarView.controller)
     } catch (error) {
-      throw new Error(`Failed to load character: ${error instanceof Error ? error.message : String(error)}`)
+      throw new Error(`Failed to load avatar: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
   // Initialize audio context (MUST be called in user gesture context)
   const initializeAudioContext = useCallback(async () => {
     if (!avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     
     const controller = avatarView.controller as any
@@ -105,7 +105,7 @@ export function useAvatarSDK() {
   // Connect service (network mode only)
   const connect = useCallback(async () => {
     if (!avatarView?.controller) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
 
     // ⚠️ CRITICAL: Initialize audio context first (MUST be called in user gesture context)
@@ -117,7 +117,7 @@ export function useAvatarSDK() {
   // Send audio data (network mode only)
   const sendAudio = useCallback((audioData: ArrayBuffer, isFinal: boolean = false) => {
     if (!avatarController) {
-      throw new Error('Character not loaded or not connected')
+      throw new Error('Avatar not loaded or not connected')
     }
     if (!avatarController.send) {
       throw new Error('send() is only available in network mode')
@@ -128,7 +128,7 @@ export function useAvatarSDK() {
   // Yield audio data (external data mode) - Streams audio data and returns conversationId
   const yieldAudioData = (data: Uint8Array, isLast: boolean = false): string | null => {
     if (!avatarController) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     if (!avatarController.yieldAudioData) {
       throw new Error('yieldAudioData() is only available in host mode')
@@ -139,7 +139,7 @@ export function useAvatarSDK() {
   // Yield frames data (external data mode) - Streams animation keyframes with conversationId
   const yieldFramesData = (keyframes: any[], conversationId: string | null) => {
     if (!avatarController) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     if (!avatarController.yieldFramesData) {
       throw new Error('yieldFramesData() is only available in host mode')
@@ -166,7 +166,7 @@ export function useAvatarSDK() {
   // Interrupt conversation
   const interrupt = useCallback(() => {
     if (!avatarController) {
-      throw new Error('Character not loaded or not connected')
+      throw new Error('Avatar not loaded or not connected')
     }
     avatarController.interrupt()
   }, [avatarController])
@@ -174,7 +174,7 @@ export function useAvatarSDK() {
   // Pause playback
   const pause = useCallback(() => {
     if (!avatarController) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     avatarController.pause()
   }, [avatarController])
@@ -182,7 +182,7 @@ export function useAvatarSDK() {
   // Resume playback
   const resume = useCallback(async () => {
     if (!avatarController) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     await avatarController.resume()
   }, [avatarController])
@@ -199,7 +199,7 @@ export function useAvatarSDK() {
   // Set audio volume
   const setVolume = useCallback((volume: number) => {
     if (!avatarController) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     if (typeof volume !== 'number' || volume < 0 || volume > 1) {
       throw new Error('Volume must be a number between 0.0 and 1.0')
@@ -210,14 +210,14 @@ export function useAvatarSDK() {
   // Get current audio volume
   const getVolume = useCallback((): number => {
     if (!avatarController) {
-      throw new Error('Character not loaded')
+      throw new Error('Avatar not loaded')
     }
     return avatarController.getVolume()
   }, [avatarController])
 
-  // Unload character
-  // ⚠️ Important: SDK currently only supports one character at a time. If you want to load a new character, you must unload the current one first
-  const unloadCharacter = useCallback(() => {
+  // Unload avatar
+  // ⚠️ Important: SDK currently only supports one avatar at a time. If you want to load a new avatar, you must unload the current one first
+  const unloadAvatar = useCallback(() => {
     if (avatarView) {
       avatarView.dispose() // Clean up all resources, including closing connection, releasing WASM resources, removing Canvas, etc.
       setAvatarView(null)
@@ -247,7 +247,7 @@ export function useAvatarSDK() {
     avatarView,
     avatarController,
     initialize,
-    loadCharacter,
+    loadAvatar,
     connect,
     initializeAudioContext,
     sendAudio,
@@ -258,9 +258,10 @@ export function useAvatarSDK() {
     pause,
     resume,
     disconnect,
-    unloadCharacter,
+    unloadAvatar,
     setVolume,
     getVolume,
   }
 }
+
 

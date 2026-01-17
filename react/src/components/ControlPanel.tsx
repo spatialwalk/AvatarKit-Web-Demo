@@ -8,8 +8,8 @@ import { Environment as SDKEnvironment } from '@spatialwalk/avatarkit'
 
 interface ControlPanelProps {
   environment: Environment
-  characterId: string
-  characterIdList: string[]
+  avatarId: string
+  avatarIdList: string[]
   isInitialized: boolean
   avatarView: any
   avatarController: any
@@ -19,21 +19,21 @@ interface ControlPanelProps {
   currentPlaybackMode: 'network' | 'external'
   conversationState?: 'idle' | 'playing' | 'pausing' | null
   isSendingAudio?: boolean
-  onCharacterIdChange: (id: string) => void
+  onAvatarIdChange: (id: string) => void
   onInit?: () => void
-  onLoadCharacter: () => void
+  onLoadAvatar: () => void
   onConnect: () => void
   onStartRecord: () => void
   onStopRecord: () => void
   onInterrupt: () => void
   onDisconnect: () => void
-  onUnloadCharacter: () => void
+  onUnloadAvatar: () => void
 }
 
 export function ControlPanel({
   environment,
-  characterId,
-  characterIdList,
+  avatarId,
+  avatarIdList,
   isInitialized,
   avatarView,
   avatarController,
@@ -43,29 +43,29 @@ export function ControlPanel({
   currentPlaybackMode,
   conversationState,
   isSendingAudio = false,
-  onCharacterIdChange,
+  onAvatarIdChange,
   onInit,
-  onLoadCharacter,
+  onLoadAvatar,
   onConnect,
   onLoadAudio,
   onStartRecord,
   onStopRecord,
   onInterrupt,
   onDisconnect,
-  onUnloadCharacter,
+  onUnloadAvatar,
 }: ControlPanelProps) {
   const [showAddIdModal, setShowAddIdModal] = useState(false)
-  const [newCharacterId, setNewCharacterId] = useState('')
+  const [newAvatarId, setNewAvatarId] = useState('')
   
   const envName = environment === SDKEnvironment.cn ? 'CN' : 
                  environment === SDKEnvironment.intl ? 'International' : 
                  'Test'
   
-  const handleAddCharacterId = () => {
-    const trimmedId = newCharacterId.trim()
+  const handleAddAvatarId = () => {
+    const trimmedId = newAvatarId.trim()
     if (trimmedId) {
-      onCharacterIdChange(trimmedId)
-      setNewCharacterId('')
+      onAvatarIdChange(trimmedId)
+      setNewAvatarId('')
       setShowAddIdModal(false)
     }
   }
@@ -83,7 +83,7 @@ export function ControlPanel({
 
       <div className="form-group">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <label style={{ marginBottom: 0, display: 'inline-block', lineHeight: '22px' }}>Character ID</label>
+          <label style={{ marginBottom: 0, display: 'inline-block', lineHeight: '22px' }}>Avatar ID</label>
           <button
             onClick={() => setShowAddIdModal(true)}
             style={{
@@ -103,7 +103,7 @@ export function ControlPanel({
               justifyContent: 'center',
               flexShrink: 0
             }}
-            title="Add new Character ID"
+            title="Add new Avatar ID"
           >
             ➕
           </button>
@@ -129,17 +129,17 @@ export function ControlPanel({
               flexShrink: 0,
               textDecoration: 'none'
             }}
-            title="Get test character IDs"
+            title="Get test avatar IDs"
           >
             🔗
           </a>
         </div>
         <select
-          value={characterId}
-          onChange={(e) => onCharacterIdChange(e.target.value)}
+          value={avatarId}
+          onChange={(e) => onAvatarIdChange(e.target.value)}
         >
-          <option value="">Select Character ID</option>
-          {characterIdList.map((id) => (
+          <option value="">Select Avatar ID</option>
+          {avatarIdList.map((id) => (
             <option key={id} value={id}>{id}</option>
           ))}
         </select>
@@ -151,8 +151,8 @@ export function ControlPanel({
             1. Initialize SDK
           </button>
         )}
-        <button disabled={!isInitialized || !!avatarView || isLoading || !characterId.trim()} onClick={onLoadCharacter}>
-          {onInit ? '2. Load Character' : '1. Load Character'}
+        <button disabled={!isInitialized || !!avatarView || isLoading || !avatarId.trim()} onClick={onLoadAvatar}>
+          {onInit ? '2. Load Avatar' : '1. Load Avatar'}
         </button>
         <button disabled={!avatarView || currentPlaybackMode !== 'network' || isConnected || isLoading} onClick={onConnect}>
           {onInit ? '3. Connect Service' : '2. Connect Service'}
@@ -174,14 +174,14 @@ export function ControlPanel({
         <button disabled={!avatarController || currentPlaybackMode !== 'network' || !isConnected} onClick={onDisconnect}>
           Disconnect
         </button>
-        <button disabled={!avatarView} onClick={onUnloadCharacter} style={{ background: '#ef4444' }}>
-          Unload Character
+        <button disabled={!avatarView} onClick={onUnloadAvatar} style={{ background: '#ef4444' }}>
+          Unload Avatar
         </button>
       </div>
 
 
       
-      {/* Add Character ID Modal */}
+      {/* Add Avatar ID Modal */}
       {showAddIdModal && (
         <div
           style={{
@@ -208,12 +208,12 @@ export function ControlPanel({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Add New Character ID</h3>
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Add New Avatar ID</h3>
             <input
               type="text"
-              value={newCharacterId}
-              onChange={(e) => setNewCharacterId(e.target.value)}
-              placeholder="Enter Character ID"
+              value={newAvatarId}
+              onChange={(e) => setNewAvatarId(e.target.value)}
+              placeholder="Enter Avatar ID"
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -225,7 +225,7 @@ export function ControlPanel({
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleAddCharacterId()
+                  handleAddAvatarId()
                 } else if (e.key === 'Escape') {
                   setShowAddIdModal(false)
                 }
@@ -246,16 +246,16 @@ export function ControlPanel({
                 Cancel
               </button>
               <button
-                onClick={handleAddCharacterId}
-                disabled={!newCharacterId.trim()}
+                onClick={handleAddAvatarId}
+                disabled={!newAvatarId.trim()}
                 style={{
                   padding: '8px 16px',
                   background: '#667eea',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  cursor: newCharacterId.trim() ? 'pointer' : 'not-allowed',
-                  opacity: newCharacterId.trim() ? 1 : 0.5
+                  cursor: newAvatarId.trim() ? 'pointer' : 'not-allowed',
+                  opacity: newAvatarId.trim() ? 1 : 0.5
                 }}
               >
                 Add

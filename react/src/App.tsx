@@ -158,7 +158,7 @@ function App() {
   return (
     <div className="container">
       <div className="header">
-        <h1>🚀 SPAvatar SDK - React Example (Multi-Character)</h1>
+        <h1>🚀 Avatar SDK - React Example (Multi-Avatar)</h1>
         <p>Supports multiple avatar views simultaneously</p>
         <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', position: 'relative' }}>
           {!globalSDKInitialized && !sdkInitializing && (

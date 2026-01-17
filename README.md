@@ -1,8 +1,8 @@
-# SPAvatarKit SDK Examples
+# AvatarKit SDK Examples
 
-SPAvatarKit practice demos in vanilla, Vue, React, and Next.js
+AvatarKit practice demos in vanilla, Vue, React, and Next.js
 
-This is a complete SDK usage example collection demonstrating how to integrate and use the SPAvatarKit SDK in different frameworks.
+This is a complete SDK usage example collection demonstrating how to integrate and use the AvatarKit SDK in different frameworks.
 
 ## 📋 Table of Contents
 
@@ -55,41 +55,41 @@ npm run dev
 
 ### 6. Start Using
 
-> ⚠️ **Important**: The default App ID and Session Token provided in these demos are **paired together** and can **only be used to drive the publicly available test characters** (Rohan, Dr.Kellan, Priya, Josh, etc.). If you want to create your own characters and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and characters.
+> ⚠️ **Important**: The default App ID and Session Token provided in these demos are **paired together** and can **only be used to drive the publicly available test avatars** (Rohan, Dr.Kellan, Priya, Josh, etc.). If you want to create your own avatars and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and avatars.
 
 **SDK Mode (Real-time Audio Streaming):**
 1. **App ID and Session Token** - The demo automatically generates a default Session Token on page load. You can also manually edit both App ID and Session Token if needed.
-   - ⚠️ **Note**: The default App ID and Session Token are paired and only work with test characters. For your own characters, create your App at the [Developer Platform](https://dash.spatialreal.ai).
+   - ⚠️ **Note**: The default App ID and Session Token are paired and only work with test avatars. For your own avatars, create your App at the [Developer Platform](https://dash.spatialreal.ai).
    - The Session Token input field is editable - you can manually enter your own token
    - Click "Inject" button to inject the token to SDK after initialization
 2. Click "初始化 SDK (SDK Mode)" to initialize the SDK
    - Select environment (International/CN)
    - The Session Token will be automatically set if you generated it in step 1
-3. Enter the character ID in the interface
-4. Click "Load Character" to load the character
+3. Enter the avatar ID in the interface
+4. Click "Load Avatar" to load the avatar
 5. Click "Connect Service" to establish WebSocket connection
 6. Click "Start Recording" and start speaking
 7. Click "Stop Recording" to send audio and receive animation
-8. Observe the character's real-time animation effects
+8. Observe the avatar's real-time animation effects
 9. Adjust volume using the volume slider (0-100%) - located on the right side above the transform button
-10. Use the play/pause button (bottom left) to control playback when the character is playing or paused
+10. Use the play/pause button (bottom left) to control playback when the avatar is playing or paused
 
 **Host Mode (Pre-recorded Audio/Animation):**
-> ⚠️ **Note**: Host Mode requires the SPAvatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
+> ⚠️ **Note**: Host Mode requires the Avatar server-side SDK to generate animation keyframes. The examples use pre-generated data files.
 
 1. **App ID and Session Token** - The demo automatically generates a default Session Token on page load. You can also manually edit both App ID and Session Token if needed.
-   - ⚠️ **Note**: The default App ID and Session Token are paired and only work with test characters. For your own characters, create your App at the [Developer Platform](https://dash.spatialreal.ai).
+   - ⚠️ **Note**: The default App ID and Session Token are paired and only work with test avatars. For your own avatars, create your App at the [Developer Platform](https://dash.spatialreal.ai).
    - The Session Token input field is editable - you can manually enter your own token
    - Click "Inject" button to inject the token to SDK after initialization
 2. Click "初始化 SDK (Host Mode)" to initialize the SDK in Host mode
    - Select environment (International/CN)
    - The Session Token will be automatically set if you generated it in step 1
-3. Enter the character ID in the interface
-4. Click "Load Character" to load the character
+3. Enter the avatar ID in the interface
+4. Click "Load Avatar" to load the avatar
 5. Click "Play Data" to load and play pre-recorded audio and animation files
-6. Observe the character's animation synchronized with audio
+6. Observe the avatar's animation synchronized with audio
 7. Adjust volume using the volume slider (0-100%) - located on the right side above the transform button
-8. Use the play/pause button (bottom left) to control playback when the character is playing or paused
+8. Use the play/pause button (bottom left) to control playback when the avatar is playing or paused
 
 ## 📦 Example List
 
@@ -115,17 +115,17 @@ npm run dev
 - Pure JavaScript, no framework dependencies
 - Simple and intuitive code structure
 - Suitable for quick learning and testing
-- Add custom character IDs dynamically via ➕ button
+- Add custom avatar IDs dynamically via ➕ button
 
 ### 2. Vue 3 Example (`vue/`)
 
-Complete example using Vue 3 Composition API with multi-character panel support.
+Complete example using Vue 3 Composition API with multi-avatar panel support.
 
 **Use Cases:**
 - Vue 3 project integration
 - Reactive state management needed
 - Component-based development
-- Multiple character instances display
+- Multiple avatar instances display
 
 **Run:**
 ```bash
@@ -140,20 +140,20 @@ npm run dev
 - Vue 3 Composition API
 - TypeScript support
 - Reactive data binding
-- Multi-character panel support (up to 4 simultaneous instances)
+- Multi-avatar panel support (up to 4 simultaneous instances)
 - Global SDK initialization pattern
 - Independent panel state management
-- Add custom character IDs dynamically via ➕ button
+- Add custom avatar IDs dynamically via ➕ button
 
 ### 3. React Example (`react/`)
 
-Complete example using React Hooks with multi-character panel support.
+Complete example using React Hooks with multi-avatar panel support.
 
 **Use Cases:**
 - React project integration
 - Functional programming style needed
 - Modern React development
-- Multiple character instances display
+- Multiple avatar instances display
 
 **Run:**
 ```bash
@@ -168,10 +168,10 @@ npm run dev
 - React Hooks with `useCallback` optimization
 - TypeScript support
 - Functional components
-- Multi-character panel support (up to 4 simultaneous instances)
+- Multi-avatar panel support (up to 4 simultaneous instances)
 - Global SDK initialization pattern
 - Independent panel state management
-- Add custom character IDs dynamically via ➕ button
+- Add custom avatar IDs dynamically via ➕ button
 
 ### 4. Next.js iframe Example (`nextjs/`)
 
@@ -201,7 +201,7 @@ npm run dev          # Starts both services automatically
 - postMessage communication between Next.js and iframe
 - TypeScript support
 - Production-ready configuration
-- Add custom character IDs dynamically via ➕ button
+- Add custom avatar IDs dynamically via ➕ button
 
 **Key Considerations:**
 - ✅ SDK runs in separate iframe (Vite app) to avoid packaging conflicts
@@ -252,14 +252,14 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)
    - Select environment (International/CN)
    - The Session Token generated in step 1 will be automatically set
 
-3. **Enter Character ID** - Specify the character to load
-   - Get character ID from SDK management platform
-   - Or click the ➕ button next to "Character ID" to add a custom character ID
+3. **Enter Avatar ID** - Specify the avatar to load
+   - Get avatar ID from SDK management platform
+   - Or click the ➕ button next to "Avatar ID" to add a custom avatar ID
 
-4. **Load Character** - Download and initialize character resources
-   - SDK will automatically download character models and textures
+4. **Load Avatar** - Download and initialize avatar resources
+   - SDK will automatically download avatar models and textures
    - Display loading progress
-   - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
+   - **Note**: Mode is determined by SDK initialization, no need to select mode when loading avatar
 
 5. **Connect Service** - Establish WebSocket connection
    - Connect to animation service
@@ -274,14 +274,14 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (SDK Mode)
    - **Note**: Recording is just a demonstration method. In actual applications, you can obtain audio data from any source (such as audio files, streaming media, etc.)
 
 7. **Real-time Rendering** - Receive animation data and render to Canvas
-   - Character will generate animations based on audio in real-time
-   - You can see character's mouth, expressions, and other animations
+   - Avatar will generate animations based on audio in real-time
+   - You can see avatar's mouth, expressions, and other animations
 
 ### Host Mode (Pre-recorded Audio/Animation)
 
 The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode)" button.
 
-> ⚠️ **Important**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the SPAvatar server-side SDK to generate animation keyframes from audio.
+> ⚠️ **Important**: Host Mode requires the Avatar digital human server-side SDK to generate animation keyframes. The audio and animation data files used in these examples are pre-generated using the server-side SDK. In production, you must integrate with the Avatar server-side SDK to generate animation keyframes from audio.
 
 1. **Generate Session Token** (Required for Demo) - Generate a temporary token (can be done before or after SDK initialization)
    - ⚠️ **Note**: This auto-generation is for demo purposes only. In production, you must manually inject a valid token from your SDK provider using `AvatarSDK.setSessionToken(token)`.
@@ -297,14 +297,14 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
    - Select environment (International/CN)
    - The Session Token generated in step 1 will be automatically set
 
-3. **Enter Character ID** - Specify the character to load
-   - Get character ID from SDK management platform
-   - Or click the ➕ button next to "Character ID" to add a custom character ID
+3. **Enter Avatar ID** - Specify the avatar to load
+   - Get avatar ID from SDK management platform
+   - Or click the ➕ button next to "Avatar ID" to add a custom avatar ID
 
-4. **Load Character** - Download and initialize character resources
-   - SDK will automatically download character models and textures
+4. **Load Avatar** - Download and initialize avatar resources
+   - SDK will automatically download avatar models and textures
    - Display loading progress
-   - **Note**: Mode is determined by SDK initialization, no need to select mode when loading character
+   - **Note**: Mode is determined by SDK initialization, no need to select mode when loading avatar
 
 5. **Play Data** - Load and play pre-recorded audio and animation files
    - ⚠️ **Important**: Audio context is automatically initialized before sending audio data (must be in user gesture context)
@@ -312,7 +312,7 @@ The mode is selected when initializing the SDK. Choose "初始化 SDK (Host Mode
    - First, audio data is sent via `yieldAudioData()` to get a `conversationId`
    - Then, animation keyframes are sent via `yieldFramesData()` with the `conversationId`
    - Animation keyframes are synchronized with audio playback
-   - **Note**: The animation keyframes must be generated using the SPAvatar server-side SDK
+   - **Note**: The animation keyframes must be generated using the Avatar server-side SDK
 
 ## 🔧 Configuration
 
@@ -328,8 +328,8 @@ Examples support two environments:
 **All environments now require an App ID and Session Token for authentication.**
 
 > ⚠️ **Important Note**: 
-> - The default App ID and Session Token provided in these demos are **paired together** and can **only be used to drive the publicly available test characters** (Rohan, Dr.Kellan, Priya, Josh, etc.).
-> - If you want to create your own characters and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and characters.
+> - The default App ID and Session Token provided in these demos are **paired together** and can **only be used to drive the publicly available test avatars** (Rohan, Dr.Kellan, Priya, Josh, etc.).
+> - If you want to create your own avatars and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and avatars.
 > - The "Auto" button in these demos is **only for demonstration purposes**. In actual production applications, you must **manually inject a valid Session Token** obtained from your SDK provider. The auto-generation feature is not available in production and should not be relied upon.
 
 **Demo Quick Setup:**
@@ -355,21 +355,21 @@ Examples support two environments:
 
 The App ID is used to identify your application. The demos provide a default App ID that is paired with the default Session Token.
 
-> ⚠️ **Important**: The default App ID and Session Token are **paired together** and can **only be used to drive the publicly available test characters**. To create and test your own characters, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App.
+> ⚠️ **Important**: The default App ID and Session Token are **paired together** and can **only be used to drive the publicly available test avatars**. To create and test your own avatars, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App.
 
-### Character ID
+### Avatar ID
 
-Character ID can be obtained from the SDK management platform and is used to identify the virtual character to load.
+Avatar ID can be obtained from the SDK management platform and is used to identify the virtual avatar to load.
 
-**Getting Test Character IDs:**
-- Visit [Test Avatars](https://docs.spatialreal.ai/overview/test-avatars) to get test character IDs for testing
+**Getting Test Avatar IDs:**
+- Visit [Test Avatars](https://docs.spatialreal.ai/overview/test-avatars) to get test avatar IDs for testing
 - Test avatars include: Rohan, Dr.Kellan, Priya, and Josh
-- **Note**: These test characters can only be used with the default App ID and Session Token provided in the demos
+- **Note**: These test avatars can only be used with the default App ID and Session Token provided in the demos
 
-**Adding Custom Character IDs:**
-- Click the ➕ button next to the "Character ID" label to add a new character ID
+**Adding Custom Avatar IDs:**
+- Click the ➕ button next to the "Avatar ID" label to add a new avatar ID
 - Or click the 🔗 link icon button to open the test avatars page in a new tab
-- Enter the character ID in the popup modal
+- Enter the avatar ID in the popup modal
 - The new ID will be added to the dropdown list and automatically selected
 - Added IDs are temporary and only persist for the current session (not saved after page refresh)
 
@@ -505,12 +505,12 @@ After building, verify:
 - **SDK Version**: `@spatialwalk/avatarkit@^1.0.0-beta.39`
 - **Audio Context Initialization**: ⚠️ **Critical**: Before using any audio-related features, you **MUST** initialize the audio context in a user gesture context using `avatarView.controller.initializeAudioContext()`. All demos automatically handle this when you click "Connect Service" (SDK Mode) or "Play Data" (Host Mode). See [Audio Context Initialization](#-audio-context-initialization-required) section for details.
 - **Volume Control**: Audio volume can be adjusted using `setVolume(volume)` API (0.0 to 1.0). All examples include a volume slider in the UI, positioned on the right side above the transform button.
-- **Play/Pause Control**: A play/pause button is available in the bottom left corner of the character view. It appears when the character is in `playing` or `pausing` state, allowing you to pause or resume playback.
+- **Play/Pause Control**: A play/pause button is available in the bottom left corner of the avatar view. It appears when the avatar is in `playing` or `pausing` state, allowing you to pause or resume playback.
 - **Initialization Modes**: 
   - **SDK Mode**: Real-time audio streaming via WebSocket, server generates animation
   - **Host Mode**: Pre-recorded audio and animation files, client-side playback
-    - ⚠️ **Requires SPAvatar Server-side SDK**: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
-  - **Mode Selection**: The mode is selected during SDK initialization via `AvatarSDK.initialize()`, not when loading characters
+    - ⚠️ **Requires Avatar Server-side SDK**: Host Mode requires the Avatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files, but in production you must integrate with the server-side SDK.
+  - **Mode Selection**: The mode is selected during SDK initialization via `AvatarSDK.initialize()`, not when loading avatars
 - **Key API Changes (v22)**: 
   - `onAvatarState` → `onConversationState` (callback renamed)
   - `AvatarState` → `ConversationState` (enum renamed, values: `idle`, `playing`, `pausing`)
@@ -531,7 +531,7 @@ After building, verify:
 - **Animation Data**: FLAME parameter keyframe sequences
 - **Audio Data Source**: 
   - SDK Mode: Microphone recording in examples is for demonstration only. In actual applications, any audio source can be used (files, streaming media, synthesized audio, etc.)
-  - Host Mode: Pre-recorded PCM16 audio files (24kHz, automatically resampled to 16kHz). Animation keyframes must be generated using the SPAvatar server-side SDK.
+  - Host Mode: Pre-recorded PCM16 audio files (24kHz, automatically resampled to 16kHz). Animation keyframes must be generated using the Avatar server-side SDK.
 - **Audio Resampling**: High-quality resampling using Web Audio API's OfflineAudioContext with anti-aliasing
 - **WASM Support**: All examples are configured with correct WASM MIME types, automatic WASM file copying, and production headers generation. See [WASM Configuration](#-wasm-configuration-required-for-production) section for details.
 - **Rendering Backend**: Automatically selects WebGPU or WebGL
@@ -545,17 +545,17 @@ After building, verify:
 ### Q: How to get App ID and Session Token?
 
 A: 
-- **For Demo**: The demos provide a default App ID and Session Token that are paired together. These can only be used to drive the publicly available test characters (Rohan, Dr.Kellan, Priya, Josh, etc.). The Session Token is automatically generated on page load, and you can also manually edit both App ID and Session Token if needed.
-- **For Your Own Characters**: If you want to create your own characters and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and characters. You will get your own App ID and can generate Session Tokens for your App.
+- **For Demo**: The demos provide a default App ID and Session Token that are paired together. These can only be used to drive the publicly available test avatars (Rohan, Dr.Kellan, Priya, Josh, etc.). The Session Token is automatically generated on page load, and you can also manually edit both App ID and Session Token if needed.
+- **For Your Own Avatars**: If you want to create your own avatars and test them, please visit the [Developer Platform](https://dash.spatialreal.ai) to create your own App and avatars. You will get your own App ID and can generate Session Tokens for your App.
 - **For Production**: Session Token needs to be obtained from the SDK provider. Please contact the SDK provider or check the main SDK documentation for more information. You must manually inject the token using `AvatarSDK.setSessionToken(token)` in your application.
 
-### Q: Can't see the character after running the example?
+### Q: Can't see the avatar after running the example?
 
 A: Please check the following:
-- Is the character ID correct?
+- Is the avatar ID correct?
 - Is the network connection normal?
 - Are there any error messages in the browser console?
-- Has the character been successfully loaded? (Check the log panel)
+- Has the avatar been successfully loaded? (Check the log panel)
 
 ### Q: Recording function not working?
 
@@ -602,10 +602,10 @@ A: Modify the `server.port` configuration in each example's `vite.config.ts`.
 
 ### Q: How to use Host Mode in production?
 
-A: Host Mode requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files for demonstration purposes. In production:
+A: Host Mode requires the Avatar digital human server-side SDK to generate animation keyframes from audio. The examples use pre-generated data files for demonstration purposes. In production:
 
 1. Initialize SDK in Host Mode: `AvatarSDK.initialize('demo', { drivingServiceMode: DrivingServiceMode.host })`
-2. Integrate the SPAvatar server-side SDK into your backend service
+2. Integrate the Avatar server-side SDK into your backend service
 3. Use the server-side SDK to generate animation keyframes from your audio files
 4. Store the generated keyframes (FLAME parameter sequences) along with the audio files
 5. Load and play both audio and animation keyframes in the client using Host Mode:

@@ -1,6 +1,6 @@
 # Vue 3 Example
 
-This is a SPAvatarKit SDK example using Vue 3 Composition API with multi-character panel support, demonstrating how to integrate the SDK in a Vue application.
+This is an AvatarKit SDK example using Vue 3 Composition API with multi-avatar panel support, demonstrating how to integrate the SDK in a Vue application.
 
 ## 🚀 Quick Start
 
@@ -34,7 +34,7 @@ Open browser and visit: `http://localhost:5175`
 - ✅ Computed properties control button state
 - ✅ Complete error handling
 - ✅ Resource cleanup (on component unmount)
-- ✅ Multi-character panel support (up to 4 simultaneous instances)
+- ✅ Multi-avatar panel support (up to 4 simultaneous instances)
 - ✅ Global SDK initialization with lazy loading
 - ✅ Independent panel state management
 - ✅ Audio volume control (0-100% slider)
@@ -73,15 +73,15 @@ async function handleInit() {
 }
 ```
 
-#### 2. Load Character
+#### 2. Load Avatar
 
 ```typescript
 const avatarView = ref<AvatarView | null>(null)
 const canvasContainerRef = ref<HTMLElement | null>(null)
 
-async function handleLoadCharacter() {
+async function handleLoadAvatar() {
   avatarManager.value = AvatarManager.shared
-  const avatar = await avatarManager.value.load(characterId.value)
+  const avatar = await avatarManager.value.load(avatarId.value)
   avatarView.value = new AvatarView(avatar, canvasContainerRef.value!)
 }
 ```
@@ -144,9 +144,9 @@ onUnmounted(async () => {
 - You can also manually enter a Session Token if you have one
 - The token must be valid and not expired
 
-### Character ID
+### Avatar ID
 
-Get character ID from SDK management platform.
+Get avatar ID from SDK management platform.
 
 ## 📁 Project Structure
 
@@ -203,7 +203,7 @@ Ensure SDK resources are properly cleaned up when component unmounts to avoid me
 - Requires user authorization for microphone permission
 - Ensure `@spatialwalk/avatarkit` SDK is installed: `npm install @spatialwalk/avatarkit`
 - Resources are automatically cleaned up on component unmount, no manual management needed
-- **Host Mode**: Requires the SPAvatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
+- **Host Mode**: Requires the Avatar digital human server-side SDK to generate animation keyframes from audio. The example uses pre-generated data files for demonstration. In production, you must integrate with the server-side SDK.
 
 ## 🔍 View Code
 

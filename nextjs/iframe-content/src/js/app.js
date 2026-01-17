@@ -73,13 +73,13 @@ export class App {
 
   handleCommand(command) {
     // Handle commands from parent Next.js app
-    // Example: Load character, connect, etc.
+    // Example: Load avatar, connect, etc.
     console.log('[iframe] Handling command:', command)
     
     // You can extend this to control SDK operations from Next.js
     // For example:
-    // if (command.action === 'loadCharacter') {
-    //   // Load character with command.characterId
+    // if (command.action === 'loadAvatar') {
+    //   // Load avatar with command.avatarId
     // }
   }
 

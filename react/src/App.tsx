@@ -19,7 +19,7 @@ function App() {
   const [currentDrivingServiceMode, setCurrentDrivingServiceMode] = useState<DrivingServiceMode | null>(null)
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>(Environment.intl)
   const [selectedSampleRate, setSelectedSampleRate] = useState(16000)
-  const [appId, setAppId] = useState('app_mj8526em_9fpt9s')
+  const [appId, setAppId] = useState('')
   const [sessionToken, setSessionToken] = useState('')
 
   // 检查是否已经初始化
@@ -29,60 +29,6 @@ function App() {
       setCurrentDrivingServiceMode(AvatarSDK.configuration?.drivingServiceMode || DrivingServiceMode.sdk)
     }
   }, [])
-  
-  // 页面加载时自动生成默认 token
-  useEffect(() => {
-    if (!sessionToken.trim()) {
-      generateDefaultToken()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // 生成默认 token（在初始化时自动调用）
-  const generateDefaultToken = async () => {
-    try {
-      // Get environment
-      const isCN = selectedEnvironment === Environment.cn
-      const consoleApiHost = isCN ? 'console.open.spatialwalk.top' : 'console.ap-northeast.spatialwalk.cloud'
-      
-      // Calculate expireAt (current timestamp + 1 hour)
-      const expireAt = Math.floor(Date.now() / 1000) + 3600
-      
-      // API Key (hardcoded for token generation)
-      const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
-      
-      // Make API request
-      const response = await fetch(`https://${consoleApiHost}/v1/console/session-tokens`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          expireAt: expireAt,
-          modelVersion: ''
-        })
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Failed to generate token: ${response.status} ${errorText}`)
-      }
-      
-      const data = await response.json()
-      const token = data.token || data.sessionToken || data.data?.token || data.data?.sessionToken
-      
-      if (token) {
-        setSessionToken(token)
-        return token
-      } else {
-        throw new Error('Token not found in response')
-      }
-    } catch (error: any) {
-      console.error('Failed to generate default token:', error)
-      return null
-    }
-  }
 
   // 手动初始化 SDK (SDK Mode)
   const handleInitSDK = async (mode: DrivingServiceMode) => {
@@ -93,9 +39,8 @@ function App() {
     try {
       setSdkInitializing(true)
       
-      // 如果还没有 token，自动生成一个默认 token
-      if (!sessionToken.trim()) {
-        await generateDefaultToken()
+      if (!appId.trim()) {
+        throw new Error('App ID is required')
       }
       
       await AvatarSDK.initialize(appId, { 
@@ -114,8 +59,9 @@ function App() {
       
       setCurrentDrivingServiceMode(mode)
       setGlobalSDKInitialized(true)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to initialize global SDK:', error)
+      alert(`Failed to initialize SDK: ${error?.message || 'Unknown error'}`)
     } finally {
       setSdkInitializing(false)
     }
@@ -161,6 +107,19 @@ function App() {
         <h1>🚀 Avatar SDK - React Example (Multi-Avatar)</h1>
         <p>Supports multiple avatar views simultaneously</p>
         <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', position: 'relative' }}>
+          {/* Notice: Get App ID and Token from Developer Platform */}
+          <div style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#1f2937', padding: '12px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', maxWidth: '800px', textAlign: 'center', fontWeight: 600, fontSize: '15px', lineHeight: 1.5, marginBottom: '8px' }}>
+            📋 <strong>Get your App ID and Session Token from the</strong>{' '}
+            <a 
+              href="https://dash.spatialreal.ai" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#1e40af', textDecoration: 'underline', fontWeight: 700, margin: '0 4px' }}
+            >
+              Developer Platform
+            </a>
+            {' '}<strong>to initialize the SDK</strong>
+          </div>
           {!globalSDKInitialized && !sdkInitializing && (
             <>
               {/* First row: Environment and Sample Rate */}
@@ -230,7 +189,7 @@ function App() {
               type="text"
               value={sessionToken}
               onChange={(e) => setSessionToken(e.target.value)}
-              placeholder="Session Token (manual input or auto-generated)"
+              placeholder="Session Token"
               style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px', background: 'white', color: '#333', minWidth: '300px', flexShrink: 0, cursor: 'text' }}
             />
             <button
@@ -256,14 +215,6 @@ function App() {
             >
               Inject
             </button>
-            <a
-              href="https://dash.spatialreal.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: 'white', fontSize: '14px', textDecoration: 'underline', cursor: 'pointer', marginLeft: '8px' }}
-            >
-              Developer Platform
-            </a>
           </div>
           {sdkInitializing && (
             <p style={{ color: '#ffeb3b', margin: 0 }}>⏳ Initializing SDK...</p>

@@ -21,9 +21,12 @@ export function useAvatarSDK() {
   }
 
   // Initialize SDK (保留用于向后兼容，但建议使用全局初始化)
-  const initialize = async (environment: Environment, drivingServiceMode: DrivingServiceMode = DrivingServiceMode.sdk, sessionToken?: string) => {
+  const initialize = async (appId: string, environment: Environment, drivingServiceMode: DrivingServiceMode = DrivingServiceMode.sdk, sessionToken?: string) => {
     try {
-      await AvatarSDK.initialize('app_mj8526em_9fpt9s', { 
+      if (!appId.trim()) {
+        throw new Error('App ID is required')
+      }
+      await AvatarSDK.initialize(appId, { 
         environment,
         drivingServiceMode 
       })

@@ -43,11 +43,12 @@ export class AvatarSDKManager {
 
   /**
    * Initialize SDK
+   * @param {string} appId - App ID (required)
    * @param {string} environment - Environment (us, cn, test)
    * @param {string} sessionToken - Session Token (optional)
    * @returns {Promise<void>}
    */
-  async initialize(environment, sessionToken = null) {
+  async initialize(appId, environment, sessionToken = null) {
     if (!this.AvatarSDK || !this.AvatarManager) {
       const loaded = await this.loadSDK()
       if (!loaded) {
@@ -55,10 +56,14 @@ export class AvatarSDKManager {
       }
     }
 
+    if (!appId || !appId.trim()) {
+      throw new Error('App ID is required')
+    }
+
     this.logger.info('Starting SDK initialization')
     this.logger.info(`Using environment: ${environment}`)
 
-    await this.AvatarSDK.initialize('app_mj8526em_9fpt9s', {
+    await this.AvatarSDK.initialize(appId, {
       environment,
       logLevel: 'basic',
     })

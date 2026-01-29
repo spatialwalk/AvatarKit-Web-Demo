@@ -68,15 +68,13 @@ export class App {
       const sampleRate = sampleRateSelect ? parseInt(sampleRateSelect.value, 10) : 16000
       this.selectedSampleRate = sampleRate
       
-      // 如果还没有 token，自动生成一个默认 token
-      const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
-      if (sessionTokenInput && !sessionTokenInput.value.trim()) {
-        await this.generateDefaultToken(sessionTokenInput, envSelect)
-      }
-      
       // Get App ID
       const appIdInput = document.getElementById('sdkAppIdInput')
-      const appId = appIdInput ? appIdInput.value : 'app_mj8526em_9fpt9s'
+      const appId = appIdInput ? appIdInput.value.trim() : ''
+      
+      if (!appId) {
+        throw new Error('App ID is required')
+      }
       
       await AvatarSDK.initialize(appId, { 
         environment: selectedEnvironment,
@@ -87,7 +85,8 @@ export class App {
         }
       })
       
-      // Set Session Token if provided
+      // Set Session Token if provided (optional - can be set later via Inject button)
+      const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
       const sessionToken = sessionTokenInput ? sessionTokenInput.value.trim() : ''
       if (sessionToken) {
         console.log('Session Token set:', sessionToken)
@@ -99,10 +98,12 @@ export class App {
       this.updateSDKStatusUI()
     } catch (error) {
       console.error('Failed to initialize global SDK:', error)
+      const errorMessage = error?.message || 'Unknown error'
       if (statusText) {
-        statusText.textContent = '❌ SDK initialization failed'
+        statusText.textContent = `❌ SDK initialization failed: ${errorMessage}`
         statusText.style.color = '#ef4444'
       }
+      alert(`Failed to initialize SDK: ${errorMessage}`)
     } finally {
       this.sdkInitializing = false
     }
@@ -186,53 +187,6 @@ export class App {
     })
   }
 
-  async generateDefaultToken(sessionTokenInput, envSelect) {
-    if (!sessionTokenInput || !envSelect) return null
-    
-    try {
-      // Get environment
-      const envValue = envSelect.value
-      const isCN = envValue === 'cn'
-      const consoleApiHost = isCN ? 'console.open.spatialwalk.top' : 'console.ap-northeast.spatialwalk.cloud'
-      
-      // Calculate expireAt (current timestamp + 1 hour)
-      const expireAt = Math.floor(Date.now() / 1000) + 3600
-      
-      // API Key (hardcoded for token generation)
-      const apiKey = 'sk-Z_8IsL6HU-2s5A-_QjwSagW_iiQx0TwtEiY5dLrgP68='
-      
-      // Make API request
-      const response = await fetch(`https://${consoleApiHost}/v1/console/session-tokens`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          expireAt: expireAt,
-          modelVersion: ''
-        })
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Failed to generate token: ${response.status} ${errorText}`)
-      }
-      
-      const data = await response.json()
-      const token = data.token || data.sessionToken || data.data?.token || data.data?.sessionToken
-      
-      if (token) {
-        sessionTokenInput.value = token
-        return token
-      } else {
-        throw new Error('Token not found in response')
-      }
-    } catch (error) {
-      console.error('Failed to generate default token:', error)
-      return null
-    }
-  }
 
   injectToken(sessionTokenInput) {
     if (!sessionTokenInput) return
@@ -264,6 +218,24 @@ export class App {
 
     const buttonContainer = document.createElement('div')
     buttonContainer.style.cssText = 'margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px;'
+    
+    // Create notice banner for getting App ID and Token
+    const noticeBanner = document.createElement('div')
+    noticeBanner.style.cssText = 'background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1f2937; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); max-width: 800px; text-align: center; font-weight: 600; font-size: 15px; line-height: 1.5; margin-bottom: 8px;'
+    const noticeText = document.createElement('span')
+    noticeText.textContent = '📋 Get your App ID and Session Token from the '
+    const devPlatformLink = document.createElement('a')
+    devPlatformLink.href = 'https://dash.spatialreal.ai'
+    devPlatformLink.target = '_blank'
+    devPlatformLink.rel = 'noopener noreferrer'
+    devPlatformLink.textContent = 'Developer Platform'
+    devPlatformLink.style.cssText = 'color: #1e40af; text-decoration: underline; font-weight: 700; margin: 0 4px;'
+    const noticeTextEnd = document.createElement('span')
+    noticeTextEnd.textContent = ' to initialize the SDK'
+    noticeBanner.appendChild(noticeText)
+    noticeBanner.appendChild(devPlatformLink)
+    noticeBanner.appendChild(noticeTextEnd)
+    buttonContainer.appendChild(noticeBanner)
     
     // Create arrow pointing to init button
     const arrow = document.createElement('span')
@@ -317,7 +289,7 @@ export class App {
     appIdInput.id = 'sdkAppIdInput'
     appIdInput.type = 'text'
     appIdInput.placeholder = 'App ID'
-    appIdInput.value = 'app_mj8526em_9fpt9s'
+    appIdInput.value = ''
     appIdInput.disabled = this.globalSDKInitialized
     appIdInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; background: white; color: #333; min-width: 300px;'
     
@@ -329,7 +301,7 @@ export class App {
     const sessionTokenInput = document.createElement('input')
     sessionTokenInput.id = 'sdkSessionTokenInput'
     sessionTokenInput.type = 'text'
-    sessionTokenInput.placeholder = 'Session Token (manual input or auto-generated)'
+    sessionTokenInput.placeholder = 'Session Token'
     sessionTokenInput.style.cssText = 'padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; background: white; color: #333; min-width: 300px; cursor: text;'
     
     // Create Inject button for injecting token
@@ -397,14 +369,6 @@ export class App {
     firstRow.appendChild(sessionTokenInput)
     firstRow.appendChild(injectTokenButton)
     
-    // Create Developer Platform link
-    const devPlatformLink = document.createElement('a')
-    devPlatformLink.href = 'https://dash.spatialreal.ai'
-    devPlatformLink.target = '_blank'
-    devPlatformLink.rel = 'noopener noreferrer'
-    devPlatformLink.textContent = 'Developer Platform'
-    devPlatformLink.style.cssText = 'color: white; font-size: 14px; text-decoration: underline; cursor: pointer; margin-left: 8px;'
-    firstRow.appendChild(devPlatformLink)
     buttonContainer.appendChild(firstRow)
     buttonContainer.appendChild(secondRow)
     buttonContainer.appendChild(statusText)
@@ -473,13 +437,6 @@ export class App {
 // Initialize application after page load
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new App()
-  
-  // 页面加载时自动生成默认 token
-  const sessionTokenInput = document.getElementById('sdkSessionTokenInput')
-  const envSelect = document.getElementById('sdkEnvironmentSelect')
-  if (sessionTokenInput && envSelect && !sessionTokenInput.value.trim()) {
-    await app.generateDefaultToken(sessionTokenInput, envSelect)
-  }
 })
 
 
